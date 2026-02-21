@@ -73,43 +73,60 @@ def build_content(lang: str) -> list[str]:
         y = draw_wrapped(c, 58, y, 10, "Real-estate agencies and independent agents listing homes in the Malaga-Marbella corridor.", 92, 13, dark)
 
         y -= 12
-        draw_text(c, 58, y, 11, "ENTRY OFFER", green)
+        draw_text(c, 58, y, 11, "SERVICE MODEL (4 STAGES)", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Photo Boost + Virtual Staging Add-On for a stronger first impression and more qualified inquiries.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Choose the stage needed for each listing, from quick cleanup to full staging and photography.", 92, 13, dark)
 
         y -= 10
-        draw_text(c, 58, y, 11, "PHOTO BOOST INCLUDES", green)
+        draw_text(c, 58, y, 11, "STAGE 1: EXISTING PHOTOS CLEANUP", green)
         y -= 18
         bullets = [
-            "On-site photo session (up to 90 minutes)",
-            "20-30 professionally edited images",
-            "HDR/light correction + perspective straightening",
-            "Web-ready and high-resolution delivery",
-            "48-hour delivery target",
+            "Use the listing's current photos",
+            "Clean up lighting, color, and vertical lines",
+            "Fast improvement with no on-site session",
         ]
         for b in bullets:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
         y -= 6
-        draw_text(c, 58, y, 11, "VIRTUAL STAGING ADD-ON", green)
+        draw_text(c, 58, y, 11, "STAGE 2: NEW ON-SITE PHOTO SHOOT", green)
+        y -= 18
+        for b in [
+            "On-site session up to 90 minutes",
+            "20-30 professionally edited images",
+            "Owner/agent prepares the property before shoot",
+        ]:
+            y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
+
+        y -= 6
+        draw_text(c, 58, y, 11, "STAGE 3: VIRTUAL STAGING", green)
         y -= 18
         vbul = [
-            "3 key rooms staged virtually",
+            "Virtually staged key rooms",
             "Buyer-profile style matching",
             "Before/after files included",
-            "+24 hours on top of base delivery",
         ]
         for b in vbul:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
+        y -= 6
+        draw_text(c, 58, y, 11, "STAGE 4: PHYSICAL STAGING + SHOOT", green)
+        y -= 18
+        for b in [
+            "Actual on-site staging coordination",
+            "Professional photos of final staged setup",
+            "Premium option for high-value listings",
+        ]:
+            y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
+
         y -= 8
-        draw_text(c, 58, y, 11, "STARTER PRICING", green)
+        draw_text(c, 58, y, 11, "PRICING BY STAGE", green)
         y -= 18
         for p in [
-            "Photo Boost: EUR 220 per property",
-            "Virtual Staging Add-On (3 rooms): EUR 120",
-            "Bundle: EUR 320",
-            "Pilot Package (3 listings in 30 days): EUR 900",
+            "Stage 1 (Cleanup): from EUR 90",
+            "Stage 2 (New Shoot): from EUR 220",
+            "Stage 3 (Virtual Staging): from EUR 120 (3 rooms)",
+            "Stage 4 (Physical Staging + Shoot): from EUR 650",
         ]:
             draw_text(c, 70, y, 10, f"- {p}", dark)
             y -= 14
@@ -127,43 +144,60 @@ def build_content(lang: str) -> list[str]:
         y = draw_wrapped(c, 58, y, 10, "Agencias inmobiliarias y agentes independientes con anuncios de vivienda en el corredor Malaga-Marbella.", 92, 13, dark)
 
         y -= 12
-        draw_text(c, 58, y, 11, "OFERTA DE ENTRADA", green)
+        draw_text(c, 58, y, 11, "MODELO DE SERVICIO (4 ETAPAS)", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Photo Boost + Add-On de Home Staging Virtual para mejorar primera impresion y captar contactos cualificados.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Elige la etapa segun cada inmueble, desde mejora rapida hasta staging fisico con fotos finales.", 92, 13, dark)
 
         y -= 10
-        draw_text(c, 58, y, 11, "INCLUYE PHOTO BOOST", green)
+        draw_text(c, 58, y, 11, "ETAPA 1: MEJORA DE FOTOS EXISTENTES", green)
         y -= 18
         bullets = [
-            "Sesion de fotos en propiedad (hasta 90 minutos)",
-            "20-30 imagenes editadas profesionalmente",
-            "Correccion HDR/luz + perspectivas rectas",
-            "Entrega web + alta resolucion",
-            "Objetivo de entrega en 48 horas",
+            "Usamos las fotos actuales del anuncio",
+            "Mejoramos luz, color y verticales",
+            "Mejora rapida sin sesion en propiedad",
         ]
         for b in bullets:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
         y -= 6
-        draw_text(c, 58, y, 11, "ADD-ON DE STAGING VIRTUAL", green)
+        draw_text(c, 58, y, 11, "ETAPA 2: NUEVA SESION EN PROPIEDAD", green)
+        y -= 18
+        for b in [
+            "Sesion en propiedad de hasta 90 minutos",
+            "20-30 imagenes editadas profesionalmente",
+            "Propietario/agente prepara la vivienda antes",
+        ]:
+            y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
+
+        y -= 6
+        draw_text(c, 58, y, 11, "ETAPA 3: STAGING VIRTUAL", green)
         y -= 18
         vbul = [
-            "3 estancias clave amuebladas virtualmente",
+            "Estancias clave amuebladas virtualmente",
             "Estilo segun perfil de comprador",
             "Incluye archivos antes/despues",
-            "+24 horas sobre la entrega base",
         ]
         for b in vbul:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
+        y -= 6
+        draw_text(c, 58, y, 11, "ETAPA 4: STAGING REAL + FOTOS", green)
+        y -= 18
+        for b in [
+            "Coordinacion de staging fisico en propiedad",
+            "Fotos profesionales del resultado final",
+            "Opcion premium para inmuebles de alto valor",
+        ]:
+            y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
+
         y -= 8
-        draw_text(c, 58, y, 11, "PRECIOS DE INICIO", green)
+        draw_text(c, 58, y, 11, "PRECIOS POR ETAPA", green)
         y -= 18
         for p in [
-            "Photo Boost: 220 EUR por propiedad",
-            "Add-On Virtual (3 estancias): 120 EUR",
-            "Pack: 320 EUR",
-            "Paquete Piloto (3 propiedades en 30 dias): 900 EUR",
+            "Etapa 1 (Mejora): desde 90 EUR",
+            "Etapa 2 (Nueva sesion): desde 220 EUR",
+            "Etapa 3 (Staging virtual): desde 120 EUR (3 estancias)",
+            "Etapa 4 (Staging real + fotos): desde 650 EUR",
         ]:
             draw_text(c, 70, y, 10, f"- {p}", dark)
             y -= 14

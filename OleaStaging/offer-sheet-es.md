@@ -13,26 +13,33 @@ Un servicio rapido y repetible de mejora visual para ayudar a tus anuncios a:
 - Verse mas premium frente a la competencia
 - Reducir presion por tiempo en mercado
 
-### Oferta de Entrada (Recomendada)
-## Photo Boost + Add-On de Home Staging Virtual
+### Modelo de Servicio (4 Etapas)
 
-#### Incluye Photo Boost
-- Sesion de fotos en la propiedad (hasta 90 minutos)
+#### Etapa 1: Mejora de Fotos Existentes
+- Trabajamos sobre las fotos actuales del anuncio
+- Edicion profesional: correccion de luz/HDR, verticales rectas y color
+- Mejora rapida sin hacer una sesion nueva
+
+#### Etapa 2: Nueva Sesion de Fotos en Propiedad
+- Vamos a la propiedad y hacemos nuevas fotos (hasta 90 minutos)
 - 20-30 imagenes editadas profesionalmente
-- Correccion de luz/HDR + enderezado de perspectivas
-- Entrega en formatos para portal web y alta resolucion
-- Objetivo de entrega en 48 horas
+- El propietario/agente se encarga de preparar y presentar la vivienda antes de la sesion
 
-#### Add-On Opcional: Home Staging Virtual
-- 3 estancias clave virtualmente amuebladas (salon + hasta 2 dormitorios)
+#### Etapa 3: Home Staging Virtual
+- Creamos versiones virtualmente amuebladas de estancias clave
 - Estilo adaptado al perfil de comprador objetivo
-- Incluye archivos antes/despues para publicar
-- +24 horas sobre la entrega base
+- Incluye archivos antes/despues para portales y redes
 
-### Precios (Inicio)
-- Photo Boost: 220 EUR por propiedad
-- Add-On Virtual (3 estancias): 120 EUR
-- Pack (Photo Boost + Add-On): 320 EUR
+#### Etapa 4: Staging Real + Sesion de Fotos
+- Coordinamos el staging fisico en la propiedad
+- Fotografiamos el resultado final ya montado
+- Paquete premium para inmuebles de alto valor o con venta lenta
+
+### Precios (Por Etapa)
+- Etapa 1 (Mejora de fotos): desde 90 EUR
+- Etapa 2 (Nueva sesion de fotos): desde 220 EUR
+- Etapa 3 (Staging virtual): desde 120 EUR (3 estancias)
+- Etapa 4 (Staging real + fotos): desde 650 EUR
 
 ### Paquete Piloto (Nuevas Agencias)
 - 3 propiedades en 30 dias
@@ -40,10 +47,10 @@ Un servicio rapido y repetible de mejora visual para ayudar a tus anuncios a:
 - Incluye una entrega prioritaria al mes
 
 ### Proceso
-1. El agente reserva por WhatsApp/email.
-2. Confirmamos datos de la propiedad y acceso.
-3. Sesion + edicion + staging (si aplica).
-4. Entrega final con checklist simple de subida.
+1. El agente comparte datos del anuncio y elige la etapa.
+2. Confirmamos alcance, tiempos y requisitos de acceso.
+3. Ejecutamos la etapa seleccionada (o combinacion de etapas).
+4. Entregamos los materiales con checklist simple de subida.
 
 ### Estandar de Servicio
 - Ventana de llegada puntual

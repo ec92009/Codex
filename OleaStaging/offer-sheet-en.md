@@ -13,26 +13,33 @@ A fast, repeatable visual-upgrade service that helps your listings:
 - Look premium vs. competing listings
 - Reduce time-on-market pressure
 
-### Entry Offer (Recommended)
-## Photo Boost + Virtual Staging Add-On
+### Service Model (4 Stages)
 
-#### Included in Photo Boost
-- On-site property photo session (up to 90 minutes)
+#### Stage 1: Existing Photos Cleanup
+- We use the agent's current listing photos
+- Professional edit: light/HDR correction, straight lines, color balance
+- Fast upgrade without a new shoot
+
+#### Stage 2: New On-Site Photo Shoot
+- We go on-site and take new photos (up to 90 minutes)
 - 20-30 professionally edited images
-- HDR/light correction + perspective straightening
-- Delivery in web-ready and high-resolution formats
-- 48-hour delivery target
+- The owner/agent is responsible for preparing and presenting the property before the shoot
 
-#### Optional Add-On: Virtual Staging
-- 3 virtually staged key rooms (living room + up to 2 bedrooms)
+#### Stage 3: Virtual Staging
+- We create virtually staged versions of key rooms
 - Style matched to target buyer profile
-- Includes before/after files for listing use
-- +24 hours on top of base delivery
+- Before/after files included for listing portals and social media
 
-### Pricing (Starter)
-- Photo Boost: EUR 220 per property
-- Virtual Staging Add-On (3 rooms): EUR 120
-- Bundle (Photo Boost + Add-On): EUR 320
+#### Stage 4: Physical Staging + Photo Shoot
+- We coordinate actual in-person staging of the property
+- We photograph the fully staged result
+- Premium package for high-value or hard-to-sell listings
+
+### Pricing (By Stage)
+- Stage 1 (Photo Cleanup): from EUR 90
+- Stage 2 (New Photo Shoot): from EUR 220
+- Stage 3 (Virtual Staging): from EUR 120 (3 rooms)
+- Stage 4 (Physical Staging + Shoot): from EUR 650
 
 ### Pilot Package (For New Agency Clients)
 - 3 listings in 30 days
@@ -40,10 +47,10 @@ A fast, repeatable visual-upgrade service that helps your listings:
 - Includes one priority turnaround per month
 
 ### Process
-1. Agent books slot via WhatsApp/email.
-2. We confirm property details and access.
-3. Shoot + edit + staging (if selected).
-4. Final assets delivered with simple upload checklist.
+1. Agent shares listing details and selects the stage.
+2. We confirm scope, timing, and access requirements.
+3. We execute the selected stage (or stage combination).
+4. Final assets are delivered with a simple upload checklist.
 
 ### Service Standard
 - Punctual arrival window
