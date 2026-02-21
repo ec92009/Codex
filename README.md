@@ -6,6 +6,10 @@ Central workspace repository for ongoing projects under `/Users/rookcohen/Codex`
 - `OleaStaging`: Sales and offer materials for real-estate listing photo/staging services (EN/ES markdown + client-ready PDFs).
 - `gmail_idealista_app`: Gmail + Idealista automation app (Python).
 
+## OleaStaging PDFs
+- [OleaStaging-Offer-EN.pdf](./OleaStaging/OleaStaging-Offer-EN.pdf)
+- [OleaStaging-Oferta-ES.pdf](./OleaStaging/OleaStaging-Oferta-ES.pdf)
+
 ## Repo Workflow
 - Work inside project folders under `/Users/rookcohen/Codex`.
 - Commit changes from the repo root with clear messages.
