@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&display=swap');
+@import url('../variants-base.css');
+
+:root {
+  --bg: linear-gradient(180deg, #f8f1e2, #efe3cd 45%, #eadcc5);
+  --ink: #201b16;
+  --muted: #655f56;
+  --surface: rgba(255, 249, 239, 0.86);
+  --surface-2: rgba(255, 251, 245, 0.72);
+  --line: rgba(116, 90, 49, 0.16);
+  --brand: #274e43;
+  --accent: #bb7f2f;
+  --shadow: 0 18px 45px rgba(87, 69, 38, 0.12);
+  --radius: 18px;
+  --font-body: 'Instrument Sans', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+}
+
+body.theme-v2 {
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(187, 127, 47, 0.12), transparent 45%),
+    radial-gradient(circle at 100% 10%, rgba(39, 78, 67, 0.15), transparent 36%),
+    linear-gradient(180deg, #f8f1e2, #efe3cd 45%, #eadcc5);
+}
+
+.theme-v2 .topbar { background: rgba(247, 239, 224, 0.76); border-bottom: 1px solid var(--line); }
+.theme-v2 .brand { font-size: 1.2rem; }
+.theme-v2 .hero { grid-template-columns: 1.05fr 0.95fr; }
+.theme-v2 .hero h1 { font-weight: 650; letter-spacing: -0.02em; }
+.theme-v2 .panel-head h2 { font-weight: 600; }
+.theme-v2 .stage-card { position: relative; }
+.theme-v2 .stage-card::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.05);
+  background: linear-gradient(140deg, rgba(187,127,47,0.12), rgba(39,78,67,0.08));
+}
+.theme-v2 .hero-art { background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(250,242,228,0.75)); }
+.theme-v2 .art-frame { border-style: dashed; }

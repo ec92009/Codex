@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@500;700;800&display=swap');
+@import url('../variants-base.css');
+
+:root {
+  --bg: #0c1110;
+  --ink: #eef5ef;
+  --muted: #aac1b2;
+  --surface: rgba(17, 24, 22, 0.92);
+  --surface-2: rgba(22, 31, 28, 0.95);
+  --line: rgba(166, 202, 176, 0.14);
+  --brand: #86dfbc;
+  --accent: #f4c15f;
+  --shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+  --radius: 20px;
+  --font-body: 'Space Grotesk', system-ui, sans-serif;
+  --font-display: 'Syne', system-ui, sans-serif;
+}
+
+body.theme-v3 {
+  background:
+    radial-gradient(circle at 20% -10%, rgba(134, 223, 188, 0.12), transparent 38%),
+    radial-gradient(circle at 100% 0%, rgba(244, 193, 95, 0.11), transparent 30%),
+    linear-gradient(180deg, #0b100f, #0d1312 45%, #0a0f0e);
+}
+
+.theme-v3 .topbar { background: rgba(10, 15, 14, 0.7); border-bottom: 1px solid var(--line); }
+.theme-v3 .back-link, .theme-v3 .pill, .theme-v3 .lang-switch { background: rgba(18, 25, 23, 0.9); }
+.theme-v3 .lang-flag.is-active { color: #08110d; }
+.theme-v3 .hero, .theme-v3 .panel, .theme-v3 .review-banner {
+  backdrop-filter: blur(6px);
+}
+.theme-v3 .hero h1 { line-height: 0.9; letter-spacing: -0.03em; }
+.theme-v3 .metric, .theme-v3 .stage-card, .theme-v3 .price-card, .theme-v3 .process-list li {
+  background: rgba(15, 22, 20, 0.9);
+}
+.theme-v3 .stage-card.emphasis {
+  background: linear-gradient(180deg, rgba(134, 223, 188, 0.16), rgba(244, 193, 95, 0.08));
+  color: var(--ink);
+}
+.theme-v3 .stage-card.emphasis p { color: var(--muted); }
+.theme-v3 .btn.primary {
+  background: linear-gradient(135deg, #86dfbc, #65c6ff);
+  color: #08110d;
+}
+.theme-v3 .hero-art {
+  background:
+    radial-gradient(circle at 25% 35%, rgba(134,223,188,0.18), transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(244,193,95,0.12), transparent 45%),
+    rgba(12,18,16,0.9);
+}
+.theme-v3 .frame-a, .theme-v3 .frame-b {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), 0 12px 22px rgba(0,0,0,0.25);
+}

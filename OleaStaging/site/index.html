@@ -3,226 +3,228 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Olea Staging | Visual Listing Upgrades</title>
-  <meta name="description" content="Mock site for Olea Staging real-estate listing photo, virtual staging, and physical staging services in the Malaga-Marbella corridor." />
+  <title>Olea Staging Mock Site Variants</title>
+  <meta name="description" content="Choose between five visual mockups for the Olea Staging website." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #efe8db;
+      --ink: #18211d;
+      --muted: #617068;
+      --line: rgba(0,0,0,.09);
+      --brand: #1f4f3e;
+      --accent: #c28735;
+      --card: rgba(255,252,246,.82);
+      --shadow: 0 20px 45px rgba(39, 45, 33, .10);
+      --r: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 5%, rgba(31,79,62,.12), transparent 38%),
+        radial-gradient(circle at 95% 0%, rgba(194,135,53,.12), transparent 30%),
+        linear-gradient(180deg, #f3ecdf, #ede5d7 44%, #e7dfd2);
+    }
+    .shell { width: min(1200px, calc(100% - 24px)); margin-inline: auto; }
+    header {
+      padding: 18px 0 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .title {
+      margin: 0;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(2rem, 4vw, 3.1rem);
+      line-height: .95;
+      color: #141c18;
+    }
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      max-width: 72ch;
+      line-height: 1.45;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .pill {
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.78);
+      padding: 9px 12px;
+      font-weight: 700;
+      font-size: .85rem;
+    }
+    .pill.primary { background: var(--brand); color: #fff; border-color: transparent; }
+    .notice {
+      margin-top: 10px;
+      border: 1px solid rgba(194,135,53,.28);
+      background: linear-gradient(180deg, rgba(255,246,225,.96), rgba(254,241,212,.92));
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: #4d3a1b;
+      font-size: .92rem;
+    }
+    .grid {
+      margin: 16px 0 28px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 160px 1fr;
+    }
+    .thumb {
+      position: relative;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      overflow: hidden;
+      padding: 12px;
+      display: grid;
+      align-content: end;
+      gap: 8px;
+    }
+    .thumb::before,
+    .thumb::after { content: ""; position: absolute; border-radius: 16px; }
+    .thumb::before { width: 42%; height: 62%; left: 8%; top: 14%; opacity: .65; }
+    .thumb::after { width: 48%; height: 58%; right: 7%; bottom: 12%; opacity: .65; }
+    .t1 { background: linear-gradient(180deg, #f7f2e8, #efe6d6); }
+    .t1::before { background: rgba(30,91,71,.14); transform: rotate(-7deg); }
+    .t1::after { background: rgba(194,135,53,.14); transform: rotate(6deg); }
+    .t2 { background: linear-gradient(180deg, #f7eedf, #eddfc8); }
+    .t2::before { background: rgba(187,127,47,.18); border: 1px dashed rgba(0,0,0,.06); }
+    .t2::after { background: rgba(39,78,67,.12); border: 1px dashed rgba(0,0,0,.06); }
+    .t3 { background: linear-gradient(180deg, #101716, #0b100f); color: #eef5ef; }
+    .t3::before { background: rgba(134,223,188,.16); }
+    .t3::after { background: rgba(244,193,95,.12); }
+    .t4 { background: linear-gradient(180deg, #eef8f7, #e5efee); }
+    .t4::before { background: rgba(20,107,112,.14); border-radius: 999px; }
+    .t4::after { background: rgba(239,138,73,.14); border-radius: 999px; }
+    .t5 { background:
+      linear-gradient(#dcdcd3 1px, transparent 1px),
+      linear-gradient(90deg, #dcdcd3 1px, transparent 1px),
+      #f2f2ed; background-size: 22px 22px; }
+    .t5::before { background: rgba(0,0,0,.04); border: 2px solid rgba(0,0,0,.6); border-radius: 0; }
+    .t5::after { background: rgba(13,122,82,.08); border: 2px solid rgba(0,0,0,.6); border-radius: 0; }
+    .thumb .badge {
+      position: relative;
+      z-index: 1;
+      align-self: start;
+      justify-self: start;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.85);
+      font-weight: 800;
+      font-size: .72rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .t3 .badge { background: rgba(14,22,20,.9); border-color: rgba(255,255,255,.08); color: #dff5ea; }
+    .thumb h3 { position: relative; z-index: 1; margin: 0; font-size: 1.05rem; }
+    .body { padding: 14px; display: grid; gap: 10px; align-content: start; }
+    .meta { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: .74rem;
+      color: var(--muted);
+      background: rgba(255,255,255,.65);
+    }
+    .body p { margin: 0; color: #3c4742; line-height: 1.42; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .actions a {
+      text-decoration: none;
+      font-weight: 700;
+      font-size: .85rem;
+      border-radius: 10px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.72);
+    }
+    .actions a.primary { background: var(--brand); color: #fff; border-color: transparent; }
+    footer { color: var(--muted); font-size: .9rem; padding: 4px 0 26px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .card { grid-template-rows: 140px 1fr; } }
+  </style>
 </head>
 <body>
-  <div class="grain"></div>
-  <header class="site-header">
-    <div class="brand-block">
-      <div class="brand">OLEA STAGING</div>
-      <div class="subbrand" data-i18n="corridor">Malaga - Marbella corridor</div>
-    </div>
-    <div class="header-actions">
-      <a class="header-link" href="./OleaStaging-Offer-EN.pdf" target="_blank" rel="noopener">PDF EN</a>
-      <a class="header-link" href="./OleaStaging-Oferta-ES.pdf" target="_blank" rel="noopener">PDF ES</a>
-      <a class="header-link" href="./OleaStaging-Offre-FR.pdf" target="_blank" rel="noopener">PDF FR</a>
-      <div class="lang-switch" role="group" aria-label="Language selector">
-        <button class="lang-flag is-active" type="button" data-lang="en" aria-label="English">🇬🇧</button>
-        <button class="lang-flag" type="button" data-lang="es" aria-label="Spanish">🇪🇸</button>
-        <button class="lang-flag" type="button" data-lang="fr" aria-label="French">🇫🇷</button>
+  <div class="shell">
+    <header>
+      <h1 class="title">Olea Staging Website Style Variants</h1>
+      <p class="subtitle">Five mock website directions for the same 4-stage offering. Each version keeps the multilingual switch (EN/ES/FR) so the team can evaluate both design and readability.</p>
+      <div class="toolbar">
+        <a class="pill primary" href="./v1/index.html">Open Version 1</a>
+        <a class="pill" href="./OleaStaging-Offer-EN.pdf" target="_blank" rel="noopener">PDF EN</a>
+        <a class="pill" href="./OleaStaging-Oferta-ES.pdf" target="_blank" rel="noopener">PDF ES</a>
+        <a class="pill" href="./OleaStaging-Offre-FR.pdf" target="_blank" rel="noopener">PDF FR</a>
       </div>
-    </div>
-  </header>
+      <div class="notice">Internal review hub. Share this page with the team and ask for feedback on: readability, trust/premium feel, agent-friendliness, and mobile comfort.</div>
+    </header>
 
-  <main>
-    <section class="review-banner" role="note" aria-label="Internal review notice">
-      <strong data-i18n="review_badge">Mock Draft</strong>
-      <span data-i18n="review_text">Internal review only. Content, pricing, and visuals are placeholders for team feedback.</span>
-    </section>
-
-    <section class="hero section-shell">
-      <div class="hero-copy">
-        <p class="eyebrow" data-i18n="eyebrow">Listing presentation that sells the visit</p>
-        <h1 data-i18n="hero_title">Help agents upgrade weak listings before they lose buyer attention.</h1>
-        <p class="lead" data-i18n="hero_lead">Olea Staging improves real-estate listing performance with a 4-stage service model: from cleaning up existing photos to full physical staging and final photography.</p>
-        <div class="hero-cta">
-          <a class="btn btn-primary" href="#stages" data-i18n="hero_cta_primary">See the 4 stages</a>
-          <a class="btn btn-ghost" href="#pricing" data-i18n="hero_cta_secondary">View pricing</a>
+    <section class="grid">
+      <article class="card">
+        <div class="thumb t1"><span class="badge">V1</span><h3>Current Rich Mock</h3></div>
+        <div class="body">
+          <div class="meta"><span class="tag">Warm luxury</span><span class="tag">Detailed layout</span><span class="tag">Animated hero</span></div>
+          <p>The current design direction with the strongest visual storytelling and full-width hero composition. Good baseline to compare against cleaner options.</p>
+          <div class="actions"><a class="primary" href="./v1/index.html">Open V1</a></div>
         </div>
-        <div class="hero-metrics">
-          <div class="metric">
-            <span class="metric-label" data-i18n="metric1_label">Coverage</span>
-            <strong data-i18n="metric1_value">Malaga -> Marbella</strong>
-          </div>
-          <div class="metric">
-            <span class="metric-label" data-i18n="metric2_label">Model</span>
-            <strong data-i18n="metric2_value">4 service stages</strong>
-          </div>
-          <div class="metric">
-            <span class="metric-label" data-i18n="metric3_label">Delivery</span>
-            <strong data-i18n="metric3_value">Fast listing-ready assets</strong>
-          </div>
-        </div>
-      </div>
-      <div class="hero-panel" aria-hidden="true">
-        <div class="panel-card before">
-          <div class="panel-tag" data-i18n="before_tag">Before</div>
-          <div class="panel-lines"></div>
-        </div>
-        <div class="panel-card after">
-          <div class="panel-tag" data-i18n="after_tag">After</div>
-          <div class="panel-scene">
-            <span></span><span></span><span></span>
-          </div>
-        </div>
-        <div class="panel-badge" data-i18n="badge_text">Visual upgrades for agency listings</div>
-      </div>
-    </section>
-
-    <section class="section-shell intro-grid">
-      <article class="info-card">
-        <h2 data-i18n="problem_title">The problem</h2>
-        <p data-i18n="problem_body">Many listings underperform because agents publish dark, distorted, or empty-looking photos. The result is fewer quality inquiries and a weaker first impression.</p>
       </article>
-      <article class="info-card accent">
-        <h2 data-i18n="solution_title">The offer</h2>
-        <p data-i18n="solution_body">A stage-based system so agencies can choose the right intervention for each property: low-cost cleanup, new photography, virtual staging, or full physical staging.</p>
+
+      <article class="card">
+        <div class="thumb t2"><span class="badge">V2</span><h3>Editorial Warm</h3></div>
+        <div class="body">
+          <div class="meta"><span class="tag">Serif-led</span><span class="tag">Magazine feel</span><span class="tag">Premium calm</span></div>
+          <p>High-end editorial look using warm tones and serif typography. A good fit if you want boutique, curated positioning for agencies.</p>
+          <div class="actions"><a class="primary" href="./v2/index.html">Open V2</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="thumb t3"><span class="badge">V3</span><h3>Dark Premium</h3></div>
+        <div class="body">
+          <div class="meta"><span class="tag">Dark mode</span><span class="tag">Modern</span><span class="tag">High contrast</span></div>
+          <p>A bold, modern premium direction with dark surfaces and luminous accents. Useful if you want a more tech-forward / luxury-agency vibe.</p>
+          <div class="actions"><a class="primary" href="./v3/index.html">Open V3</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="thumb t4"><span class="badge">V4</span><h3>Mediterranean Air</h3></div>
+        <div class="body">
+          <div class="meta"><span class="tag">Bright</span><span class="tag">Coastal palette</span><span class="tag">Friendly</span></div>
+          <p>Light and airy direction inspired by Mediterranean interiors. This one feels accessible, optimistic, and easier for broad agency outreach.</p>
+          <div class="actions"><a class="primary" href="./v4/index.html">Open V4</a></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="thumb t5"><span class="badge">V5</span><h3>Grid Minimal</h3></div>
+        <div class="body">
+          <div class="meta"><span class="tag">Minimal</span><span class="tag">Brutalist grid</span><span class="tag">Direct</span></div>
+          <p>Structured, no-nonsense layout with strong borders and mono accents. Good if you want a practical, service-operator brand feel.</p>
+          <div class="actions"><a class="primary" href="./v5/index.html">Open V5</a></div>
+        </div>
       </article>
     </section>
 
-    <section id="stages" class="section-shell stack-section">
-      <div class="section-head">
-        <p class="eyebrow" data-i18n="stages_eyebrow">Service model</p>
-        <h2 data-i18n="stages_title">4 stages, one visual standards system</h2>
-      </div>
-
-      <div class="stage-grid">
-        <article class="stage-card">
-          <div class="stage-number">01</div>
-          <h3 data-i18n="s1_title">Existing Photos Cleanup</h3>
-          <p data-i18n="s1_desc">Use the agent's current photos and improve light, color, and vertical lines for a fast visual upgrade.</p>
-          <ul>
-            <li data-i18n="s1_b1">No on-site visit needed</li>
-            <li data-i18n="s1_b2">Quick turnaround</li>
-            <li data-i18n="s1_b3">Best for weak-but-usable listings</li>
-          </ul>
-        </article>
-
-        <article class="stage-card">
-          <div class="stage-number">02</div>
-          <h3 data-i18n="s2_title">New On-Site Photo Shoot</h3>
-          <p data-i18n="s2_desc">We visit the property and create a fresh set of listing images. The owner or agent prepares the property beforehand.</p>
-          <ul>
-            <li data-i18n="s2_b1">Up to 90-minute session</li>
-            <li data-i18n="s2_b2">20-30 edited images</li>
-            <li data-i18n="s2_b3">Professional listing-ready delivery</li>
-          </ul>
-        </article>
-
-        <article class="stage-card">
-          <div class="stage-number">03</div>
-          <h3 data-i18n="s3_title">Virtual Staging</h3>
-          <p data-i18n="s3_desc">Create staged versions of key rooms to help buyers imagine the space and improve portal performance.</p>
-          <ul>
-            <li data-i18n="s3_b1">Buyer-profile styling</li>
-            <li data-i18n="s3_b2">Before/after images</li>
-            <li data-i18n="s3_b3">Strong add-on to Stage 1 or 2</li>
-          </ul>
-        </article>
-
-        <article class="stage-card highlight">
-          <div class="stage-number">04</div>
-          <h3 data-i18n="s4_title">Physical Staging + Photo Shoot</h3>
-          <p data-i18n="s4_desc">Coordinate actual staging in the property, then photograph the final setup for premium listings.</p>
-          <ul>
-            <li data-i18n="s4_b1">Highest-impact presentation</li>
-            <li data-i18n="s4_b2">Premium positioning</li>
-            <li data-i18n="s4_b3">Best for high-value or slow listings</li>
-          </ul>
-        </article>
-      </div>
-    </section>
-
-    <section id="pricing" class="section-shell pricing-wrap">
-      <div class="section-head">
-        <p class="eyebrow" data-i18n="pricing_eyebrow">Pricing</p>
-        <h2 data-i18n="pricing_title">Stage-based pricing (starting points)</h2>
-      </div>
-      <div class="pricing-grid">
-        <article class="price-card">
-          <p class="price-stage" data-i18n="p1_stage">Stage 1</p>
-          <h3 data-i18n="p1_title">Photo Cleanup</h3>
-          <p class="price-value">EUR 90+</p>
-          <p class="price-note" data-i18n="p1_note">Depends on number and quality of source images.</p>
-        </article>
-        <article class="price-card">
-          <p class="price-stage" data-i18n="p2_stage">Stage 2</p>
-          <h3 data-i18n="p2_title">New Photo Shoot</h3>
-          <p class="price-value">EUR 220+</p>
-          <p class="price-note" data-i18n="p2_note">Travel time, property size, and access window may affect pricing.</p>
-        </article>
-        <article class="price-card">
-          <p class="price-stage" data-i18n="p3_stage">Stage 3</p>
-          <h3 data-i18n="p3_title">Virtual Staging</h3>
-          <p class="price-value">EUR 120+</p>
-          <p class="price-note" data-i18n="p3_note">Starting point for 3 rooms. Additional rooms priced separately.</p>
-        </article>
-        <article class="price-card premium">
-          <p class="price-stage" data-i18n="p4_stage">Stage 4</p>
-          <h3 data-i18n="p4_title">Physical Staging + Shoot</h3>
-          <p class="price-value">EUR 650+</p>
-          <p class="price-note" data-i18n="p4_note">Scope depends on staging inventory, labor, and shoot requirements.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section-shell process-wrap">
-      <div class="section-head">
-        <p class="eyebrow" data-i18n="process_eyebrow">How it works</p>
-        <h2 data-i18n="process_title">Simple workflow for agents</h2>
-      </div>
-      <ol class="process-list">
-        <li>
-          <span>01</span>
-          <div>
-            <h3 data-i18n="pr1_title">Share listing + choose stage</h3>
-            <p data-i18n="pr1_body">Send the listing link or property details and tell us which stage (or combination) you want.</p>
-          </div>
-        </li>
-        <li>
-          <span>02</span>
-          <div>
-            <h3 data-i18n="pr2_title">Confirm scope and timing</h3>
-            <p data-i18n="pr2_body">We confirm deliverables, timing, access requirements, and pricing before work starts.</p>
-          </div>
-        </li>
-        <li>
-          <span>03</span>
-          <div>
-            <h3 data-i18n="pr3_title">Execute the selected stage(s)</h3>
-            <p data-i18n="pr3_body">Editing, photography, virtual staging, or physical staging depending on the package chosen.</p>
-          </div>
-        </li>
-        <li>
-          <span>04</span>
-          <div>
-            <h3 data-i18n="pr4_title">Deliver listing-ready assets</h3>
-            <p data-i18n="pr4_body">Receive final files with a simple upload checklist for portals and social media.</p>
-          </div>
-        </li>
-      </ol>
-    </section>
-
-    <section class="section-shell cta-wrap">
-      <div class="cta-card">
-        <div>
-          <p class="eyebrow" data-i18n="cta_eyebrow">Mock site CTA</p>
-          <h2 data-i18n="cta_title">Book a pilot with 3 listings in 30 days</h2>
-          <p data-i18n="cta_body">Use this mock site as the base for a production website. Next step: add real before/after examples, WhatsApp contact, and booking flow.</p>
-        </div>
-        <div class="cta-actions">
-          <a class="btn btn-primary" href="mailto:hello@oleastaging.com">hello@oleastaging.com</a>
-          <a class="btn btn-ghost" href="https://wa.me/34000000000" target="_blank" rel="noopener">WhatsApp</a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <script src="./script.js"></script>
+    <footer>Tip: ask each reviewer to pick 1 favorite and 1 runner-up, then explain why in one sentence.</footer>
+  </div>
 </body>
 </html>

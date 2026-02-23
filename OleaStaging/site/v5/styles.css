@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap');
+@import url('../variants-base.css');
+
+:root {
+  --bg: #f2f2ed;
+  --ink: #151515;
+  --muted: #525252;
+  --surface: #fbfbf8;
+  --surface-2: #f8f8f4;
+  --line: #1b1b1b;
+  --brand: #111111;
+  --accent: #0d7a52;
+  --shadow: none;
+  --radius: 0px;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-display: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+body.theme-v5 {
+  background-image:
+    linear-gradient(#e2e2db 1px, transparent 1px),
+    linear-gradient(90deg, #e2e2db 1px, transparent 1px);
+  background-size: 26px 26px;
+  background-color: #f2f2ed;
+}
+
+.theme-v5 .topbar {
+  background: rgba(242,242,237,0.94);
+  border-bottom: 2px solid var(--line);
+}
+.theme-v5 .back-link,
+.theme-v5 .pill,
+.theme-v5 .lang-switch,
+.theme-v5 .hero,
+.theme-v5 .panel,
+.theme-v5 .review-banner,
+.theme-v5 .metric,
+.theme-v5 .stage-card,
+.theme-v5 .price-card,
+.theme-v5 .process-list li,
+.theme-v5 .hero-art {
+  border-radius: 0;
+  box-shadow: none;
+  border-width: 2px;
+}
+.theme-v5 .brand {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.theme-v5 .brand-sub { font-family: var(--font-mono); font-size: 0.75rem; }
+.theme-v5 .lang-flag.is-active { background: var(--line); color: #fff; }
+.theme-v5 .hero { grid-template-columns: 1fr; gap: 12px; }
+.theme-v5 .hero h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.8rem, 3.7vw, 3rem);
+  line-height: 0.96;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+.theme-v5 .eyebrow { font-family: var(--font-mono); color: var(--accent); }
+.theme-v5 .btn.primary {
+  background: var(--line);
+  color: #fff;
+}
+.theme-v5 .btn.secondary { background: transparent; }
+.theme-v5 .hero-art {
+  min-height: 180px;
+  background: #fff;
+}
+.theme-v5 .frame-a, .theme-v5 .frame-b {
+  border-radius: 0;
+  background: repeating-linear-gradient(135deg, rgba(0,0,0,0.02) 0 8px, rgba(0,0,0,0.06) 8px 10px);
+}
+.theme-v5 .art-note {
+  border-radius: 0;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+.theme-v5 .stage-grid { grid-template-columns: 1fr 1fr; }
+.theme-v5 .stage-num { font-family: var(--font-mono); color: var(--accent); }
+.theme-v5 .stage-card.emphasis {
+  background: #fff;
+  color: var(--ink);
+  outline: 4px solid var(--accent);
+  outline-offset: -4px;
+}
+.theme-v5 .stage-card.emphasis p { color: var(--muted); }
+.theme-v5 .price-card span { font-family: var(--font-mono); color: var(--accent); }
+.theme-v5 .price { font-family: var(--font-display); font-weight: 700; }
+.theme-v5 .process-list li > span {
+  border-radius: 0;
+  background: var(--line);
+  color: #fff;
+}
