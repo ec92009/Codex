@@ -63,7 +63,7 @@ def build_content(lang: str) -> list[str]:
     muted = (0.42, 0.45, 0.50)
 
     draw_text(c, 58, 778, 18, "OLEA STAGING", green)
-    draw_text(c, 58, 760, 10, "Malaga - Marbella corridor", muted)
+    draw_text(c, 58, 760, 10, "Málaga - Marbella corridor", muted)
 
     if lang == "EN":
         draw_text(c, 355, 778, 11, "One-Page Offer Sheet", green)
@@ -141,7 +141,7 @@ def build_content(lang: str) -> list[str]:
         y = 730
         draw_text(c, 58, y, 11, "PARA QUIÉN ES", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Agencias inmobiliarias y agentes independientes con anuncios de vivienda en el corredor Malaga-Marbella.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Agencias inmobiliarias y agentes independientes con anuncios de vivienda en el corredor Málaga-Marbella.", 92, 13, dark)
 
         y -= 12
         draw_text(c, 58, y, 11, "MODELO DE SERVICIO (4 ETAPAS)", green)
@@ -154,13 +154,13 @@ def build_content(lang: str) -> list[str]:
         bullets = [
             "Usamos las fotos actuales del anuncio",
             "Mejoramos luz, color y verticales",
-            "Mejora rapida sin sesión en propiedad",
+            "Mejora rápida sin sesión en propiedad",
         ]
         for b in bullets:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
         y -= 6
-        draw_text(c, 58, y, 11, "ETAPA 2: NUEVA SESION EN PROPIEDAD", green)
+        draw_text(c, 58, y, 11, "ETAPA 2: NUEVA SESIÓN EN PROPIEDAD", green)
         y -= 18
         for b in [
             "Sesión en propiedad de hasta 90 minutos",
@@ -212,61 +212,61 @@ def build_content(lang: str) -> list[str]:
         y = 730
         draw_text(c, 58, y, 11, "POUR QUI", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Agences immobilieres et agents independants avec des biens a vendre sur le corridor Malaga-Marbella.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Agences immobilières et agents indépendants avec des biens à vendre sur le corridor Málaga-Marbella.", 92, 13, dark)
 
         y -= 12
-        draw_text(c, 58, y, 11, "MODELE DE SERVICE (4 ETAPES)", green)
+        draw_text(c, 58, y, 11, "MODÈLE DE SERVICE (4 ÉTAPES)", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Choisissez l'etape adaptee a chaque bien, de la retouche rapide au staging reel avec photos finales.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Choisissez l'étape adaptée à chaque bien, de la retouche rapide au staging réel avec photos finales.", 92, 13, dark)
 
         y -= 10
-        draw_text(c, 58, y, 11, "ETAPE 1: RETOUCHE DES PHOTOS EXISTANTES", green)
+        draw_text(c, 58, y, 11, "ÉTAPE 1: RETOUCHE DES PHOTOS EXISTANTES", green)
         y -= 18
         for b in [
             "Utilisation des photos actuelles de l'annonce",
-            "Correction lumiere, couleur et verticales",
-            "Amelioration rapide sans visite sur place",
+            "Correction lumière, couleur et verticales",
+            "Amélioration rapide sans visite sur place",
         ]:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
         y -= 6
-        draw_text(c, 58, y, 11, "ETAPE 2: NOUVELLE SEANCE PHOTO SUR PLACE", green)
+        draw_text(c, 58, y, 11, "ÉTAPE 2: NOUVELLE SÉANCE PHOTO SUR PLACE", green)
         y -= 18
         for b in [
-            "Seance sur place jusqu a 90 minutes",
-            "20-30 images retouchees professionnellement",
-            "Le proprietaire/l'agent prepare le bien avant la seance",
+            "Séance sur place jusqu'à 90 minutes",
+            "20-30 images retouchées professionnellement",
+            "Le propriétaire/l'agent prépare le bien avant la séance",
         ]:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
         y -= 6
-        draw_text(c, 58, y, 11, "ETAPE 3: STAGING VIRTUEL", green)
+        draw_text(c, 58, y, 11, "ÉTAPE 3: STAGING VIRTUEL", green)
         y -= 18
         for b in [
-            "Pieces cles amenagees virtuellement",
-            "Style adapte au profil acheteur",
-            "Fichiers avant/apres inclus",
+            "Pièces clés aménagées virtuellement",
+            "Style adapté au profil acheteur",
+            "Fichiers avant/après inclus",
         ]:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
         y -= 6
-        draw_text(c, 58, y, 11, "ETAPE 4: STAGING REEL + PHOTOS", green)
+        draw_text(c, 58, y, 11, "ÉTAPE 4: STAGING RÉEL + PHOTOS", green)
         y -= 18
         for b in [
-            "Coordination d'un staging reel sur place",
-            "Photos professionnelles du resultat final",
+            "Coordination d'un staging réel sur place",
+            "Photos professionnelles du résultat final",
             "Option premium pour biens haut de gamme",
         ]:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
         y -= 8
-        draw_text(c, 58, y, 11, "TARIFS PAR ETAPE", green)
+        draw_text(c, 58, y, 11, "TARIFS PAR ÉTAPE", green)
         y -= 18
         for p in [
-            "Etape 1 (Retouche): a partir de 90 EUR",
-            "Etape 2 (Nouvelle seance): a partir de 220 EUR",
-            "Etape 3 (Staging virtuel): a partir de 120 EUR (3 pieces)",
-            "Etape 4 (Staging reel + photos): a partir de 650 EUR",
+            "Étape 1 (Retouche): à partir de 90 EUR",
+            "Étape 2 (Nouvelle séance): à partir de 220 EUR",
+            "Étape 3 (Staging virtuel): à partir de 120 EUR (3 pièces)",
+            "Étape 4 (Staging réel + photos): à partir de 650 EUR",
         ]:
             draw_text(c, 70, y, 10, f"- {p}", dark)
             y -= 14
@@ -274,7 +274,7 @@ def build_content(lang: str) -> list[str]:
         y -= 4
         draw_text(c, 58, y, 11, "GARANTIE", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Si nous manquons le delai convenu, votre prochaine annonce recoit un credit de 15%.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Si nous manquons le délai convenu, votre prochaine annonce reçoit un crédit de 15%.", 92, 13, dark)
 
     else:
         raise ValueError(f"Unsupported language: {lang}")
