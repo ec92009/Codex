@@ -1,7 +1,77 @@
 from pathlib import Path
+import subprocess
+import tempfile
 
 W = 595
 H = 842
+
+
+def jpeg_size(data: bytes) -> tuple[int, int]:
+    if not data.startswith(b"\xff\xd8"):
+        raise ValueError("Not a JPEG file")
+    i = 2
+    n = len(data)
+    while i < n - 1:
+        if data[i] != 0xFF:
+            i += 1
+            continue
+        while i < n and data[i] == 0xFF:
+            i += 1
+        if i >= n:
+            break
+        marker = data[i]
+        i += 1
+        if marker in (0xD8, 0xD9):
+            continue
+        if marker == 0xDA:  # Start of scan
+            break
+        if i + 1 >= n:
+            break
+        seg_len = (data[i] << 8) | data[i + 1]
+        if seg_len < 2 or i + seg_len > n:
+            break
+        if marker in {
+            0xC0,
+            0xC1,
+            0xC2,
+            0xC3,
+            0xC5,
+            0xC6,
+            0xC7,
+            0xC9,
+            0xCA,
+            0xCB,
+            0xCD,
+            0xCE,
+            0xCF,
+        }:
+            if i + 7 >= n:
+                break
+            h = (data[i + 3] << 8) | data[i + 4]
+            w = (data[i + 5] << 8) | data[i + 6]
+            return w, h
+        i += seg_len
+    raise ValueError("Could not read JPEG dimensions")
+
+
+def png_to_jpeg_bytes(png_path: Path) -> tuple[bytes, int, int]:
+    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+    try:
+        subprocess.run(
+            ["sips", "-s", "format", "jpeg", str(png_path), "--out", str(tmp_path)],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        data = tmp_path.read_bytes()
+        w, h = jpeg_size(data)
+        return data, w, h
+    finally:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
 
 
 def esc(txt: str) -> str:
@@ -286,15 +356,117 @@ def build_content(lang: str) -> list[str]:
     return c
 
 
-def make_pdf(path: Path, lang: str) -> None:
-    content = "\n".join(build_content(lang)).encode("latin-1", errors="replace")
+def draw_image_cover(cmds: list[str], name: str, x: int, y: int, box: int, img_w: int, img_h: int) -> None:
+    scale = max(box / img_w, box / img_h)
+    w = img_w * scale
+    h = img_h * scale
+    dx = x - (w - box) / 2
+    dy = y - (h - box) / 2
+    cmds.append("q")
+    cmds.append(f"{x} {y} {box} {box} re W n")
+    cmds.append(f"{w:.3f} 0 0 {h:.3f} {dx:.3f} {dy:.3f} cm")
+    cmds.append(f"/{name} Do")
+    cmds.append("Q")
+
+
+def build_compare_page_content(lang: str, before_size: tuple[int, int], after_size: tuple[int, int]) -> list[str]:
+    c: list[str] = []
+    c.append("0.965 0.957 0.925 rg")
+    c.append(f"0 0 {W} {H} re f")
+    c.append("0.992 0.988 0.973 rg")
+    c.append("34 36 527 770 re f")
+    c.append("0.90 0.87 0.80 RG 1.2 w")
+    c.append("34 36 527 770 re S")
+
+    green = (0.13, 0.30, 0.24)
+    dark = (0.12, 0.15, 0.20)
+    muted = (0.42, 0.45, 0.50)
+
+    labels = {
+        "EN": ("Before / After Example", "Before", "After", "Real listing example used in mock site and sales materials"),
+        "ES": ("Ejemplo Antes / Despues", "Antes", "Despues", "Ejemplo real usado en el mock y materiales comerciales"),
+        "FR": ("Exemple Avant / Apres", "Avant", "Apres", "Exemple reel utilise dans le mock et les supports commerciaux"),
+    }
+    title, before_lbl, after_lbl, subtitle = labels[lang]
+
+    draw_text(c, 58, 778, 18, "OLEA STAGING", green)
+    header_corridor = "Málaga - Marbella corridor" if lang == "ES" else "Malaga - Marbella corridor"
+    draw_text(c, 58, 760, 10, header_corridor, muted)
+    draw_text(c, 340, 778, 11, title, green)
+    draw_text(c, 58, 730, 10, subtitle, dark)
+
+    # Decorative image panel area
+    c.append("0.965 0.955 0.930 rg")
+    c.append("52 116 491 572 re f")
+    c.append("0.90 0.87 0.80 RG 1 w")
+    c.append("52 116 491 572 re S")
+
+    # Square frames
+    box = 220
+    left_x = 75
+    right_x = 300
+    img_y = 250
+    label_y = img_y + box + 22
+    caption_y = 190
+
+    c.append("0.96 0.96 0.95 rg")
+    c.append(f"{left_x-2} {img_y-2} {box+4} {box+4} re f")
+    c.append(f"{right_x-2} {img_y-2} {box+4} {box+4} re f")
+    c.append("0.82 0.80 0.75 RG 1 w")
+    c.append(f"{left_x-2} {img_y-2} {box+4} {box+4} re S")
+    c.append(f"{right_x-2} {img_y-2} {box+4} {box+4} re S")
+
+    bw, bh = before_size
+    aw, ah = after_size
+    draw_image_cover(c, "ImBefore", left_x, img_y, box, bw, bh)
+    draw_image_cover(c, "ImAfter", right_x, img_y, box, aw, ah)
+
+    draw_text(c, left_x, label_y, 12, before_lbl, green)
+    draw_text(c, right_x, label_y, 12, after_lbl, green)
+
+    # Simple caption line under images
+    draw_wrapped(
+        c,
+        75,
+        caption_y,
+        10,
+        "Stage 3/4 visual transformation example. Replace with your own portfolio examples over time.",
+        76,
+        13,
+        dark,
+    )
+
+    draw_text(c, 58, 70, 10, "Contacto: hello@oleastaging.com | +34 XXX XXX XXX", dark)
+    return c
+
+
+def make_pdf(path: Path, lang: str, before_jpg: tuple[bytes, int, int], after_jpg: tuple[bytes, int, int]) -> None:
+    content1 = "\n".join(build_content(lang)).encode("latin-1", errors="replace")
+    content2 = "\n".join(build_compare_page_content(lang, before_jpg[1:], after_jpg[1:])).encode("latin-1", errors="replace")
+    before_bytes, before_w, before_h = before_jpg
+    after_bytes, after_w, after_h = after_jpg
 
     objs = []
+    # 1 catalog, 2 pages, 3 page1, 4 content1, 5 page2, 6 content2, 7 font, 8 imgBefore, 9 imgAfter
     objs.append(b"<< /Type /Catalog /Pages 2 0 R >>")
-    objs.append(b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
-    objs.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {W} {H}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>".encode("ascii"))
-    objs.append(f"<< /Length {len(content)} >>\nstream\n".encode("ascii") + content + b"\nendstream")
+    objs.append(b"<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>")
+    res1 = b"<< /Font << /F1 7 0 R >> >>"
+    res2 = b"<< /Font << /F1 7 0 R >> /XObject << /ImBefore 8 0 R /ImAfter 9 0 R >> >>"
+    objs.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {W} {H}] /Contents 4 0 R /Resources ".encode("ascii") + res1 + b" >>")
+    objs.append(f"<< /Length {len(content1)} >>\nstream\n".encode("ascii") + content1 + b"\nendstream")
+    objs.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {W} {H}] /Contents 6 0 R /Resources ".encode("ascii") + res2 + b" >>")
+    objs.append(f"<< /Length {len(content2)} >>\nstream\n".encode("ascii") + content2 + b"\nendstream")
     objs.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
+    objs.append(
+        f"<< /Type /XObject /Subtype /Image /Width {before_w} /Height {before_h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {len(before_bytes)} >>\nstream\n".encode("ascii")
+        + before_bytes
+        + b"\nendstream"
+    )
+    objs.append(
+        f"<< /Type /XObject /Subtype /Image /Width {after_w} /Height {after_h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {len(after_bytes)} >>\nstream\n".encode("ascii")
+        + after_bytes
+        + b"\nendstream"
+    )
 
     pdf = bytearray(b"%PDF-1.4\n")
     offsets = [0]
@@ -319,9 +491,12 @@ def make_pdf(path: Path, lang: str) -> None:
 
 def main() -> None:
     root = Path(__file__).resolve().parent
-    make_pdf(root / "OleaStaging-Offer-EN.pdf", "EN")
-    make_pdf(root / "OleaStaging-Oferta-ES.pdf", "ES")
-    make_pdf(root / "OleaStaging-Offre-FR.pdf", "FR")
+    assets = root / "site" / "assets"
+    before_jpg = png_to_jpeg_bytes(assets / "before.png")
+    after_jpg = png_to_jpeg_bytes(assets / "after.png")
+    make_pdf(root / "OleaStaging-Offer-EN.pdf", "EN", before_jpg, after_jpg)
+    make_pdf(root / "OleaStaging-Oferta-ES.pdf", "ES", before_jpg, after_jpg)
+    make_pdf(root / "OleaStaging-Offre-FR.pdf", "FR", before_jpg, after_jpg)
 
 
 if __name__ == "__main__":
