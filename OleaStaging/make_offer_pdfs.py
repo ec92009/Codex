@@ -1,6 +1,7 @@
 from pathlib import Path
 import subprocess
 import tempfile
+from typing import Optional, Tuple
 
 W = 595
 H = 842
@@ -117,7 +118,7 @@ def draw_wrapped(cmds: list[str], x: int, y: int, size: int, text: str, max_char
     return yy
 
 
-def build_content(lang: str) -> list[str]:
+def build_content(lang: str, before_size: Optional[Tuple[int, int]] = None, after_size: Optional[Tuple[int, int]] = None) -> list[str]:
     c: list[str] = []
 
     # Background and card
@@ -350,6 +351,37 @@ def build_content(lang: str) -> list[str]:
     else:
         raise ValueError(f"Unsupported language: {lang}")
 
+    # Compact before/after image strip on the same page
+    if before_size and after_size:
+        labels = {
+            "EN": ("Before", "After", "Before/After Example"),
+            "ES": ("Antes", "Despues", "Ejemplo Antes/Despues"),
+            "FR": ("Avant", "Apres", "Exemple Avant/Apres"),
+        }
+        before_lbl, after_lbl, strip_title = labels[lang]
+        box = 86
+        gap = 12
+        left_x = 58
+        right_x = left_x + box + gap
+        img_y = 118
+        title_y = 242
+        label_y = 210
+
+        draw_text(c, 58, title_y, 10, strip_title, green)
+        c.append("0.965 0.962 0.950 rg")
+        c.append(f"{left_x-4} {img_y-4} {box+8} {box+8} re f")
+        c.append(f"{right_x-4} {img_y-4} {box+8} {box+8} re f")
+        c.append("0.82 0.80 0.75 RG 1 w")
+        c.append(f"{left_x-4} {img_y-4} {box+8} {box+8} re S")
+        c.append(f"{right_x-4} {img_y-4} {box+8} {box+8} re S")
+
+        bw, bh = before_size
+        aw, ah = after_size
+        draw_image_cover(c, "ImBefore", left_x, img_y, box, bw, bh)
+        draw_image_cover(c, "ImAfter", right_x, img_y, box, aw, ah)
+        draw_text(c, left_x, label_y, 9, before_lbl, dark)
+        draw_text(c, right_x, label_y, 9, after_lbl, dark)
+
     # Footer
     draw_text(c, 58, 70, 10, "Contacto: hello@oleastaging.com | +34 XXX XXX XXX", dark)
 
@@ -369,93 +401,18 @@ def draw_image_cover(cmds: list[str], name: str, x: int, y: int, box: int, img_w
     cmds.append("Q")
 
 
-def build_compare_page_content(lang: str, before_size: tuple[int, int], after_size: tuple[int, int]) -> list[str]:
-    c: list[str] = []
-    c.append("0.965 0.957 0.925 rg")
-    c.append(f"0 0 {W} {H} re f")
-    c.append("0.992 0.988 0.973 rg")
-    c.append("34 36 527 770 re f")
-    c.append("0.90 0.87 0.80 RG 1.2 w")
-    c.append("34 36 527 770 re S")
-
-    green = (0.13, 0.30, 0.24)
-    dark = (0.12, 0.15, 0.20)
-    muted = (0.42, 0.45, 0.50)
-
-    labels = {
-        "EN": ("Before / After Example", "Before", "After", "Real listing example used in mock site and sales materials"),
-        "ES": ("Ejemplo Antes / Despues", "Antes", "Despues", "Ejemplo real usado en el mock y materiales comerciales"),
-        "FR": ("Exemple Avant / Apres", "Avant", "Apres", "Exemple reel utilise dans le mock et les supports commerciaux"),
-    }
-    title, before_lbl, after_lbl, subtitle = labels[lang]
-
-    draw_text(c, 58, 778, 18, "OLEA STAGING", green)
-    header_corridor = "Málaga - Marbella corridor" if lang == "ES" else "Malaga - Marbella corridor"
-    draw_text(c, 58, 760, 10, header_corridor, muted)
-    draw_text(c, 340, 778, 11, title, green)
-    draw_text(c, 58, 730, 10, subtitle, dark)
-
-    # Decorative image panel area
-    c.append("0.965 0.955 0.930 rg")
-    c.append("52 116 491 572 re f")
-    c.append("0.90 0.87 0.80 RG 1 w")
-    c.append("52 116 491 572 re S")
-
-    # Square frames
-    box = 220
-    left_x = 75
-    right_x = 300
-    img_y = 250
-    label_y = img_y + box + 22
-    caption_y = 190
-
-    c.append("0.96 0.96 0.95 rg")
-    c.append(f"{left_x-2} {img_y-2} {box+4} {box+4} re f")
-    c.append(f"{right_x-2} {img_y-2} {box+4} {box+4} re f")
-    c.append("0.82 0.80 0.75 RG 1 w")
-    c.append(f"{left_x-2} {img_y-2} {box+4} {box+4} re S")
-    c.append(f"{right_x-2} {img_y-2} {box+4} {box+4} re S")
-
-    bw, bh = before_size
-    aw, ah = after_size
-    draw_image_cover(c, "ImBefore", left_x, img_y, box, bw, bh)
-    draw_image_cover(c, "ImAfter", right_x, img_y, box, aw, ah)
-
-    draw_text(c, left_x, label_y, 12, before_lbl, green)
-    draw_text(c, right_x, label_y, 12, after_lbl, green)
-
-    # Simple caption line under images
-    draw_wrapped(
-        c,
-        75,
-        caption_y,
-        10,
-        "Stage 3/4 visual transformation example. Replace with your own portfolio examples over time.",
-        76,
-        13,
-        dark,
-    )
-
-    draw_text(c, 58, 70, 10, "Contacto: hello@oleastaging.com | +34 XXX XXX XXX", dark)
-    return c
-
-
 def make_pdf(path: Path, lang: str, before_jpg: tuple[bytes, int, int], after_jpg: tuple[bytes, int, int]) -> None:
-    content1 = "\n".join(build_content(lang)).encode("latin-1", errors="replace")
-    content2 = "\n".join(build_compare_page_content(lang, before_jpg[1:], after_jpg[1:])).encode("latin-1", errors="replace")
     before_bytes, before_w, before_h = before_jpg
     after_bytes, after_w, after_h = after_jpg
+    content1 = "\n".join(build_content(lang, (before_w, before_h), (after_w, after_h))).encode("latin-1", errors="replace")
 
     objs = []
-    # 1 catalog, 2 pages, 3 page1, 4 content1, 5 page2, 6 content2, 7 font, 8 imgBefore, 9 imgAfter
+    # 1 catalog, 2 pages, 3 page, 4 content, 5 font, 6 imgBefore, 7 imgAfter
     objs.append(b"<< /Type /Catalog /Pages 2 0 R >>")
-    objs.append(b"<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>")
-    res1 = b"<< /Font << /F1 7 0 R >> >>"
-    res2 = b"<< /Font << /F1 7 0 R >> /XObject << /ImBefore 8 0 R /ImAfter 9 0 R >> >>"
+    objs.append(b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    res1 = b"<< /Font << /F1 5 0 R >> /XObject << /ImBefore 6 0 R /ImAfter 7 0 R >> >>"
     objs.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {W} {H}] /Contents 4 0 R /Resources ".encode("ascii") + res1 + b" >>")
     objs.append(f"<< /Length {len(content1)} >>\nstream\n".encode("ascii") + content1 + b"\nendstream")
-    objs.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {W} {H}] /Contents 6 0 R /Resources ".encode("ascii") + res2 + b" >>")
-    objs.append(f"<< /Length {len(content2)} >>\nstream\n".encode("ascii") + content2 + b"\nendstream")
     objs.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
     objs.append(
         f"<< /Type /XObject /Subtype /Image /Width {before_w} /Height {before_h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length {len(before_bytes)} >>\nstream\n".encode("ascii")
