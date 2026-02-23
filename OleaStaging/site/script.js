@@ -146,7 +146,7 @@ const translations = {
 };
 
 let current = 'en';
-const toggle = document.getElementById('langToggle');
+const langButtons = Array.from(document.querySelectorAll('.lang-flag[data-lang]'));
 
 function applyLang(lang) {
   const dict = translations[lang];
@@ -156,12 +156,18 @@ function applyLang(lang) {
     const key = el.getAttribute('data-i18n');
     if (dict[key]) el.textContent = dict[key];
   });
-  toggle.textContent = lang === 'en' ? 'ES' : 'EN';
+  langButtons.forEach((btn) => {
+    btn.classList.toggle('is-active', btn.dataset.lang === lang);
+    btn.setAttribute('aria-pressed', String(btn.dataset.lang === lang));
+  });
   current = lang;
 }
 
-toggle.addEventListener('click', () => {
-  applyLang(current === 'en' ? 'es' : 'en');
+langButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const next = btn.dataset.lang;
+    if (next && next !== current) applyLang(next);
+  });
 });
 
 applyLang('en');
