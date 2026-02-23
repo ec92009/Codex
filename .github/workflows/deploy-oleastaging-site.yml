@@ -7,6 +7,7 @@ on:
       - 'OleaStaging/site/**'
       - 'OleaStaging/OleaStaging-Offer-EN.pdf'
       - 'OleaStaging/OleaStaging-Oferta-ES.pdf'
+      - 'OleaStaging/OleaStaging-Offre-FR.pdf'
       - '.github/workflows/deploy-oleastaging-site.yml'
   workflow_dispatch:
 
@@ -35,6 +36,7 @@ jobs:
           cp -R OleaStaging/site/. _site/
           cp OleaStaging/OleaStaging-Offer-EN.pdf _site/
           cp OleaStaging/OleaStaging-Oferta-ES.pdf _site/
+          cp OleaStaging/OleaStaging-Offre-FR.pdf _site/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

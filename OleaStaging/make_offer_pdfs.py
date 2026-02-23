@@ -136,7 +136,7 @@ def build_content(lang: str) -> list[str]:
         y -= 18
         y = draw_wrapped(c, 58, y, 10, "If we miss the agreed deadline, your next listing gets a 15% service credit.", 92, 13, dark)
 
-    else:
+    elif lang == "ES":
         draw_text(c, 380, 778, 11, "Hoja de Oferta", green)
         y = 730
         draw_text(c, 58, y, 11, "PARA QUIEN ES", green)
@@ -207,6 +207,78 @@ def build_content(lang: str) -> list[str]:
         y -= 18
         y = draw_wrapped(c, 58, y, 10, "Si no cumplimos el plazo acordado, tu siguiente anuncio recibe un credito del 15%.", 92, 13, dark)
 
+    elif lang == "FR":
+        draw_text(c, 390, 778, 11, "Offre 1 page", green)
+        y = 730
+        draw_text(c, 58, y, 11, "POUR QUI", green)
+        y -= 18
+        y = draw_wrapped(c, 58, y, 10, "Agences immobilieres et agents independants avec des biens a vendre sur le corridor Malaga-Marbella.", 92, 13, dark)
+
+        y -= 12
+        draw_text(c, 58, y, 11, "MODELE DE SERVICE (4 ETAPES)", green)
+        y -= 18
+        y = draw_wrapped(c, 58, y, 10, "Choisissez l etape adaptee a chaque bien, de la retouche rapide au staging reel avec photos finales.", 92, 13, dark)
+
+        y -= 10
+        draw_text(c, 58, y, 11, "ETAPE 1: RETOUCHE DES PHOTOS EXISTANTES", green)
+        y -= 18
+        for b in [
+            "Utilisation des photos actuelles de l annonce",
+            "Correction lumiere, couleur et verticales",
+            "Amelioration rapide sans visite sur place",
+        ]:
+            y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
+
+        y -= 6
+        draw_text(c, 58, y, 11, "ETAPE 2: NOUVELLE SEANCE PHOTO SUR PLACE", green)
+        y -= 18
+        for b in [
+            "Seance sur place jusqu a 90 minutes",
+            "20-30 images retouchees professionnellement",
+            "Le proprietaire/agent prepare le bien avant la seance",
+        ]:
+            y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
+
+        y -= 6
+        draw_text(c, 58, y, 11, "ETAPE 3: STAGING VIRTUEL", green)
+        y -= 18
+        for b in [
+            "Pieces cles amenagees virtuellement",
+            "Style adapte au profil acheteur",
+            "Fichiers avant/apres inclus",
+        ]:
+            y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
+
+        y -= 6
+        draw_text(c, 58, y, 11, "ETAPE 4: STAGING REEL + PHOTOS", green)
+        y -= 18
+        for b in [
+            "Coordination du staging reel sur place",
+            "Photos professionnelles du resultat final",
+            "Option premium pour biens haut de gamme",
+        ]:
+            y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
+
+        y -= 8
+        draw_text(c, 58, y, 11, "TARIFS PAR ETAPE", green)
+        y -= 18
+        for p in [
+            "Etape 1 (Retouche): a partir de 90 EUR",
+            "Etape 2 (Nouvelle seance): a partir de 220 EUR",
+            "Etape 3 (Staging virtuel): a partir de 120 EUR (3 pieces)",
+            "Etape 4 (Staging reel + photos): a partir de 650 EUR",
+        ]:
+            draw_text(c, 70, y, 10, f"- {p}", dark)
+            y -= 14
+
+        y -= 4
+        draw_text(c, 58, y, 11, "GARANTIE", green)
+        y -= 18
+        y = draw_wrapped(c, 58, y, 10, "Si nous manquons le delai convenu, votre prochaine annonce recoit un credit de 15%.", 92, 13, dark)
+
+    else:
+        raise ValueError(f"Unsupported language: {lang}")
+
     # Footer
     draw_text(c, 58, 70, 10, "Contacto: hello@oleastaging.com | +34 XXX XXX XXX", dark)
 
@@ -248,6 +320,7 @@ def main() -> None:
     root = Path(__file__).resolve().parent
     make_pdf(root / "OleaStaging-Offer-EN.pdf", "EN")
     make_pdf(root / "OleaStaging-Oferta-ES.pdf", "ES")
+    make_pdf(root / "OleaStaging-Offre-FR.pdf", "FR")
 
 
 if __name__ == "__main__":
