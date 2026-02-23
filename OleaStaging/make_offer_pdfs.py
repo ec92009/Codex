@@ -217,13 +217,13 @@ def build_content(lang: str) -> list[str]:
         y -= 12
         draw_text(c, 58, y, 11, "MODELE DE SERVICE (4 ETAPES)", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Choisissez l etape adaptee a chaque bien, de la retouche rapide au staging reel avec photos finales.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Choisissez l'etape adaptee a chaque bien, de la retouche rapide au staging reel avec photos finales.", 92, 13, dark)
 
         y -= 10
         draw_text(c, 58, y, 11, "ETAPE 1: RETOUCHE DES PHOTOS EXISTANTES", green)
         y -= 18
         for b in [
-            "Utilisation des photos actuelles de l annonce",
+            "Utilisation des photos actuelles de l'annonce",
             "Correction lumiere, couleur et verticales",
             "Amelioration rapide sans visite sur place",
         ]:
@@ -235,7 +235,7 @@ def build_content(lang: str) -> list[str]:
         for b in [
             "Seance sur place jusqu a 90 minutes",
             "20-30 images retouchees professionnellement",
-            "Le proprietaire/agent prepare le bien avant la seance",
+            "Le proprietaire/l'agent prepare le bien avant la seance",
         ]:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
@@ -253,7 +253,7 @@ def build_content(lang: str) -> list[str]:
         draw_text(c, 58, y, 11, "ETAPE 4: STAGING REEL + PHOTOS", green)
         y -= 18
         for b in [
-            "Coordination du staging reel sur place",
+            "Coordination d'un staging reel sur place",
             "Photos professionnelles du resultat final",
             "Option premium pour biens haut de gamme",
         ]:
