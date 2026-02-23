@@ -224,19 +224,23 @@ a { color: inherit; }
   position: relative;
   min-height: 330px;
   display: grid;
-  place-items: center;
+  grid-template-rows: 1fr auto;
+  align-content: stretch;
+  gap: 10px;
+  padding: 12px;
   overflow: hidden;
   border-radius: calc(var(--radius) - 4px);
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.2));
 }
 .compare-grid {
-  position: absolute;
-  inset: 14px;
+  position: relative;
+  inset: auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   z-index: 1;
+  align-self: stretch;
 }
 .compare-card {
   margin: 0;
@@ -245,7 +249,8 @@ a { color: inherit; }
   border: 1px solid var(--line);
   background: rgba(255,255,255,0.72);
   position: relative;
-  min-height: 210px;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
 }
 .compare-card img {
   width: 100%;
@@ -284,6 +289,7 @@ a { color: inherit; }
 .art-note {
   position: relative;
   z-index: 2;
+  justify-self: center;
   padding: 8px 12px;
   border-radius: 999px;
   background: var(--surface);
@@ -403,7 +409,6 @@ a { color: inherit; }
   .metrics, .stage-grid, .pricing-grid { grid-template-columns: 1fr; }
   .process-list li { grid-template-columns: 42px 1fr; gap: 10px; }
   .process-list li > span { width: 36px; height: 36px; }
-  .hero-art { min-height: 240px; }
+  .hero-art { min-height: auto; }
   .compare-grid { grid-template-columns: 1fr; }
-  .compare-card { min-height: 120px; }
 }

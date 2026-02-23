@@ -250,7 +250,7 @@ main {
 .panel-card {
   border-radius: 20px;
   border: 1px solid var(--line);
-  min-height: 280px;
+  aspect-ratio: 1 / 1;
   position: relative;
   overflow: hidden;
   animation: floatIn 550ms ease both;
@@ -470,7 +470,7 @@ main {
 
 @media (max-width: 1000px) {
   .hero { grid-template-columns: 1fr; min-height: auto; }
-  .hero-panel { min-height: 320px; }
+  .hero-panel { min-height: 760px; }
   .pricing-grid { grid-template-columns: repeat(2, 1fr); }
   .cta-card { grid-template-columns: 1fr; }
   .cta-actions { justify-content: flex-start; }
