@@ -212,7 +212,7 @@ ET
 endstream
 endobj
 5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
 endobj
 xref
 0 6
@@ -225,5 +225,5 @@ xref
 trailer
 << /Size 6 /Root 1 0 R >>
 startxref
-3612
+3639
 %%EOF

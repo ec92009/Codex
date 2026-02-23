@@ -9,7 +9,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
 endobj
 4 0 obj
-<< /Length 3412 >>
+<< /Length 3416 >>
 stream
 0.965 0.957 0.925 rg
 0 0 595 842 re f
@@ -63,7 +63,7 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 58 656 Tm
-(Choisissez l etape adaptee a chaque bien, de la retouche rapide au staging reel avec photos) Tj
+(Choisissez l'etape adaptee a chaque bien, de la retouche rapide au staging reel avec photos) Tj
 ET
 0.120 0.150 0.200 rg
 BT
@@ -81,7 +81,7 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 70 602 Tm
-(- Utilisation des photos actuelles de l annonce) Tj
+(- Utilisation des photos actuelles de l'annonce) Tj
 ET
 0.120 0.150 0.200 rg
 BT
@@ -117,7 +117,7 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 70 513 Tm
-(- Le proprietaire/agent prepare le bien avant la seance) Tj
+(- Le proprietaire/l'agent prepare le bien avant la seance) Tj
 ET
 0.130 0.300 0.240 rg
 BT
@@ -153,7 +153,7 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 70 413 Tm
-(- Coordination du staging reel sur place) Tj
+(- Coordination d'un staging reel sur place) Tj
 ET
 0.120 0.150 0.200 rg
 BT
@@ -218,7 +218,7 @@ ET
 endstream
 endobj
 5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
 endobj
 xref
 0 6
@@ -227,9 +227,9 @@ xref
 0000000058 00000 n 
 0000000115 00000 n 
 0000000241 00000 n 
-0000003705 00000 n 
+0000003709 00000 n 
 trailer
 << /Size 6 /Root 1 0 R >>
 startxref
-3775
+3806
 %%EOF

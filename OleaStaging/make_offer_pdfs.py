@@ -139,14 +139,14 @@ def build_content(lang: str) -> list[str]:
     elif lang == "ES":
         draw_text(c, 380, 778, 11, "Hoja de Oferta", green)
         y = 730
-        draw_text(c, 58, y, 11, "PARA QUIEN ES", green)
+        draw_text(c, 58, y, 11, "PARA QUIÉN ES", green)
         y -= 18
         y = draw_wrapped(c, 58, y, 10, "Agencias inmobiliarias y agentes independientes con anuncios de vivienda en el corredor Malaga-Marbella.", 92, 13, dark)
 
         y -= 12
         draw_text(c, 58, y, 11, "MODELO DE SERVICIO (4 ETAPAS)", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Elige la etapa segun cada inmueble, desde mejora rapida hasta staging fisico con fotos finales.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Elige la etapa según cada inmueble, desde mejora rápida hasta staging físico con fotos finales.", 92, 13, dark)
 
         y -= 10
         draw_text(c, 58, y, 11, "ETAPA 1: MEJORA DE FOTOS EXISTENTES", green)
@@ -154,7 +154,7 @@ def build_content(lang: str) -> list[str]:
         bullets = [
             "Usamos las fotos actuales del anuncio",
             "Mejoramos luz, color y verticales",
-            "Mejora rapida sin sesion en propiedad",
+            "Mejora rapida sin sesión en propiedad",
         ]
         for b in bullets:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
@@ -163,8 +163,8 @@ def build_content(lang: str) -> list[str]:
         draw_text(c, 58, y, 11, "ETAPA 2: NUEVA SESION EN PROPIEDAD", green)
         y -= 18
         for b in [
-            "Sesion en propiedad de hasta 90 minutos",
-            "20-30 imagenes editadas profesionalmente",
+            "Sesión en propiedad de hasta 90 minutos",
+            "20-30 imágenes editadas profesionalmente",
             "Propietario/agente prepara la vivienda antes",
         ]:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
@@ -174,8 +174,8 @@ def build_content(lang: str) -> list[str]:
         y -= 18
         vbul = [
             "Estancias clave amuebladas virtualmente",
-            "Estilo segun perfil de comprador",
-            "Incluye archivos antes/despues",
+            "Estilo según perfil de comprador",
+            "Incluye archivos antes/después",
         ]
         for b in vbul:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
@@ -184,9 +184,9 @@ def build_content(lang: str) -> list[str]:
         draw_text(c, 58, y, 11, "ETAPA 4: STAGING REAL + FOTOS", green)
         y -= 18
         for b in [
-            "Coordinacion de staging fisico en propiedad",
+            "Coordinación de staging físico en propiedad",
             "Fotos profesionales del resultado final",
-            "Opcion premium para inmuebles de alto valor",
+            "Opción premium para inmuebles de alto valor",
         ]:
             y = draw_wrapped(c, 70, y, 10, f"- {b}", 90, 13, dark)
 
@@ -195,7 +195,7 @@ def build_content(lang: str) -> list[str]:
         y -= 18
         for p in [
             "Etapa 1 (Mejora): desde 90 EUR",
-            "Etapa 2 (Nueva sesion): desde 220 EUR",
+            "Etapa 2 (Nueva sesión): desde 220 EUR",
             "Etapa 3 (Staging virtual): desde 120 EUR (3 estancias)",
             "Etapa 4 (Staging real + fotos): desde 650 EUR",
         ]:
@@ -203,9 +203,9 @@ def build_content(lang: str) -> list[str]:
             y -= 14
 
         y -= 4
-        draw_text(c, 58, y, 11, "GARANTIA", green)
+        draw_text(c, 58, y, 11, "GARANTÍA", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Si no cumplimos el plazo acordado, tu siguiente anuncio recibe un credito del 15%.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Si no cumplimos el plazo acordado, tu siguiente anuncio recibe un crédito del 15%.", 92, 13, dark)
 
     elif lang == "FR":
         draw_text(c, 390, 778, 11, "Offre 1 page", green)
@@ -293,7 +293,7 @@ def make_pdf(path: Path, lang: str) -> None:
     objs.append(b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
     objs.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {W} {H}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>".encode("ascii"))
     objs.append(f"<< /Length {len(content)} >>\nstream\n".encode("ascii") + content + b"\nendstream")
-    objs.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+    objs.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
 
     pdf = bytearray(b"%PDF-1.4\n")
     offsets = [0]

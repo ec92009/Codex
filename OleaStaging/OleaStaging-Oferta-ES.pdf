@@ -39,7 +39,7 @@ ET
 BT
 /F1 11 Tf
 1 0 0 1 58 730 Tm
-(PARA QUIEN ES) Tj
+(PARA QUIÉN ES) Tj
 ET
 0.120 0.150 0.200 rg
 BT
@@ -63,7 +63,7 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 58 656 Tm
-(Elige la etapa segun cada inmueble, desde mejora rapida hasta staging fisico con fotos) Tj
+(Elige la etapa según cada inmueble, desde mejora rápida hasta staging físico con fotos) Tj
 ET
 0.120 0.150 0.200 rg
 BT
@@ -93,7 +93,7 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 70 576 Tm
-(- Mejora rapida sin sesion en propiedad) Tj
+(- Mejora rapida sin sesión en propiedad) Tj
 ET
 0.130 0.300 0.240 rg
 BT
@@ -105,13 +105,13 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 70 539 Tm
-(- Sesion en propiedad de hasta 90 minutos) Tj
+(- Sesión en propiedad de hasta 90 minutos) Tj
 ET
 0.120 0.150 0.200 rg
 BT
 /F1 10 Tf
 1 0 0 1 70 526 Tm
-(- 20-30 imagenes editadas profesionalmente) Tj
+(- 20-30 imágenes editadas profesionalmente) Tj
 ET
 0.120 0.150 0.200 rg
 BT
@@ -135,13 +135,13 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 70 463 Tm
-(- Estilo segun perfil de comprador) Tj
+(- Estilo según perfil de comprador) Tj
 ET
 0.120 0.150 0.200 rg
 BT
 /F1 10 Tf
 1 0 0 1 70 450 Tm
-(- Incluye archivos antes/despues) Tj
+(- Incluye archivos antes/después) Tj
 ET
 0.130 0.300 0.240 rg
 BT
@@ -153,7 +153,7 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 70 413 Tm
-(- Coordinacion de staging fisico en propiedad) Tj
+(- Coordinación de staging físico en propiedad) Tj
 ET
 0.120 0.150 0.200 rg
 BT
@@ -165,7 +165,7 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 70 387 Tm
-(- Opcion premium para inmuebles de alto valor) Tj
+(- Opción premium para inmuebles de alto valor) Tj
 ET
 0.130 0.300 0.240 rg
 BT
@@ -183,7 +183,7 @@ ET
 BT
 /F1 10 Tf
 1 0 0 1 70 334 Tm
-(- Etapa 2 \(Nueva sesion\): desde 220 EUR) Tj
+(- Etapa 2 \(Nueva sesión\): desde 220 EUR) Tj
 ET
 0.120 0.150 0.200 rg
 BT
@@ -201,13 +201,13 @@ ET
 BT
 /F1 11 Tf
 1 0 0 1 58 288 Tm
-(GARANTIA) Tj
+(GARANTÍA) Tj
 ET
 0.120 0.150 0.200 rg
 BT
 /F1 10 Tf
 1 0 0 1 58 270 Tm
-(Si no cumplimos el plazo acordado, tu siguiente anuncio recibe un credito del 15%.) Tj
+(Si no cumplimos el plazo acordado, tu siguiente anuncio recibe un crédito del 15%.) Tj
 ET
 0.120 0.150 0.200 rg
 BT
@@ -218,7 +218,7 @@ ET
 endstream
 endobj
 5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
 endobj
 xref
 0 6
@@ -231,5 +231,5 @@ xref
 trailer
 << /Size 6 /Root 1 0 R >>
 startxref
-3731
+3758
 %%EOF
