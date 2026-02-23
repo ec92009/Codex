@@ -144,14 +144,14 @@ const translations = {
     cta_body: 'Usa este mock como base de una web real. Siguiente paso: ejemplos reales antes/después, WhatsApp y flujo de reserva.'
   },
   fr: {
-    corridor: 'Corridor Málaga - Marbella',
+    corridor: 'Corridor Malaga - Marbella',
     eyebrow: "Une présentation d'annonces qui vend la visite",
     hero_title: "Aidez les agences à améliorer les annonces faibles avant de perdre l'attention des acheteurs.",
     hero_lead: 'Olea Staging améliore la performance des annonces immobilières avec un modèle en 4 étapes : retouche de photos existantes, prise de vue sur place, staging virtuel et staging réel avec photos finales.',
     hero_cta_primary: 'Voir les 4 étapes',
     hero_cta_secondary: 'Voir les tarifs',
     metric1_label: 'Zone',
-    metric1_value: 'Málaga -> Marbella',
+    metric1_value: 'Malaga -> Marbella',
     metric2_label: 'Modèle',
     metric2_value: '4 étapes de service',
     metric3_label: 'Livrables',

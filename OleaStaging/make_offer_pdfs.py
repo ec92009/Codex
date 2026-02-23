@@ -63,7 +63,8 @@ def build_content(lang: str) -> list[str]:
     muted = (0.42, 0.45, 0.50)
 
     draw_text(c, 58, 778, 18, "OLEA STAGING", green)
-    draw_text(c, 58, 760, 10, "Málaga - Marbella corridor", muted)
+    header_corridor = "Málaga - Marbella corridor" if lang == "ES" else "Malaga - Marbella corridor"
+    draw_text(c, 58, 760, 10, header_corridor, muted)
 
     if lang == "EN":
         draw_text(c, 355, 778, 11, "One-Page Offer Sheet", green)
@@ -212,7 +213,7 @@ def build_content(lang: str) -> list[str]:
         y = 730
         draw_text(c, 58, y, 11, "POUR QUI", green)
         y -= 18
-        y = draw_wrapped(c, 58, y, 10, "Agences immobilières et agents indépendants avec des biens à vendre sur le corridor Málaga-Marbella.", 92, 13, dark)
+        y = draw_wrapped(c, 58, y, 10, "Agences immobilières et agents indépendants avec des biens à vendre sur le corridor Malaga-Marbella.", 92, 13, dark)
 
         y -= 12
         draw_text(c, 58, y, 11, "MODÈLE DE SERVICE (4 ÉTAPES)", green)
