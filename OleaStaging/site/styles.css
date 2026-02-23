@@ -99,6 +99,39 @@ main {
   margin-top: 16px;
 }
 
+.review-banner {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid #e2c98e;
+  background:
+    linear-gradient(180deg, rgba(255, 247, 226, 0.95), rgba(252, 240, 210, 0.92));
+  color: #3f3522;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 24px rgba(86, 64, 24, 0.08);
+}
+
+.review-banner strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: rgba(33, 76, 60, 0.12);
+  color: var(--brand);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.review-banner span {
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -460,6 +493,7 @@ main {
   .site-header { padding: 12px; }
   main { width: calc(100% - 16px); margin-top: 8px; }
   .section-shell { padding: 14px; border-radius: 14px; }
+  .review-banner { align-items: flex-start; flex-direction: column; gap: 6px; }
   .hero-metrics { grid-template-columns: 1fr; }
   .intro-grid,
   .stage-grid,
