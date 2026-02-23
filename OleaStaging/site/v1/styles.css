@@ -256,11 +256,15 @@ main {
   animation: floatIn 550ms ease both;
 }
 .panel-card.before {
-  background: linear-gradient(165deg, #ded6c8, #cfc7ba);
+  background:
+    linear-gradient(165deg, rgba(0,0,0,0.06), rgba(0,0,0,0.14)),
+    url("../assets/before.png") center / cover no-repeat;
   transform: rotate(-2deg);
 }
 .panel-card.after {
-  background: linear-gradient(160deg, #edf3ef, #e2ecd8 45%, #f8eedf);
+  background:
+    linear-gradient(165deg, rgba(0,0,0,0.04), rgba(0,0,0,0.10)),
+    url("../assets/after.png") center / cover no-repeat;
   transform: rotate(2deg);
   animation-delay: 100ms;
 }
@@ -277,49 +281,9 @@ main {
   background: rgba(255,255,255,0.8);
   border: 1px solid rgba(0,0,0,0.06);
 }
-.panel-lines {
-  position: absolute;
-  inset: 56px 14px 14px;
-  border-radius: 12px;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.03)),
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.18) 0 16px, rgba(0,0,0,0.03) 16px 18px);
-}
+.panel-lines,
 .panel-scene {
-  position: absolute;
-  inset: 46px 12px 12px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #dde8f0, #f4eadf 46%, #e6dac7);
-  overflow: hidden;
-}
-.panel-scene span:nth-child(1) {
-  position: absolute;
-  width: 64%;
-  height: 38%;
-  background: #caa574;
-  bottom: 12%;
-  left: 18%;
-  border-radius: 14px 14px 8px 8px;
-  box-shadow: inset 0 -10px rgba(0,0,0,0.05);
-}
-.panel-scene span:nth-child(2) {
-  position: absolute;
-  width: 20%;
-  height: 32%;
-  background: #496456;
-  bottom: 18%;
-  left: 12%;
-  border-radius: 10px;
-}
-.panel-scene span:nth-child(3) {
-  position: absolute;
-  width: 18%;
-  height: 36%;
-  background: #f1f4f7;
-  top: 14%;
-  right: 14%;
-  border-radius: 10px;
-  border: 2px solid rgba(0,0,0,0.05);
+  display: none;
 }
 .panel-badge {
   position: absolute;

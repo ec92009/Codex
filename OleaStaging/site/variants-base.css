@@ -230,6 +230,42 @@ a { color: inherit; }
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.2));
 }
+.compare-grid {
+  position: absolute;
+  inset: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  z-index: 1;
+}
+.compare-card {
+  margin: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.72);
+  position: relative;
+  min-height: 210px;
+}
+.compare-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.compare-card figcaption {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.82);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .art-frame {
   position: absolute;
   border-radius: 20px;
@@ -247,7 +283,7 @@ a { color: inherit; }
 }
 .art-note {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   padding: 8px 12px;
   border-radius: 999px;
   background: var(--surface);
@@ -368,4 +404,6 @@ a { color: inherit; }
   .process-list li { grid-template-columns: 42px 1fr; gap: 10px; }
   .process-list li > span { width: 36px; height: 36px; }
   .hero-art { min-height: 240px; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .compare-card { min-height: 120px; }
 }
