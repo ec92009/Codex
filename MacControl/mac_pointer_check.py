@@ -42,6 +42,7 @@ core_foundation = ctypes.CDLL(ctypes.util.find_library("CoreFoundation"))
 core_foundation.CFRelease.argtypes = [ctypes.c_void_p]
 core_foundation.CFRelease.restype = None
 TARGET_WINDOW_TITLE = "Centering Pin"
+MAX_SPACES_TO_SCAN = 10
 
 
 def get_main_display_center() -> CGPoint:
@@ -132,6 +133,22 @@ def print_open_windows() -> None:
         print(f"- {line}", flush=True)
 
 
+def switch_space(direction: str) -> None:
+    if direction not in {"left", "right"}:
+        raise ValueError("direction must be 'left' or 'right'")
+    key_code = "123" if direction == "left" else "124"
+    script = f"""
+tell application "System Events"
+    key code {key_code} using control down
+end tell
+""".strip()
+    subprocess.run(["osascript", "-e", script], check=True)
+
+
+def sleep_short(seconds: float) -> None:
+    subprocess.run(["/bin/sleep", f"{seconds}"], check=True)
+
+
 def bring_window_to_foreground(window_title: str) -> str:
     escaped_title = window_title.replace("\\", "\\\\").replace('"', '\\"')
     script = f"""
@@ -164,10 +181,44 @@ end run
     return result.stdout.strip() or "Unknown app"
 
 
+def try_focus_window(window_title: str) -> str | None:
+    try:
+        return bring_window_to_foreground(window_title)
+    except subprocess.CalledProcessError:
+        return None
+
+
+def scan_spaces_and_focus_window(window_title: str) -> str:
+    print("Scanning Spaces for target window...", flush=True)
+    print("Space 1 (current):", flush=True)
+    print_open_windows()
+    app_name = try_focus_window(window_title)
+    if app_name:
+        return app_name
+
+    moves_right = 0
+    for index in range(2, MAX_SPACES_TO_SCAN + 1):
+        switch_space("right")
+        moves_right += 1
+        sleep_short(0.35)
+        print(f"Space {index}:", flush=True)
+        print_open_windows()
+        app_name = try_focus_window(window_title)
+        if app_name:
+            return app_name
+
+    for _ in range(moves_right):
+        switch_space("left")
+        sleep_short(0.2)
+
+    raise RuntimeError(
+        f"Window not found across up to {MAX_SPACES_TO_SCAN} Spaces: {window_title}"
+    )
+
+
 def run_pointer_check() -> int:
     try:
-        print_open_windows()
-        app_name = bring_window_to_foreground(TARGET_WINDOW_TITLE)
+        app_name = scan_spaces_and_focus_window(TARGET_WINDOW_TITLE)
         center = get_main_display_center()
         move_pointer(center)
         worked = ask_worked()
@@ -204,8 +255,7 @@ def main() -> int:
     args = parse_args()
     if args.screenshot_only:
         try:
-            print_open_windows()
-            app_name = bring_window_to_foreground(TARGET_WINDOW_TITLE)
+            app_name = scan_spaces_and_focus_window(TARGET_WINDOW_TITLE)
             screenshot_path = take_screenshot_to_desktop()
             print(f"Foreground window forced: {TARGET_WINDOW_TITLE} (app: {app_name})")
             print(f"Screenshot saved: {screenshot_path}")
