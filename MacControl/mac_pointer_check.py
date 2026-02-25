@@ -3,12 +3,14 @@ from __future__ import annotations
 import argparse
 import ctypes
 import ctypes.util
+import json
 import subprocess
 import sys
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from tkinter import messagebox
+from typing import Any
 
 
 class CGPoint(ctypes.Structure):
@@ -43,6 +45,8 @@ core_foundation.CFRelease.argtypes = [ctypes.c_void_p]
 core_foundation.CFRelease.restype = None
 TARGET_WINDOW_TITLE = "Centering Pin"
 MAX_SPACES_TO_SCAN = 10
+WINDOW_DESC_PROBE_LIMIT = 20
+WINDOW_DESC_TIMEOUT_SECONDS = 3.0
 
 
 def get_main_display_center() -> CGPoint:
@@ -216,6 +220,182 @@ def scan_spaces_and_focus_window(window_title: str) -> str:
     )
 
 
+def _osascript_json(script: str) -> dict[str, Any]:
+    result = subprocess.run(
+        ["osascript", "-l", "JavaScript", "-e", script],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=WINDOW_DESC_TIMEOUT_SECONDS,
+    )
+    return json.loads(result.stdout)
+
+
+def get_window_accessibility_summary(app_name: str, window_title: str) -> dict[str, Any]:
+    js = f"""
+ObjC.import('stdlib');
+function safe(fn, fallback) {{ try {{ return fn(); }} catch (e) {{ return fallback; }} }}
+function run() {{
+  const se = Application('System Events');
+  const proc = se.applicationProcesses.byName({json.dumps(app_name)});
+  const win = proc.windows.byName({json.dumps(window_title)});
+  const attrs = {{}};
+  attrs.app = {json.dumps(app_name)};
+  attrs.window = {json.dumps(window_title)};
+  attrs.frontmost = safe(() => proc.frontmost(), false);
+  attrs.position = safe(() => win.position(), null);
+  attrs.size = safe(() => win.size(), null);
+  attrs.role = safe(() => win.role(), '');
+  attrs.subrole = safe(() => win.subrole(), '');
+  let elements = [];
+  let top = safe(() => win.uiElements(), []);
+  let count = 0;
+  for (const e of top) {{
+    if (count >= {WINDOW_DESC_PROBE_LIMIT}) break;
+    const row = {{
+      role: safe(() => e.role(), ''),
+      subrole: safe(() => e.subrole(), ''),
+      name: safe(() => e.name(), ''),
+      description: safe(() => e.description(), ''),
+      position: safe(() => e.position(), null),
+      size: safe(() => e.size(), null),
+    }};
+    elements.push(row);
+    count += 1;
+  }}
+  attrs.topLevelElements = elements;
+  return JSON.stringify(attrs);
+}}
+run();
+""".strip()
+    try:
+        return _osascript_json(js)
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, json.JSONDecodeError):
+        return {
+            "app": app_name,
+            "window": window_title,
+            "frontmost": True,
+            "probeError": "Accessibility probe timed out or failed",
+            "topLevelElements": [],
+        }
+
+
+def _element_area(element: dict[str, Any]) -> int:
+    size = element.get("size")
+    if not isinstance(size, list) or len(size) != 2:
+        return -1
+    try:
+        return int(size[0]) * int(size[1])
+    except Exception:  # noqa: BLE001
+        return -1
+
+
+def _best_main_pane_element(summary: dict[str, Any]) -> dict[str, Any] | None:
+    ignored_roles = {
+        "AXToolbar",
+        "AXTitleBar",
+        "AXButton",
+        "AXMenuButton",
+        "AXScrollBar",
+        "AXGrowArea",
+    }
+    candidates = [
+        e
+        for e in summary.get("topLevelElements", [])
+        if e.get("role") not in ignored_roles and _element_area(e) > 0
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=_element_area)
+
+
+def build_window_description_text(
+    *,
+    app_name: str,
+    window_title: str,
+    screenshot_path: Path,
+    summary: dict,
+) -> str:
+    lines = [
+        "Window Description (Accessibility-based, best effort)",
+        f"App: {app_name}",
+        f"Window: {window_title}",
+        f"Screenshot: {screenshot_path}",
+    ]
+    if summary.get("size"):
+        lines.append(f"Window size: {summary['size']}")
+    if summary.get("position"):
+        lines.append(f"Window position: {summary['position']}")
+    if summary.get("probeError"):
+        lines.append(f"Probe note: {summary['probeError']}")
+
+    main_pane = _best_main_pane_element(summary)
+    lines.append("")
+    lines.append("Main Pane (inferred)")
+    if main_pane is None:
+        lines.append(
+            "- Could not infer a main pane from accessible top-level elements."
+        )
+        if app_name == "BambuStudio":
+            lines.append(
+                "- Likely content is a BambuStudio 3D model/canvas view, but the viewport is not exposed with a detailed Accessibility description."
+            )
+    else:
+        lines.append(
+            f"- Role: {main_pane.get('role') or '(unknown)'}"
+        )
+        if main_pane.get("subrole"):
+            lines.append(f"- Subrole: {main_pane['subrole']}")
+        if main_pane.get("name"):
+            lines.append(f"- Name: {main_pane['name']}")
+        if main_pane.get("description"):
+            lines.append(f"- Description: {main_pane['description']}")
+        if main_pane.get("size"):
+            lines.append(f"- Size: {main_pane['size']}")
+        if main_pane.get("position"):
+            lines.append(f"- Position: {main_pane['position']}")
+        lines.append(
+            "- Note: This is inferred from macOS Accessibility and may not describe the actual 3D image pixels."
+        )
+
+    lines.append("")
+    lines.append("Visible Top-Level Elements")
+    elements = summary.get("topLevelElements", [])
+    if not elements:
+        lines.append("- (none)")
+    else:
+        for element in elements:
+            role = element.get("role") or "?"
+            name = element.get("name") or ""
+            desc = element.get("description") or ""
+            size = element.get("size") or ""
+            parts = [role]
+            if name:
+                parts.append(f"name={name}")
+            if desc:
+                parts.append(f"desc={desc}")
+            if size:
+                parts.append(f"size={size}")
+            lines.append("- " + " | ".join(parts))
+
+    return "\n".join(lines) + "\n"
+
+
+def write_window_description_to_desktop(
+    screenshot_path: Path, app_name: str, window_title: str
+) -> Path:
+    summary = get_window_accessibility_summary(app_name, window_title)
+    text = build_window_description_text(
+        app_name=app_name,
+        window_title=window_title,
+        screenshot_path=screenshot_path,
+        summary=summary,
+    )
+    description_path = screenshot_path.with_suffix(".txt")
+    description_path.write_text(text, encoding="utf-8")
+    return description_path
+
+
 def run_pointer_check() -> int:
     try:
         app_name = scan_spaces_and_focus_window(TARGET_WINDOW_TITLE)
@@ -225,10 +405,14 @@ def run_pointer_check() -> int:
         current = get_pointer_position()
         move_pointer(CGPoint(current.x + 50.0, current.y + 100.0))
         screenshot_path = take_screenshot_to_desktop()
+        description_path = write_window_description_to_desktop(
+            screenshot_path, app_name, TARGET_WINDOW_TITLE
+        )
         print(f"Foreground window forced: {TARGET_WINDOW_TITLE} (app: {app_name})")
         print(f"User selected: {'Yes' if worked else 'No'}")
         print("Pointer moved 50px right and 100px down from the selection position.")
         print(f"Screenshot saved: {screenshot_path}")
+        print(f"Description saved: {description_path}")
         return 0
     except Exception as exc:  # noqa: BLE001
         print(f"Error: {exc}", file=sys.stderr)
@@ -257,8 +441,12 @@ def main() -> int:
         try:
             app_name = scan_spaces_and_focus_window(TARGET_WINDOW_TITLE)
             screenshot_path = take_screenshot_to_desktop()
+            description_path = write_window_description_to_desktop(
+                screenshot_path, app_name, TARGET_WINDOW_TITLE
+            )
             print(f"Foreground window forced: {TARGET_WINDOW_TITLE} (app: {app_name})")
             print(f"Screenshot saved: {screenshot_path}")
+            print(f"Description saved: {description_path}")
             return 0
         except Exception as exc:  # noqa: BLE001
             print(f"Error: {exc}", file=sys.stderr)

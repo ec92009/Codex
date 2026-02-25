@@ -7,6 +7,7 @@ Small macOS helper scripts for local control and verification.
 Moves the pointer for a manual check and can save a full-screen screenshot to your Desktop.
 Before running, it attempts to bring the window titled `Centering Pin` to the foreground.
 It also scans across Spaces, printing the list of windows currently visible to `System Events` on each Space before attempting to focus `Centering Pin`.
+After taking the screenshot, it writes a best-effort Accessibility-based description of the focused window (including an inferred main pane) to a `.txt` file next to the screenshot.
 
 ### Usage
 
@@ -18,6 +19,7 @@ It also scans across Spaces, printing the list of windows currently visible to `
 ### Output
 
 - Screenshot files are saved to `~/Desktop` with a timestamp filename like `YYYYMMDD.HHMMSS.png`.
+- A matching text description is saved beside the screenshot as `YYYYMMDD.HHMMSS.txt`.
 
 ### macOS Permissions
 
