@@ -124,12 +124,12 @@ end tell
 
 def print_open_windows() -> None:
     windows = list_open_windows()
-    print("Open windows visible to System Events:")
+    print("Open windows visible to System Events:", flush=True)
     if not windows:
-        print("- (none)")
+        print("- (none)", flush=True)
         return
     for line in windows:
-        print(f"- {line}")
+        print(f"- {line}", flush=True)
 
 
 def bring_window_to_foreground(window_title: str) -> str:
