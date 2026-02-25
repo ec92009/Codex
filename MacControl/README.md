@@ -6,6 +6,7 @@ Small macOS helper scripts for local control and verification.
 
 Moves the pointer for a manual check and can save a full-screen screenshot to your Desktop.
 Before running, it attempts to bring the window titled `Centering Pin` to the foreground.
+It also prints the list of windows currently visible to `System Events` first (for debugging title/accessibility mismatches).
 
 ### Usage
 

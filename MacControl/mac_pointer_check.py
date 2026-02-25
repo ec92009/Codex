@@ -93,6 +93,45 @@ def take_screenshot_to_desktop() -> Path:
     return target
 
 
+def list_open_windows() -> list[str]:
+    script = """
+tell application "System Events"
+    set linesList to {}
+    repeat with p in (application processes whose background only is false)
+        try
+            set procName to (name of p as text)
+            repeat with w in windows of p
+                try
+                    set windowName to (name of w as text)
+                    copy (procName & " | " & windowName) to end of linesList
+                end try
+            end repeat
+        end try
+    end repeat
+    set AppleScript's text item delimiters to linefeed
+    return linesList as text
+end tell
+""".strip()
+    result = subprocess.run(
+        ["osascript", "-e", script],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    text = result.stdout.strip()
+    return [line for line in text.splitlines() if line.strip()]
+
+
+def print_open_windows() -> None:
+    windows = list_open_windows()
+    print("Open windows visible to System Events:")
+    if not windows:
+        print("- (none)")
+        return
+    for line in windows:
+        print(f"- {line}")
+
+
 def bring_window_to_foreground(window_title: str) -> str:
     escaped_title = window_title.replace("\\", "\\\\").replace('"', '\\"')
     script = f"""
@@ -127,6 +166,7 @@ end run
 
 def run_pointer_check() -> int:
     try:
+        print_open_windows()
         app_name = bring_window_to_foreground(TARGET_WINDOW_TITLE)
         center = get_main_display_center()
         move_pointer(center)
@@ -164,6 +204,7 @@ def main() -> int:
     args = parse_args()
     if args.screenshot_only:
         try:
+            print_open_windows()
             app_name = bring_window_to_foreground(TARGET_WINDOW_TITLE)
             screenshot_path = take_screenshot_to_desktop()
             print(f"Foreground window forced: {TARGET_WINDOW_TITLE} (app: {app_name})")
