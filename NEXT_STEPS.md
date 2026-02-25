@@ -4,23 +4,42 @@ Use this file as a quick checkpoint before stopping work.
 
 ## Current Task
 
-- What are we trying to finish right now?
+- Verify `MacControl/mac_pointer_check.py` can force the `Centering Pin` window to the foreground and complete a screenshot/pointer test after macOS permissions are granted.
 
 ## Last Completed
 
-- Most recent completed change (include commit hash if committed)
+- Pushed `ecda97a` - `Focus Centering Pin window before capture`
+- Verified script failure mode when `Centering Pin` is not found / not accessible through `System Events`
 
 ## Next Command To Run
 
-- Exact command to resume (for example: `git -C /Users/ecohen/Codex status --short --branch`)
+- `uv run python /Users/ecohen/Codex/MacControl/mac_pointer_check.py`
+- If only testing capture + focus: `uv run python /Users/ecohen/Codex/MacControl/mac_pointer_check.py --screenshot-only`
 
 ## Open Questions
 
-- Decisions still pending
+- Is the target window title exactly `Centering Pin` (case/spaces must match)?
+- Which app owns the `Centering Pin` window (useful if we need app-specific targeting)?
 
 ## Blockers
 
-- Credentials, approvals, missing tools, failing tests, etc.
+- macOS `Accessibility` permission may be missing for `Codex` / `Terminal` / Python (required for `System Events` window focusing).
+- macOS `Screen Recording` permission may be missing (required for screenshots).
+- The `Centering Pin` window must be open before running the script.
+
+## Permission Setup (before rerun)
+
+- Open `Centering Pin` so the window is visible.
+- In `System Settings > Privacy & Security`:
+- Enable `Accessibility` for the app running the script (`Codex`, `Terminal`, or Python).
+- Enable `Screen Recording` for the app running the script.
+- Re-run the command above after granting permissions (macOS may require closing/reopening the app).
+
+## Expected Success Output
+
+- Console line like: `Foreground window forced: Centering Pin (app: <AppName>)`
+- Screenshot path on Desktop (`~/Desktop/YYYYMMDD.HHMMSS.png`)
+- For full flow, pointer dialog appears and script reports result
 
 ## Resume Checklist
 
