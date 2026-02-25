@@ -41,6 +41,7 @@ cg.CGEventGetLocation.restype = CGPoint
 core_foundation = ctypes.CDLL(ctypes.util.find_library("CoreFoundation"))
 core_foundation.CFRelease.argtypes = [ctypes.c_void_p]
 core_foundation.CFRelease.restype = None
+TARGET_WINDOW_TITLE = "Centering Pin"
 
 
 def get_main_display_center() -> CGPoint:
@@ -92,14 +93,48 @@ def take_screenshot_to_desktop() -> Path:
     return target
 
 
+def bring_window_to_foreground(window_title: str) -> str:
+    escaped_title = window_title.replace("\\", "\\\\").replace('"', '\\"')
+    script = f"""
+on run
+    set targetTitle to "{escaped_title}"
+    tell application "System Events"
+        repeat with p in (application processes whose background only is false)
+            repeat with w in windows of p
+                try
+                    if name of w is targetTitle then
+                        set frontmost of p to true
+                        try
+                            perform action "AXRaise" of w
+                        end try
+                        return name of p as text
+                    end if
+                end try
+            end repeat
+        end repeat
+    end tell
+    error "Window not found: " & targetTitle
+end run
+""".strip()
+    result = subprocess.run(
+        ["osascript", "-e", script],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip() or "Unknown app"
+
+
 def run_pointer_check() -> int:
     try:
+        app_name = bring_window_to_foreground(TARGET_WINDOW_TITLE)
         center = get_main_display_center()
         move_pointer(center)
         worked = ask_worked()
         current = get_pointer_position()
         move_pointer(CGPoint(current.x + 50.0, current.y + 100.0))
         screenshot_path = take_screenshot_to_desktop()
+        print(f"Foreground window forced: {TARGET_WINDOW_TITLE} (app: {app_name})")
         print(f"User selected: {'Yes' if worked else 'No'}")
         print("Pointer moved 50px right and 100px down from the selection position.")
         print(f"Screenshot saved: {screenshot_path}")
@@ -129,13 +164,15 @@ def main() -> int:
     args = parse_args()
     if args.screenshot_only:
         try:
+            app_name = bring_window_to_foreground(TARGET_WINDOW_TITLE)
             screenshot_path = take_screenshot_to_desktop()
+            print(f"Foreground window forced: {TARGET_WINDOW_TITLE} (app: {app_name})")
             print(f"Screenshot saved: {screenshot_path}")
             return 0
         except Exception as exc:  # noqa: BLE001
             print(f"Error: {exc}", file=sys.stderr)
             print(
-                "If this is a permission issue, enable Screen Recording access for Terminal/Codex/Python in System Settings > Privacy & Security.",
+                "If this is a permission issue, enable Accessibility and Screen Recording access for Terminal/Codex/Python in System Settings > Privacy & Security.",
                 file=sys.stderr,
             )
             return 1
