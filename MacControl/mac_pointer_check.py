@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import ctypes
 import ctypes.util
 import subprocess
@@ -91,7 +92,7 @@ def take_screenshot_to_desktop() -> Path:
     return target
 
 
-def main() -> int:
+def run_pointer_check() -> int:
     try:
         center = get_main_display_center()
         move_pointer(center)
@@ -110,6 +111,36 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Pointer movement check and/or full-screen screenshot on macOS."
+    )
+    parser.add_argument(
+        "--screenshot-only",
+        action="store_true",
+        help="Skip pointer movement checks and only save a full-screen screenshot to the Desktop.",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    if args.screenshot_only:
+        try:
+            screenshot_path = take_screenshot_to_desktop()
+            print(f"Screenshot saved: {screenshot_path}")
+            return 0
+        except Exception as exc:  # noqa: BLE001
+            print(f"Error: {exc}", file=sys.stderr)
+            print(
+                "If this is a permission issue, enable Screen Recording access for Terminal/Codex/Python in System Settings > Privacy & Security.",
+                file=sys.stderr,
+            )
+            return 1
+
+    return run_pointer_check()
 
 
 if __name__ == "__main__":
