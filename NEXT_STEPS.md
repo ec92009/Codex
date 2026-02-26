@@ -2,6 +2,12 @@
 
 Use this file as a quick checkpoint before stopping work.
 
+## Additional Active Task (OleaTaxCo website concepts)
+
+- Draft concept files moved into `/Users/ecohen/Codex/OleaTaxCoSiteConcepts/` for Kelly's CPA/SquareSpace planning.
+- Working domain is `OleaTaxCo.com` (already purchased, not published yet).
+- Next command: `python3 -m http.server 8000` (run from `/Users/ecohen/Codex/OleaTaxCoSiteConcepts`) to preview concepts locally.
+
 ## Current Task
 
 - Verify `MacControl/mac_pointer_check.py` can force the `Centering Pin` window to the foreground and complete a screenshot/pointer test after macOS permissions are granted.

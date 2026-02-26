@@ -1,4 +1,4 @@
-name: Deploy OleaStaging Mock Site
+name: Deploy Codex Pages (OleaStaging + OleaTaxCo)
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
       - 'OleaStaging/OleaStaging-Offer-EN.pdf'
       - 'OleaStaging/OleaStaging-Oferta-ES.pdf'
       - 'OleaStaging/OleaStaging-Offre-FR.pdf'
+      - 'OleaTaxCoSiteConcepts/**'
       - '.github/workflows/deploy-oleastaging-site.yml'
   workflow_dispatch:
 
@@ -32,11 +33,55 @@ jobs:
 
       - name: Prepare artifact
         run: |
-          mkdir -p _site
-          cp -R OleaStaging/site/. _site/
-          cp OleaStaging/OleaStaging-Offer-EN.pdf _site/
-          cp OleaStaging/OleaStaging-Oferta-ES.pdf _site/
-          cp OleaStaging/OleaStaging-Offre-FR.pdf _site/
+          mkdir -p _site/oleastaging _site/oleataxco
+
+          # OleaStaging (existing concept set)
+          cp -R OleaStaging/site/. _site/oleastaging/
+          cp OleaStaging/OleaStaging-Offer-EN.pdf _site/oleastaging/
+          cp OleaStaging/OleaStaging-Oferta-ES.pdf _site/oleastaging/
+          cp OleaStaging/OleaStaging-Offre-FR.pdf _site/oleastaging/
+
+          # OleaTaxCo CPA website concept set
+          cp -R OleaTaxCoSiteConcepts/. _site/oleataxco/
+
+          # Simple landing page linking to both hosted concept sets
+          cat > _site/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>Codex Concept Sites</title>
+            <style>
+              body { font-family: system-ui, sans-serif; margin: 0; background: #f5f7fb; color: #111827; }
+              main { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+              h1 { margin: 0 0 0.5rem; }
+              p { color: #4b5563; }
+              .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 1rem; }
+              .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem; }
+              a.button { display: inline-block; margin-top: 0.75rem; text-decoration: none; background: #111827; color: #fff; padding: 0.6rem 0.9rem; border-radius: 999px; font-weight: 600; }
+            </style>
+          </head>
+          <body>
+            <main>
+              <h1>Codex Hosted Concept Sites</h1>
+              <p>Project previews published from the <code>Codex</code> repository.</p>
+              <div class="grid">
+                <section class="card">
+                  <h2>OleaStaging</h2>
+                  <p>Product/offer mock site and multilingual PDFs.</p>
+                  <a class="button" href="./oleastaging/">Open OleaStaging</a>
+                </section>
+                <section class="card">
+                  <h2>Olea Tax Co. (CPA concepts)</h2>
+                  <p>Kelly Olea website concept board with three homepage directions for SquareSpace planning.</p>
+                  <a class="button" href="./oleataxco/">Open Olea Tax Co. concepts</a>
+                </section>
+              </div>
+            </main>
+          </body>
+          </html>
+          EOF
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
