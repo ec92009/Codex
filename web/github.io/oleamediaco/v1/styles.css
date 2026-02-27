@@ -6,9 +6,23 @@
   --muted: #667068;
   --brand: #214c3c;
   --brand-2: #b9873f;
+  --on-brand: #ffffff;
   --line: #e4dac7;
   --shadow: 0 14px 40px rgba(34, 49, 39, 0.10);
   --radius: 18px;
+}
+
+html[data-theme="dark"] {
+  --bg: #0c1110;
+  --surface: rgba(17, 24, 22, 0.92);
+  --surface-2: rgba(21, 30, 27, 0.9);
+  --ink: #eaf3ee;
+  --muted: #a7b9af;
+  --brand: #86dfbc;
+  --brand-2: #f4c15f;
+  --on-brand: #07110d;
+  --line: rgba(177, 208, 188, 0.18);
+  --shadow: 0 20px 45px rgba(0, 0, 0, 0.36);
 }
 
 * { box-sizing: border-box; }
@@ -21,6 +35,13 @@ body {
     radial-gradient(circle at 10% 10%, rgba(185, 135, 63, 0.10), transparent 35%),
     radial-gradient(circle at 95% 0%, rgba(33, 76, 60, 0.12), transparent 34%),
     linear-gradient(180deg, #f7f2e8, #f1ebdf 38%, #eee7d8);
+}
+
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(134, 223, 188, 0.14), transparent 35%),
+    radial-gradient(circle at 95% 0%, rgba(244, 193, 95, 0.12), transparent 34%),
+    linear-gradient(180deg, #0b100f, #0d1312 45%, #0a0f0e);
 }
 
 .grain {
@@ -49,6 +70,11 @@ body {
   border-bottom: 1px solid rgba(228, 218, 199, 0.8);
 }
 
+html[data-theme="dark"] .site-header {
+  background: rgba(9, 14, 13, 0.82);
+  border-bottom-color: var(--line);
+}
+
 .brand-block { display: flex; flex-direction: column; gap: 2px; }
 .brand {
   font-family: "Cormorant Garamond", Georgia, serif;
@@ -66,10 +92,18 @@ body {
   justify-content: flex-end;
 }
 .header-link,
+.theme-toggle,
 .lang-switch {
   border: 1px solid var(--line);
   background: rgba(255,255,255,0.8);
   border-radius: 999px;
+}
+
+html[data-theme="dark"] .header-link,
+html[data-theme="dark"] .theme-toggle,
+html[data-theme="dark"] .lang-switch {
+  background: rgba(12, 18, 16, 0.96);
+  border-color: rgba(177, 208, 188, 0.34);
 }
 
 .header-link {
@@ -78,6 +112,14 @@ body {
   text-decoration: none;
   font-weight: 700;
   font-size: 0.82rem;
+}
+
+.theme-toggle {
+  color: var(--ink);
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
 }
 
 .lang-switch {
@@ -206,7 +248,7 @@ main {
 .btn:hover { transform: translateY(-1px); }
 .btn-primary {
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   box-shadow: 0 8px 18px rgba(33, 76, 60, 0.25);
 }
 .btn-ghost {

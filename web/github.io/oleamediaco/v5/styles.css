@@ -25,6 +25,13 @@ body.theme-v5 {
   background-color: #f2f2ed;
 }
 
+html[data-theme="dark"] body.theme-v5 {
+  background-image:
+    linear-gradient(#1b2522 1px, transparent 1px),
+    linear-gradient(90deg, #1b2522 1px, transparent 1px);
+  background-color: #0f1614;
+}
+
 .theme-v5 .topbar {
   background: rgba(242,242,237,0.94);
   border-bottom: 2px solid var(--line);

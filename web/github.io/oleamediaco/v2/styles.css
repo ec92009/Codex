@@ -23,6 +23,13 @@ body.theme-v2 {
     linear-gradient(180deg, #f8f1e2, #efe3cd 45%, #eadcc5);
 }
 
+html[data-theme="dark"] body.theme-v2 {
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(134, 223, 188, 0.14), transparent 45%),
+    radial-gradient(circle at 100% 10%, rgba(244, 193, 95, 0.12), transparent 36%),
+    linear-gradient(180deg, #0b100f, #0d1312 45%, #0a0f0e);
+}
+
 .theme-v2 .topbar { background: rgba(247, 239, 224, 0.76); border-bottom: 1px solid var(--line); }
 .theme-v2 .brand { font-size: 1.2rem; }
 .theme-v2 .hero { grid-template-columns: 1.05fr 0.95fr; }

@@ -17,11 +17,11 @@ Do not edit Olea Tax Co files from this project thread.
 ## Local Preview
 
 ```bash
-cd /Users/ecohen/Codex/web/github.io/oleamediaco
+cd /Users/ecohen/Codex/web/github.io
 python3 -m http.server 8000
 ```
 
-Open `http://localhost:8000`.
+Open `http://localhost:8000/oleamediaco/`.
 
 ## PDF Source Workflow
 

@@ -7,12 +7,26 @@
   --line: rgba(0, 0, 0, 0.08);
   --brand: #1e5b47;
   --accent: #c08b39;
+  --on-brand: #ffffff;
   --shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
   --radius: 18px;
   --font-body: system-ui, sans-serif;
   --font-display: Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --shell: 1180px;
+}
+
+html[data-theme="dark"] {
+  --bg: #0c1110;
+  --ink: #eaf3ee;
+  --muted: #a7b9af;
+  --surface: rgba(17, 24, 22, 0.92);
+  --surface-2: rgba(21, 30, 27, 0.9);
+  --line: rgba(177, 208, 188, 0.18);
+  --brand: #86dfbc;
+  --accent: #f4c15f;
+  --on-brand: #07110d;
+  --shadow: 0 20px 45px rgba(0, 0, 0, 0.36);
 }
 
 * { box-sizing: border-box; }
@@ -84,6 +98,17 @@ a { color: inherit; }
   padding: 8px 12px;
   font-weight: 700;
   font-size: 0.8rem;
+}
+
+.theme-toggle {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--ink);
+  cursor: pointer;
 }
 
 .lang-switch {
@@ -202,6 +227,22 @@ a { color: inherit; }
 }
 .btn.primary { background: var(--brand); color: white; border-color: transparent; }
 .btn.secondary { background: var(--surface-2); color: var(--ink); }
+.btn.primary { color: var(--on-brand); }
+
+html[data-theme="dark"] .back-link,
+html[data-theme="dark"] .pill,
+html[data-theme="dark"] .theme-toggle,
+html[data-theme="dark"] .lang-switch {
+  background: rgba(12, 18, 16, 0.96);
+  border-color: rgba(177, 208, 188, 0.34);
+  color: #eaf3ee;
+}
+
+html[data-theme="dark"] .btn.secondary {
+  background: rgba(12, 18, 16, 0.96);
+  border-color: rgba(177, 208, 188, 0.34);
+  color: #eaf3ee;
+}
 
 .metrics {
   display: grid;

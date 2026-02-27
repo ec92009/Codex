@@ -23,6 +23,13 @@ body.theme-v4 {
     linear-gradient(180deg, #eef8f7, #e7f0ef 45%, #e4eceb);
 }
 
+html[data-theme="dark"] body.theme-v4 {
+  background-image:
+    radial-gradient(circle at 8% 10%, rgba(67, 192, 216, 0.14), transparent 38%),
+    radial-gradient(circle at 92% 4%, rgba(226, 183, 111, 0.16), transparent 34%),
+    linear-gradient(180deg, #0a1318, #0c1820 45%, #091017);
+}
+
 .theme-v4 .topbar { background: rgba(234, 244, 244, 0.78); }
 .theme-v4 .brand { letter-spacing: 0.06em; font-size: 1.1rem; }
 .theme-v4 .review-banner {

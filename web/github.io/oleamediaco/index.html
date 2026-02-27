@@ -16,9 +16,21 @@
       --line: rgba(0,0,0,.09);
       --brand: #1f4f3e;
       --accent: #c28735;
+      --on-brand: #ffffff;
       --card: rgba(255,252,246,.82);
       --shadow: 0 20px 45px rgba(39, 45, 33, .10);
       --r: 18px;
+    }
+    html[data-theme="dark"] {
+      --bg: #0b1110;
+      --ink: #eaf2ee;
+      --muted: #b0c2b8;
+      --line: rgba(177,208,188,.2);
+      --brand: #86dfbc;
+      --accent: #f4c15f;
+      --on-brand: #07110d;
+      --card: rgba(15,22,20,.85);
+      --shadow: 0 20px 45px rgba(0, 0, 0, .36);
     }
     * { box-sizing: border-box; }
     body {
@@ -65,7 +77,17 @@
       font-weight: 700;
       font-size: .85rem;
     }
-    .pill.primary { background: var(--brand); color: #fff; border-color: transparent; }
+    .pill.primary { background: var(--brand); color: var(--on-brand); border-color: transparent; }
+    .theme-toggle {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.78);
+      color: var(--ink);
+      padding: 9px 12px;
+      font-weight: 700;
+      font-size: .85rem;
+      cursor: pointer;
+    }
     .notice {
       margin-top: 10px;
       border: 1px solid rgba(194,135,53,.28);
@@ -158,8 +180,65 @@
       border: 1px solid var(--line);
       background: rgba(255,255,255,.72);
     }
-    .actions a.primary { background: var(--brand); color: #fff; border-color: transparent; }
+    .actions a.primary { background: var(--brand); color: var(--on-brand); border-color: transparent; }
     footer { color: var(--muted); font-size: .9rem; padding: 4px 0 26px; }
+    html[data-theme="dark"] body {
+      background:
+        radial-gradient(circle at 8% 5%, rgba(134,223,188,.14), transparent 38%),
+        radial-gradient(circle at 95% 0%, rgba(244,193,95,.12), transparent 30%),
+        linear-gradient(180deg, #0a100f, #0c1311 44%, #090f0e);
+    }
+    html[data-theme="dark"] .pill,
+    html[data-theme="dark"] .theme-toggle,
+    html[data-theme="dark"] .actions a {
+      background: rgba(11,17,15,.96);
+      color: #eaf3ee;
+      border-color: rgba(177,208,188,.36);
+    }
+    html[data-theme="dark"] .pill.primary,
+    html[data-theme="dark"] .actions a.primary {
+      background: var(--brand);
+      color: var(--on-brand);
+      border-color: transparent;
+    }
+    html[data-theme="dark"] .tag {
+      background: rgba(11,17,15,.96);
+      color: #d3e3db;
+      border-color: rgba(177,208,188,.30);
+    }
+    html[data-theme="dark"] .thumb .badge {
+      background: rgba(10,15,14,.90);
+      color: #eaf3ee;
+      border-color: rgba(177,208,188,.34);
+    }
+    html[data-theme="dark"] .thumb h3 { color: #f2f7f4; }
+    html[data-theme="dark"] .t1,
+    html[data-theme="dark"] .t2,
+    html[data-theme="dark"] .t4,
+    html[data-theme="dark"] .t5 {
+      background: linear-gradient(180deg, #18211e, #101715);
+    }
+    html[data-theme="dark"] .t1::before,
+    html[data-theme="dark"] .t2::before,
+    html[data-theme="dark"] .t4::before,
+    html[data-theme="dark"] .t5::before {
+      background: rgba(134,223,188,.16);
+      border-color: rgba(177,208,188,.28);
+    }
+    html[data-theme="dark"] .t1::after,
+    html[data-theme="dark"] .t2::after,
+    html[data-theme="dark"] .t4::after,
+    html[data-theme="dark"] .t5::after {
+      background: rgba(244,193,95,.16);
+      border-color: rgba(244,193,95,.28);
+    }
+    html[data-theme="dark"] .notice {
+      border-color: rgba(244,193,95,.32);
+      background: linear-gradient(180deg, rgba(56,43,20,.72), rgba(36,28,15,.72));
+      color: #f0dbb7;
+    }
+    html[data-theme="dark"] .title { color: #ebf4ef; }
+    html[data-theme="dark"] .body p { color: #c4d3cc; }
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .card { grid-template-rows: 140px 1fr; } }
   </style>
 </head>
@@ -170,6 +249,7 @@
       <p class="subtitle">Five mock website directions for the same 4-stage offering. Each version keeps the multilingual switch (EN/ES/FR) so the team can evaluate both design and readability.</p>
       <div class="toolbar">
         <a class="pill primary" href="./v1/index.html">Open Version 1</a>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle color theme">Night mode</button>
         <a class="pill" href="./OleaMediaCo-Offer-EN.pdf" target="_blank" rel="noopener">PDF EN</a>
         <a class="pill" href="./OleaMediaCo-Oferta-ES.pdf" target="_blank" rel="noopener">PDF ES</a>
         <a class="pill" href="./OleaMediaCo-Offre-FR.pdf" target="_blank" rel="noopener">PDF FR</a>
@@ -226,5 +306,6 @@
 
     <footer>Tip: ask each reviewer to pick 1 favorite and 1 runner-up, then explain why in one sentence.</footer>
   </div>
+  <script src="./theme-toggle.js"></script>
 </body>
 </html>

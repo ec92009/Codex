@@ -1,4 +1,4 @@
-# OLEA STAGING
+# OLEA MEDIA CO
 ## One-Page Offer Sheet (Malaga - Marbella)
 
 ### Who This Is For

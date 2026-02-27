@@ -133,7 +133,7 @@ def build_content(lang: str, before_size: Optional[Tuple[int, int]] = None, afte
     dark = (0.12, 0.15, 0.20)
     muted = (0.42, 0.45, 0.50)
 
-    draw_text(c, 58, 778, 18, "OLEA STAGING", green)
+    draw_text(c, 58, 778, 18, "OLEA MEDIA CO", green)
     header_corridor = "Málaga - Marbella corridor" if lang == "ES" else "Malaga - Marbella corridor"
     draw_text(c, 58, 760, 10, header_corridor, muted)
 
