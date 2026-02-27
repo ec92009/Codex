@@ -13,8 +13,8 @@ Use this file as a quick checkpoint before stopping work.
 
 ## Next Command To Run
 
-- `cd /Users/ecohen/Codex/web/github.io/oleamediaco && python3 -m http.server 8000`
-- Open `http://localhost:8000` to review `v1`-`v5` variants side-by-side
+- `cd /Users/ecohen/Codex/web/github.io && python3 -m http.server 8000`
+- Open `http://localhost:8000/oleamediaco/` to review `v1`-`v5` variants side-by-side
 
 ## Open Questions
 

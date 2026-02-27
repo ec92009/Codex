@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Codex Local Sites</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --text: #0f172a;
+      --muted: #475569;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --button: #0f172a;
+      --button-text: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    main {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+    }
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.8rem;
+    }
+    p { color: var(--muted); }
+    .grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      margin-top: 1.25rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      margin-top: 0.75rem;
+      background: var(--button);
+      color: var(--button-text);
+      padding: 0.55rem 0.85rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Codex Local Website Workspace</h1>
+    <p>Choose a project site to open.</p>
+    <div class="grid">
+      <section class="card">
+        <h2>Olea Media Co</h2>
+        <p>Website variants and multilingual offer PDFs.</p>
+        <a class="btn" href="./oleamediaco/">Open Olea Media Co</a>
+      </section>
+      <section class="card">
+        <h2>Olea Tax Co</h2>
+        <p>CPA website concept board and homepage directions.</p>
+        <a class="btn" href="./oleataxco/">Open Olea Tax Co</a>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

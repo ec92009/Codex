@@ -34,8 +34,9 @@ GitHub Pages is deployed by `.github/workflows/deploy-oleamediaco-site.yml`, whi
 
 ## Local Development
 
-- Olea Media Co preview: `cd /Users/ecohen/Codex/web/github.io/oleamediaco && python3 -m http.server 8000`
-- Olea Tax Co preview: `cd /Users/ecohen/Codex/web/github.io/oleataxco && python3 -m http.server 8001`
+- Top-level local preview: `cd /Users/ecohen/Codex/web/github.io && python3 -m http.server 8000`
+- Olea Media Co: `http://localhost:8000/oleamediaco/`
+- Olea Tax Co: `http://localhost:8000/oleataxco/`
 
 ## Repo Workflow
 
