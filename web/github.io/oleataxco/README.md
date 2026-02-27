@@ -27,6 +27,8 @@ Open `http://localhost:8000/oleataxco/`.
 - `concepts/01-trust-ledger.html`
 - `concepts/02-modern-growth.html`
 - `concepts/03-neighborhood-advisor.html`
+- `concepts/04-editorial-ledger.html`
+- `concepts/05-studio-poster.html`
 
 Update copy and structure in the selected concept first, then backport approved shared changes only when requested.
 
