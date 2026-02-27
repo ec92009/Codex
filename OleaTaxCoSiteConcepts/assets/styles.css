@@ -11,44 +11,44 @@
 }
 
 html[data-theme="dark"] {
-  --bg: #13161b;
-  --text: #e9eef5;
-  --muted: #a8b2c0;
-  --line: rgba(233, 238, 245, 0.14);
-  --card: rgba(24, 30, 40, 0.86);
-  --accent: #1e8aa1;
-  --accent-2: #d0a95b;
-  --shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+  --bg: #080b10;
+  --text: #f4f8ff;
+  --muted: #c3cfdf;
+  --line: rgba(244, 248, 255, 0.2);
+  --card: rgba(14, 19, 27, 0.96);
+  --accent: #27a9c2;
+  --accent-2: #e2b76f;
+  --shadow: 0 20px 56px rgba(0, 0, 0, 0.55);
 }
 
 html[data-theme="dark"] .concept-trust {
-  --bg: #131722;
-  --text: #e8edf6;
-  --muted: #a7b1c4;
-  --line: rgba(232, 237, 246, 0.14);
-  --card: rgba(23, 30, 44, 0.9);
-  --accent: #7da9e0;
-  --accent-2: #d8b977;
+  --bg: #090f19;
+  --text: #f1f6ff;
+  --muted: #bccbe0;
+  --line: rgba(241, 246, 255, 0.2);
+  --card: rgba(14, 22, 35, 0.96);
+  --accent: #8db9f3;
+  --accent-2: #e3c688;
 }
 
 html[data-theme="dark"] .concept-modern {
-  --bg: #10161d;
-  --text: #eaf1f9;
-  --muted: #a9b7c7;
-  --line: rgba(234, 241, 249, 0.14);
-  --card: rgba(20, 30, 40, 0.88);
-  --accent: #3ab2c8;
-  --accent-2: #f4b85a;
+  --bg: #071018;
+  --text: #f2f9ff;
+  --muted: #bdd0e0;
+  --line: rgba(242, 249, 255, 0.2);
+  --card: rgba(10, 23, 33, 0.96);
+  --accent: #43c0d8;
+  --accent-2: #ffc46a;
 }
 
 html[data-theme="dark"] .concept-neighborhood {
-  --bg: #191410;
-  --text: #f4ece4;
-  --muted: #c2b0a2;
-  --line: rgba(244, 236, 228, 0.14);
-  --card: rgba(38, 30, 25, 0.88);
-  --accent: #d38f66;
-  --accent-2: #f0bb87;
+  --bg: #120d09;
+  --text: #fff2e5;
+  --muted: #ddc3af;
+  --line: rgba(255, 242, 229, 0.2);
+  --card: rgba(30, 21, 16, 0.96);
+  --accent: #e2a074;
+  --accent-2: #ffc58f;
 }
 
 * { box-sizing: border-box; }
@@ -337,7 +337,7 @@ img { max-width: 100%; }
 }
 
 html[data-theme="dark"] .theme-toggle {
-  background: rgba(20, 26, 35, 0.85);
+  background: rgba(8, 12, 18, 0.94);
 }
 
 /* Concept variants */
