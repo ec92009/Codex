@@ -61,7 +61,7 @@ Un servicio rapido y repetible de mejora visual para ayudar a tus anuncios a:
 Si no cumplimos el plazo de entrega acordado, el siguiente anuncio recibe un credito del 15%.
 
 ### Contacto
-Olea Staging
+Olea Media Co
 Corredor Malaga - Marbella
-Email: hello@oleastaging.com
+Email: hello@oleamediaco.com
 Telefono/WhatsApp: +34 XXX XXX XXX

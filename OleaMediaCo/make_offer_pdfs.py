@@ -383,7 +383,7 @@ def build_content(lang: str, before_size: Optional[Tuple[int, int]] = None, afte
         draw_text(c, right_x, label_y, 9, after_lbl, dark)
 
     # Footer
-    draw_text(c, 58, 70, 10, "Contacto: hello@oleastaging.com | +34 XXX XXX XXX", dark)
+    draw_text(c, 58, 70, 10, "Contacto: hello@oleamediaco.com | +34 XXX XXX XXX", dark)
 
     return c
 
@@ -451,9 +451,9 @@ def main() -> None:
     assets = root / "site" / "assets"
     before_jpg = png_to_jpeg_bytes(assets / "before.png")
     after_jpg = png_to_jpeg_bytes(assets / "after.png")
-    make_pdf(root / "OleaStaging-Offer-EN.pdf", "EN", before_jpg, after_jpg)
-    make_pdf(root / "OleaStaging-Oferta-ES.pdf", "ES", before_jpg, after_jpg)
-    make_pdf(root / "OleaStaging-Offre-FR.pdf", "FR", before_jpg, after_jpg)
+    make_pdf(root / "OleaMediaCo-Offer-EN.pdf", "EN", before_jpg, after_jpg)
+    make_pdf(root / "OleaMediaCo-Oferta-ES.pdf", "ES", before_jpg, after_jpg)
+    make_pdf(root / "OleaMediaCo-Offre-FR.pdf", "FR", before_jpg, after_jpg)
 
 
 if __name__ == "__main__":

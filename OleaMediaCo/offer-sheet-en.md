@@ -61,7 +61,7 @@ A fast, repeatable visual-upgrade service that helps your listings:
 If delivery misses the agreed deadline, next listing gets a 15% service credit.
 
 ### Contact
-Olea Staging
+Olea Media Co
 Malaga - Marbella corridor
-Email: hello@oleastaging.com
+Email: hello@oleamediaco.com
 Phone/WhatsApp: +34 XXX XXX XXX

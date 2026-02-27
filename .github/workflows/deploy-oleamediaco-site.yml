@@ -1,15 +1,15 @@
-name: Deploy Codex Pages (OleaStaging + OleaTaxCo)
+name: Deploy Codex Pages (Olea Media Co + OleaTaxCo)
 
 on:
   push:
     branches: [main]
     paths:
-      - 'OleaStaging/site/**'
-      - 'OleaStaging/OleaStaging-Offer-EN.pdf'
-      - 'OleaStaging/OleaStaging-Oferta-ES.pdf'
-      - 'OleaStaging/OleaStaging-Offre-FR.pdf'
+      - 'OleaMediaCo/site/**'
+      - 'OleaMediaCo/OleaMediaCo-Offer-EN.pdf'
+      - 'OleaMediaCo/OleaMediaCo-Oferta-ES.pdf'
+      - 'OleaMediaCo/OleaMediaCo-Offre-FR.pdf'
       - 'OleaTaxCoSiteConcepts/**'
-      - '.github/workflows/deploy-oleastaging-site.yml'
+      - '.github/workflows/deploy-oleamediaco-site.yml'
   workflow_dispatch:
 
 permissions:
@@ -33,13 +33,13 @@ jobs:
 
       - name: Prepare artifact
         run: |
-          mkdir -p _site/oleastaging _site/oleataxco
+          mkdir -p _site/oleamediaco _site/oleataxco
 
-          # OleaStaging (existing concept set)
-          cp -R OleaStaging/site/. _site/oleastaging/
-          cp OleaStaging/OleaStaging-Offer-EN.pdf _site/oleastaging/
-          cp OleaStaging/OleaStaging-Oferta-ES.pdf _site/oleastaging/
-          cp OleaStaging/OleaStaging-Offre-FR.pdf _site/oleastaging/
+          # Olea Media Co (existing concept set)
+          cp -R OleaMediaCo/site/. _site/oleamediaco/
+          cp OleaMediaCo/OleaMediaCo-Offer-EN.pdf _site/oleamediaco/
+          cp OleaMediaCo/OleaMediaCo-Oferta-ES.pdf _site/oleamediaco/
+          cp OleaMediaCo/OleaMediaCo-Offre-FR.pdf _site/oleamediaco/
 
           # OleaTaxCo CPA website concept set
           cp -R OleaTaxCoSiteConcepts/. _site/oleataxco/
@@ -68,9 +68,9 @@ jobs:
               <p>Project previews published from the <code>Codex</code> repository.</p>
               <div class="grid">
                 <section class="card">
-                  <h2>OleaStaging</h2>
+                  <h2>Olea Media Co</h2>
                   <p>Product/offer mock site and multilingual PDFs.</p>
-                  <a class="button" href="./oleastaging/">Open OleaStaging</a>
+                  <a class="button" href="./oleamediaco/">Open Olea Media Co</a>
                 </section>
                 <section class="card">
                   <h2>Olea Tax Co. (CPA concepts)</h2>
