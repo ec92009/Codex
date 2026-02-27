@@ -5,17 +5,24 @@ Central workspace repository for ongoing projects under `/Users/ecohen/Codex`.
 ## Projects
 
 - `MacControl`: Local macOS control/verification scripts, including pointer checks and Desktop screen snapshots.
-- `OleaMediaCo`: Sales and offer materials for real-estate listing photo/staging services (Markdown, HTML, and client-ready PDFs).
-- `OleaTaxCoSiteConcepts`: Website concept board and homepage mockups for Kelly Olea's CPA business (`OleaTaxCo.com`) to review before building in SquareSpace.
+- `web/github.io`: Canonical local website workspace for GitHub Pages.
 - `gmail_idealista_app`: Python app for Gmail + Idealista automation.
+
+## Website Structure
+
+- `web/github.io/oleamediaco`: Olea Media Co site, variants, assets, and published PDFs.
+- `web/github.io/oleamediaco/source`: Olea Media Co source materials (offer-sheet markdown/html and PDF generation script).
+- `web/github.io/oleataxco`: Olea Tax Co concept board and homepage directions.
+
+When working in separate threads, treat `oleamediaco` and `oleataxco` as separate projects and keep edits scoped to the active project only.
 
 ## Notable Files
 
 ### Olea Media Co PDFs
 
-- [OleaMediaCo-Offer-EN.pdf](./OleaMediaCo/OleaMediaCo-Offer-EN.pdf)
-- [OleaMediaCo-Oferta-ES.pdf](./OleaMediaCo/OleaMediaCo-Oferta-ES.pdf)
-- [OleaMediaCo-Offre-FR.pdf](./OleaMediaCo/OleaMediaCo-Offre-FR.pdf)
+- [OleaMediaCo-Offer-EN.pdf](./web/github.io/oleamediaco/OleaMediaCo-Offer-EN.pdf)
+- [OleaMediaCo-Oferta-ES.pdf](./web/github.io/oleamediaco/OleaMediaCo-Oferta-ES.pdf)
+- [OleaMediaCo-Offre-FR.pdf](./web/github.io/oleamediaco/OleaMediaCo-Offre-FR.pdf)
 
 ### Website Concept Previews (GitHub Pages)
 
@@ -24,6 +31,11 @@ Central workspace repository for ongoing projects under `/Users/ecohen/Codex`.
 - Olea Tax Co. CPA concepts: [ec92009.github.io/Codex/oleataxco/](https://ec92009.github.io/Codex/oleataxco/)
 
 GitHub Pages is deployed by `.github/workflows/deploy-oleamediaco-site.yml`, which now publishes both concept sets in a single Pages artifact.
+
+## Local Development
+
+- Olea Media Co preview: `cd /Users/ecohen/Codex/web/github.io/oleamediaco && python3 -m http.server 8000`
+- Olea Tax Co preview: `cd /Users/ecohen/Codex/web/github.io/oleataxco && python3 -m http.server 8001`
 
 ## Repo Workflow
 

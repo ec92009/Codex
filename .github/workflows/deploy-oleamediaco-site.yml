@@ -4,11 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'OleaMediaCo/site/**'
-      - 'OleaMediaCo/OleaMediaCo-Offer-EN.pdf'
-      - 'OleaMediaCo/OleaMediaCo-Oferta-ES.pdf'
-      - 'OleaMediaCo/OleaMediaCo-Offre-FR.pdf'
-      - 'OleaTaxCoSiteConcepts/**'
+      - 'web/github.io/oleamediaco/**'
+      - 'web/github.io/oleataxco/**'
       - '.github/workflows/deploy-oleamediaco-site.yml'
   workflow_dispatch:
 
@@ -36,13 +33,10 @@ jobs:
           mkdir -p _site/oleamediaco _site/oleataxco
 
           # Olea Media Co (existing concept set)
-          cp -R OleaMediaCo/site/. _site/oleamediaco/
-          cp OleaMediaCo/OleaMediaCo-Offer-EN.pdf _site/oleamediaco/
-          cp OleaMediaCo/OleaMediaCo-Oferta-ES.pdf _site/oleamediaco/
-          cp OleaMediaCo/OleaMediaCo-Offre-FR.pdf _site/oleamediaco/
+          cp -R web/github.io/oleamediaco/. _site/oleamediaco/
 
           # OleaTaxCo CPA website concept set
-          cp -R OleaTaxCoSiteConcepts/. _site/oleataxco/
+          cp -R web/github.io/oleataxco/. _site/oleataxco/
 
           # Simple landing page linking to both hosted concept sets
           cat > _site/index.html <<'EOF'

@@ -1,0 +1,41 @@
+# Olea Tax Co Project
+
+Local project workspace for Olea Tax Co concept pages used to decide final direction before a production CMS build.
+
+## Scope
+
+Use this folder for Olea Tax Co work only:
+
+- Concept board index: `index.html`
+- Homepage directions: `concepts/`
+- Shared styles/scripts: `assets/`
+- Planning notes: `content-workbook.md`
+
+Do not edit Olea Media Co files from this project thread.
+
+## Local Preview
+
+```bash
+cd /Users/ecohen/Codex/web/github.io/oleataxco
+python3 -m http.server 8001
+```
+
+Open `http://localhost:8001`.
+
+## Concept Files
+
+- `concepts/01-trust-ledger.html`
+- `concepts/02-modern-growth.html`
+- `concepts/03-neighborhood-advisor.html`
+
+Update copy and structure in the selected concept first, then backport approved shared changes only when requested.
+
+## Deployment
+
+GitHub Pages deploy is handled by:
+
+- `/Users/ecohen/Codex/.github/workflows/deploy-oleamediaco-site.yml`
+
+This workflow publishes this folder to:
+
+- `https://ec92009.github.io/Codex/oleataxco/`

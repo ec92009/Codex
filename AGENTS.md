@@ -18,6 +18,25 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 - After modifying a project, update relevant `README.md` files and other necessary docs/config, then push to GitHub.
 - Before pausing, update `/Users/ecohen/Codex/NEXT_STEPS.md` with current status and next command.
 
+## Website Workspace Structure
+
+- Canonical website workspace root: `/Users/ecohen/Codex/web/github.io`
+- Olea Media Co project: `/Users/ecohen/Codex/web/github.io/oleamediaco`
+- Olea Tax Co project: `/Users/ecohen/Codex/web/github.io/oleataxco`
+- GitHub Pages workflow: `/Users/ecohen/Codex/.github/workflows/deploy-oleamediaco-site.yml`
+
+## Project Boundaries (Separate Threads)
+
+- If a thread is for Olea Media Co, only modify files under `web/github.io/oleamediaco` unless explicitly asked otherwise.
+- If a thread is for Olea Tax Co, only modify files under `web/github.io/oleataxco` unless explicitly asked otherwise.
+- Avoid cross-project refactors or shared style/script changes across both projects unless explicitly requested.
+- Keep commit messages project-scoped (for example: `oleamediaco: ...` or `oleataxco: ...`).
+
+## Local Preview Commands
+
+- Olea Media Co: `cd /Users/ecohen/Codex/web/github.io/oleamediaco && python3 -m http.server 8000`
+- Olea Tax Co: `cd /Users/ecohen/Codex/web/github.io/oleataxco && python3 -m http.server 8001`
+
 ## Python Hygiene
 
 - Do not commit virtual environments (`.venv/`).
