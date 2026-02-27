@@ -16,11 +16,11 @@ Do not edit Olea Media Co files from this project thread.
 ## Local Preview
 
 ```bash
-cd /Users/ecohen/Codex/web/github.io/oleataxco
-python3 -m http.server 8001
+cd /Users/ecohen/Codex/web/github.io
+python3 -m http.server 8000
 ```
 
-Open `http://localhost:8001`.
+Open `http://localhost:8000/oleataxco/`.
 
 ## Concept Files
 
@@ -29,6 +29,13 @@ Open `http://localhost:8001`.
 - `concepts/03-neighborhood-advisor.html`
 
 Update copy and structure in the selected concept first, then backport approved shared changes only when requested.
+
+## Draft Disclaimer
+
+All versions include the same top banner text:
+
+- `MOCK DRAFT`
+- `Internal review only. Content, pricing, and visuals are placeholders for team feedback.`
 
 ## Deployment
 

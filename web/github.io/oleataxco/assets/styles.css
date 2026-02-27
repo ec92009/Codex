@@ -370,6 +370,30 @@ html[data-theme="dark"] .theme-toggle {
   background: rgba(8, 12, 18, 0.94);
 }
 
+.draft-banner {
+  width: min(1150px, calc(100% - 1.5rem));
+  margin: 0.9rem auto 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.65rem 0.9rem;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-1) 84%);
+  box-shadow: var(--shadow);
+}
+
+.draft-banner strong {
+  display: block;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  margin-bottom: 0.1rem;
+}
+
+.draft-banner p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
 /* Concept variants */
 .concept-trust {
   --bg: #f2efe8;
