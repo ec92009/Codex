@@ -10,6 +10,47 @@
   --radius: 18px;
 }
 
+html[data-theme="dark"] {
+  --bg: #13161b;
+  --text: #e9eef5;
+  --muted: #a8b2c0;
+  --line: rgba(233, 238, 245, 0.14);
+  --card: rgba(24, 30, 40, 0.86);
+  --accent: #1e8aa1;
+  --accent-2: #d0a95b;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .concept-trust {
+  --bg: #131722;
+  --text: #e8edf6;
+  --muted: #a7b1c4;
+  --line: rgba(232, 237, 246, 0.14);
+  --card: rgba(23, 30, 44, 0.9);
+  --accent: #7da9e0;
+  --accent-2: #d8b977;
+}
+
+html[data-theme="dark"] .concept-modern {
+  --bg: #10161d;
+  --text: #eaf1f9;
+  --muted: #a9b7c7;
+  --line: rgba(234, 241, 249, 0.14);
+  --card: rgba(20, 30, 40, 0.88);
+  --accent: #3ab2c8;
+  --accent-2: #f4b85a;
+}
+
+html[data-theme="dark"] .concept-neighborhood {
+  --bg: #191410;
+  --text: #f4ece4;
+  --muted: #c2b0a2;
+  --line: rgba(244, 236, 228, 0.14);
+  --card: rgba(38, 30, 25, 0.88);
+  --accent: #d38f66;
+  --accent-2: #f0bb87;
+}
+
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
@@ -277,6 +318,26 @@ img { max-width: 100%; }
   text-decoration: none;
   color: var(--muted);
   font-weight: 700;
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+html[data-theme="dark"] .theme-toggle {
+  background: rgba(20, 26, 35, 0.85);
 }
 
 /* Concept variants */

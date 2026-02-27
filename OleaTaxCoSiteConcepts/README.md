@@ -11,6 +11,7 @@ Current domain already secured (not published yet): **OleaTaxCo.com**
 - `concepts/02-modern-growth.html` - modern / growth-focused concept
 - `concepts/03-neighborhood-advisor.html` - warm / local concept
 - `content-workbook.md` - questions and content checklist for Kelly
+- `assets/theme-toggle.js` - shared day/night toggle logic (saved in browser local storage)
 
 ## How to preview locally
 
@@ -21,6 +22,14 @@ python3 -m http.server 8000
 ```
 
 Then visit `http://localhost:8000`.
+
+## Day/Night toggle
+
+Each concept page includes a toggle button at the top-right corner:
+
+- Starts from saved preference (or system preference if first visit)
+- Saves choice in local storage
+- Applies consistently across concept board and all sample pages
 
 ## Recommended workflow (GitHub + SquareSpace)
 
