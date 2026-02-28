@@ -115,11 +115,64 @@ html[data-theme="dark"] .lang-switch {
 }
 
 .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
   color: var(--ink);
-  padding: 8px 12px;
-  font-weight: 700;
-  font-size: 0.82rem;
+  min-width: 6.4rem;
+  height: 1.95rem;
+  padding: 0.2rem 0.45rem;
   cursor: pointer;
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--brand-2);
+  outline-offset: 2px;
+}
+
+.theme-toggle .toggle-track {
+  width: 2.95rem;
+  height: 100%;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  position: relative;
+}
+
+.theme-toggle .toggle-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--muted);
+  min-width: 1.9rem;
+  text-align: center;
+}
+
+.theme-toggle .toggle-thumb {
+  position: absolute;
+  top: 0.12rem;
+  left: 0.15rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: var(--ink);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.theme-toggle[aria-pressed="true"] .toggle-track {
+  background: color-mix(in srgb, var(--brand-2) 72%, var(--surface-2) 28%);
+}
+
+.theme-toggle[aria-pressed="true"] .toggle-thumb {
+  transform: translateX(1.28rem);
+  background: color-mix(in srgb, var(--on-brand) 35%, #ffffff 65%);
+}
+
+.theme-toggle[aria-pressed="true"] .toggle-label-dark,
+.theme-toggle[aria-pressed="false"] .toggle-label-light {
+  color: var(--ink);
 }
 
 .lang-switch {

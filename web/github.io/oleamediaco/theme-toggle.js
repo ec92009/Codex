@@ -4,6 +4,14 @@
   var button = document.querySelector('[data-theme-toggle]');
   if (!button) return;
 
+  if (!button.dataset.toggleReady) {
+    button.innerHTML =
+      '<span class="toggle-label toggle-label-light">Light</span>' +
+      '<span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>' +
+      '<span class="toggle-label toggle-label-dark">Dark</span>';
+    button.dataset.toggleReady = 'true';
+  }
+
   function getPreferredTheme() {
     var saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'light' || saved === 'dark') return saved;
@@ -11,9 +19,10 @@
   }
 
   function applyTheme(theme) {
+    var isDark = theme === 'dark';
     root.setAttribute('data-theme', theme);
-    button.textContent = theme === 'dark' ? 'Day mode' : 'Night mode';
-    button.setAttribute('aria-label', theme === 'dark' ? 'Switch to day mode' : 'Switch to night mode');
+    button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    button.setAttribute('aria-label', 'Toggle day/night mode');
   }
 
   var currentTheme = getPreferredTheme();
