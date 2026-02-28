@@ -567,12 +567,21 @@ img { max-width: 100%; }
   .section-grid > * {
     grid-column: span 12 !important;
   }
+  .section-grid.whoami-row > .span-5 {
+    grid-column: span 5 !important;
+  }
+  .section-grid.whoami-row > .span-7 {
+    grid-column: span 7 !important;
+  }
   .cards.cols-3 {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
+  .section-grid.whoami-row > * {
+    grid-column: span 12 !important;
+  }
   .gallery-hero,
   .compare-panel {
     padding: 1rem;
