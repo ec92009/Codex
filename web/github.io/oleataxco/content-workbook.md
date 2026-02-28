@@ -55,7 +55,7 @@ Examples:
 
 - Do you work remotely?
 - What documents do I need?
-- Do you help with bookkeeping cleanup?
+- Do you help with bookkeeping catch-up?
 - Do you work with new businesses?
 - How do I get started?
 
