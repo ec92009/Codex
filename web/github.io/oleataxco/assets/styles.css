@@ -312,6 +312,15 @@ img { max-width: 100%; }
   gap: 1rem;
   margin-top: 1rem;
 }
+.whoami-row {
+  grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.05fr);
+}
+.whoami-row > .span-5 {
+  grid-column: 1;
+}
+.whoami-row > .span-7 {
+  grid-column: 2;
+}
 .span-7 { grid-column: span 7; }
 .span-5 { grid-column: span 5; }
 .span-6 { grid-column: span 6; }
@@ -567,11 +576,14 @@ img { max-width: 100%; }
   .section-grid > * {
     grid-column: span 12 !important;
   }
+  .whoami-row {
+    grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.1fr);
+  }
   .section-grid.whoami-row > .span-5 {
-    grid-column: span 5 !important;
+    grid-column: 1 !important;
   }
   .section-grid.whoami-row > .span-7 {
-    grid-column: span 7 !important;
+    grid-column: 2 !important;
   }
   .cards.cols-3 {
     grid-template-columns: 1fr;
