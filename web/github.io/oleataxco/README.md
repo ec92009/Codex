@@ -30,6 +30,14 @@ Open `http://localhost:8000/oleataxco/`.
 
 Update copy and structure in the selected concept first, then backport approved shared changes only when requested.
 
+## Founder Photo
+
+All 3 concept pages now render a founder photo in the hero-side panel using:
+
+- `web/github.io/oleataxco/assets/kelly-portrait.jpg`
+
+Add/replace that file to update the image across Concepts 1-3.
+
 ## Draft Disclaimer
 
 All versions include the same top banner text:

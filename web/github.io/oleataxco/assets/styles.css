@@ -266,6 +266,26 @@ img { max-width: 100%; }
   gap: 0.8rem;
   align-content: start;
 }
+.profile-shot {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.profile-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+.profile-shot figcaption {
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
