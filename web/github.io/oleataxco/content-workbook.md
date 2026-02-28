@@ -27,7 +27,7 @@ For each service:
 - Who it is for
 - What is included
 - What outcome the client gets
-- How often (one-time / monthly / quarterly / annual)
+- How often (one-time / periodic / quarterly / annual)
 
 ## 4. Brand Voice
 
