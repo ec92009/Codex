@@ -321,7 +321,7 @@ html[data-theme="dark"] .btn.secondary {
   grid-template-rows: 1fr auto;
   align-content: stretch;
   gap: 10px;
-  padding: 12px;
+  padding: 0;
   overflow: hidden;
   border-radius: calc(var(--radius) - 4px);
   border: 1px solid var(--line);
@@ -333,7 +333,7 @@ html[data-theme="dark"] .btn.secondary {
   z-index: 1;
   align-self: stretch;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 16 / 10;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -539,5 +539,19 @@ html[data-theme="dark"] .btn.secondary {
   .metrics, .stage-grid, .pricing-grid { grid-template-columns: 1fr; }
   .process-list li { grid-template-columns: 42px 1fr; gap: 10px; }
   .process-list li > span { width: 36px; height: 36px; }
-  .hero-art { min-height: auto; }
+  .hero-art {
+    min-height: auto;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+  .compare-slider {
+    width: 100vw;
+    max-width: none;
+    margin-inline: calc(50% - 50vw);
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    aspect-ratio: 16 / 9;
+  }
 }

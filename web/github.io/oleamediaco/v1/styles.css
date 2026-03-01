@@ -367,7 +367,7 @@ html[data-theme="dark"] .metric {
   position: relative;
   display: grid;
   align-content: stretch;
-  padding: 10px;
+  padding: 0;
   min-height: 0;
 }
 .compare-slider {
@@ -375,7 +375,8 @@ html[data-theme="dark"] .metric {
   margin: 0;
   border-radius: 16px;
   border: 1px solid var(--line);
-  aspect-ratio: 1 / 1;
+  width: 100%;
+  aspect-ratio: 16 / 10;
   position: relative;
   overflow: hidden;
   background: rgba(255,255,255,0.78);
@@ -701,4 +702,13 @@ html[data-theme="dark"] .cta-card p:not(.eyebrow) { color: #d7c7a6; }
   .header-link { padding: 7px 10px; }
   .lang-flag { width: 34px; height: 30px; }
   .panel-badge { font-size: 0.72rem; }
+  .compare-slider {
+    width: 100vw;
+    max-width: none;
+    margin-inline: calc(50% - 50vw);
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    aspect-ratio: 16 / 9;
+  }
 }
