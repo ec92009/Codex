@@ -150,20 +150,28 @@
             <li>Clear next steps afterward</li>
             <li>No obligation to proceed</li>
           </ul>
-          <p class="small">
-            If the embedded calendar does not load, use
-            <a href="https://calendly.com/oleataxco/intro-call" target="_blank" rel="noopener">this direct booking link</a>.
-          </p>
+          <p class="small">Placeholder scheduler only for draft review (no external booking service connected yet).</p>
         </div>
         <div class="calendar-embed" aria-label="Booking calendar">
-          <iframe
-            title="Book a call with Olea Tax Co."
-            src="https://calendly.com/oleataxco/intro-call?hide_gdpr_banner=1"
-            loading="lazy">
-          </iframe>
+          <form class="booking-form" action="#" method="post" onsubmit="return false;">
+            <div class="booking-row">
+              <label for="call-date">Pick a date</label>
+              <input id="call-date" name="call_date" type="date" />
+            </div>
+            <div class="booking-row">
+              <label for="call-time">Pick a start time (30-minute increments)</label>
+              <select id="call-time" name="call_time" required>
+                <option value="">Select a time</option>
+              </select>
+            </div>
+            <div class="booking-row">
+              <button type="button" class="button">Reserve Placeholder Slot</button>
+            </div>
+            <p class="small">Available window shown: 10:00 AM to 4:00 PM.</p>
+          </form>
         </div>
       </div>
-      <p class="small book-call-note">Replace the Calendly URL with Kelly's final scheduling link before production launch.</p>
+      <p class="small book-call-note">This is a UI placeholder. Final booking workflow can later connect to SquareSpace Scheduling, Calendly, or another provider.</p>
     </section>
 
     <section id="faqs" class="section panel">
@@ -184,6 +192,41 @@
       </div>
     </section>
   </main>
+  <script>
+    (function () {
+      var dateInput = document.getElementById("call-date");
+      var timeSelect = document.getElementById("call-time");
+      if (!dateInput || !timeSelect) return;
+
+      var today = new Date();
+      var yyyy = today.getFullYear();
+      var mm = String(today.getMonth() + 1).padStart(2, "0");
+      var dd = String(today.getDate()).padStart(2, "0");
+      dateInput.min = yyyy + "-" + mm + "-" + dd;
+      dateInput.value = dateInput.min;
+
+      var startHour = 10;
+      var endHour = 16;
+
+      function toLabel(hours24, minutes) {
+        var suffix = hours24 >= 12 ? "PM" : "AM";
+        var hour12 = hours24 % 12;
+        if (hour12 === 0) hour12 = 12;
+        return hour12 + ":" + String(minutes).padStart(2, "0") + " " + suffix;
+      }
+
+      for (var h = startHour; h <= endHour; h++) {
+        for (var m = 0; m <= 30; m += 30) {
+          if (h === endHour && m > 0) continue;
+          var value = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+          var option = document.createElement("option");
+          option.value = value;
+          option.textContent = toLabel(h, m);
+          timeSelect.appendChild(option);
+        }
+      }
+    })();
+  </script>
   <script src="assets/theme-toggle.js"></script>
 </body>
 </html>

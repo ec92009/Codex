@@ -387,16 +387,37 @@ a.button.alt:active {
 .calendar-embed {
   border: 1px solid var(--line);
   border-radius: 16px;
-  overflow: hidden;
+  overflow: auto;
   background: var(--surface-2);
-  min-height: 720px;
+  min-height: 420px;
 }
-.calendar-embed iframe {
+.booking-form {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+}
+.booking-row {
+  display: grid;
+  gap: 0.35rem;
+}
+.booking-row label {
+  font-weight: 700;
+  color: var(--text);
+}
+.booking-row input,
+.booking-row select {
   width: 100%;
-  height: 100%;
-  min-height: 720px;
-  border: 0;
-  display: block;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-1);
+  color: var(--text);
+  padding: 0.65rem 0.7rem;
+  font: inherit;
+}
+.booking-row input:focus-visible,
+.booking-row select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .book-call-note {
   margin-top: 0.7rem;
@@ -632,10 +653,6 @@ a.button.alt:active {
   }
   .book-call-grid {
     grid-template-columns: 1fr;
-  }
-  .calendar-embed,
-  .calendar-embed iframe {
-    min-height: 680px;
   }
 }
 

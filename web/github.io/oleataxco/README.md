@@ -27,7 +27,7 @@ Open `http://localhost:8000/oleataxco/`.
 - Main draft site: `index.html`
 - Theme/script assets: `assets/`
 - Optional legacy concept files remain under `concepts/` for reference only
-- Includes a `Book a Call` section with an embedded scheduling calendar (Calendly URL placeholder)
+- Includes a `Book a Call` placeholder section with local date/time controls
 
 ## Founder Photo
 
@@ -54,10 +54,11 @@ This workflow publishes this folder to:
 
 - `https://ec92009.github.io/Codex/oleataxco/`
 
-## Scheduling Link
+## Scheduling Placeholder
 
-The booking section in `index.html` currently uses:
+The booking section in `index.html` currently provides local placeholder controls:
 
-- `https://calendly.com/oleataxco/intro-call`
+- Date picker
+- Time options from 10:00 AM to 4:00 PM in 30-minute increments
 
-Replace that URL with Kelly's final scheduling link before production launch.
+No external service is connected yet. Replace this with the final scheduling provider when ready.
