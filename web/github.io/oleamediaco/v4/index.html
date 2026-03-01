@@ -52,17 +52,17 @@
           <div class="metric"><span data-i18n="metric3_label">Delivery</span><strong data-i18n="metric3_value">Fast listing-ready assets</strong></div>
         </div>
       </div>
-      <div class="hero-art" aria-hidden="true">
-        <div class="compare-grid">
-          <figure class="compare-card before">
-            <img src="../assets/before.png" alt="" loading="lazy" />
-            <figcaption data-i18n="before_tag">Before</figcaption>
-          </figure>
-          <figure class="compare-card after">
+      <div class="hero-art">
+        <figure class="compare-slider" data-compare-slider>
+          <img src="../assets/before.png" alt="" loading="lazy" />
+          <div class="compare-after">
             <img src="../assets/after.png" alt="" loading="lazy" />
-            <figcaption data-i18n="after_tag">After</figcaption>
-          </figure>
-        </div>
+          </div>
+          <figcaption class="compare-label before" data-i18n="before_tag">Before</figcaption>
+          <figcaption class="compare-label after" data-i18n="after_tag">After</figcaption>
+          <div class="compare-divider" aria-hidden="true"></div>
+          <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Before and after slider" />
+        </figure>
         <div class="art-note">Mediterranean Air</div>
       </div>
     </section>
@@ -136,6 +136,7 @@
   </main>
 
   <script src="../theme-toggle.js"></script>
+  <script src="../before-after-slider.js"></script>
   <script src="../shared-translations.js"></script>
   <script src="../shared-i18n.js"></script>
   <script>window.initOleaI18n('en');</script>

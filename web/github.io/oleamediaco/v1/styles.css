@@ -336,37 +336,35 @@ main {
 .hero-panel {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-content: center;
-  gap: 10px;
+  align-content: stretch;
   padding: 10px;
-  min-height: 400px;
+  min-height: 0;
 }
-.panel-card {
-  border-radius: 20px;
+.compare-slider {
+  --split: 50%;
+  margin: 0;
+  border-radius: 16px;
   border: 1px solid var(--line);
   aspect-ratio: 1 / 1;
   position: relative;
   overflow: hidden;
+  background: rgba(255,255,255,0.78);
   animation: floatIn 550ms ease both;
 }
-.panel-card.before {
-  background:
-    linear-gradient(165deg, rgba(0,0,0,0.06), rgba(0,0,0,0.14)),
-    url("../assets/before.png") center / cover no-repeat;
-  transform: rotate(-2deg);
+.compare-slider img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
-.panel-card.after {
-  background:
-    linear-gradient(165deg, rgba(0,0,0,0.04), rgba(0,0,0,0.10)),
-    url("../assets/after.png") center / cover no-repeat;
-  transform: rotate(2deg);
-  animation-delay: 100ms;
+.compare-after {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 calc(100% - var(--split)) 0 0);
 }
-.panel-tag {
+.compare-label {
   position: absolute;
   top: 10px;
-  left: 10px;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -375,10 +373,44 @@ main {
   border-radius: 999px;
   background: rgba(255,255,255,0.8);
   border: 1px solid rgba(0,0,0,0.06);
+  z-index: 3;
 }
-.panel-lines,
-.panel-scene {
-  display: none;
+.compare-label.before { left: 10px; }
+.compare-label.after { right: 10px; }
+.compare-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--split);
+  transform: translateX(-50%);
+  width: 2px;
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
+  z-index: 3;
+  pointer-events: none;
+}
+.compare-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.92);
+  background: rgba(12,22,19,0.7);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.24);
+}
+.compare-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  z-index: 4;
 }
 .panel-badge {
   position: absolute;
@@ -565,7 +597,7 @@ main {
 
 @media (max-width: 1000px) {
   .hero { grid-template-columns: 1fr; min-height: auto; }
-  .hero-panel { min-height: 760px; }
+  .hero-panel { min-height: 0; }
   .pricing-grid { grid-template-columns: repeat(2, 1fr); }
   .cta-card { grid-template-columns: 1fr; }
   .cta-actions { justify-content: flex-start; }

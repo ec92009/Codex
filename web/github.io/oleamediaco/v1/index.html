@@ -62,17 +62,17 @@
           </div>
         </div>
       </div>
-      <div class="hero-panel" aria-hidden="true">
-        <div class="panel-card before">
-          <div class="panel-tag" data-i18n="before_tag">Before</div>
-          <div class="panel-lines"></div>
-        </div>
-        <div class="panel-card after">
-          <div class="panel-tag" data-i18n="after_tag">After</div>
-          <div class="panel-scene">
-            <span></span><span></span><span></span>
+      <div class="hero-panel">
+        <figure class="compare-slider" data-compare-slider>
+          <img src="../assets/before.png" alt="" loading="lazy" />
+          <div class="compare-after">
+            <img src="../assets/after.png" alt="" loading="lazy" />
           </div>
-        </div>
+          <figcaption class="compare-label before" data-i18n="before_tag">Before</figcaption>
+          <figcaption class="compare-label after" data-i18n="after_tag">After</figcaption>
+          <div class="compare-divider" aria-hidden="true"></div>
+          <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Before and after slider" />
+        </figure>
         <div class="panel-badge" data-i18n="badge_text">Visual upgrades for agency listings</div>
       </div>
     </section>
@@ -227,6 +227,7 @@
   </main>
 
   <script src="../theme-toggle.js"></script>
+  <script src="../before-after-slider.js"></script>
   <script src="./script.js"></script>
 </body>
 </html>
