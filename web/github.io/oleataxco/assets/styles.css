@@ -106,10 +106,16 @@ img { max-width: 100%; }
   font-weight: 700;
   border: 1px solid transparent;
 }
+a.button {
+  color: var(--button-text);
+}
 .button.alt {
   background: transparent;
   color: var(--text);
   border-color: var(--line);
+}
+a.button.alt {
+  color: var(--text);
 }
 .button:hover { opacity: 0.92; }
 
@@ -224,6 +230,12 @@ img { max-width: 100%; }
 .topbar a {
   text-decoration: none;
   color: var(--muted);
+}
+.topbar a.button {
+  color: var(--button-text);
+}
+.topbar a.button.alt {
+  color: var(--text);
 }
 .brand {
   font-weight: 800;
