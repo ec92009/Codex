@@ -236,13 +236,27 @@ a.button.alt:active {
 }
 .topbar a {
   text-decoration: none;
-  color: var(--muted);
+  color: var(--text);
+  font-weight: 600;
+  padding: 0.42rem 0.58rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
 }
 .topbar a.button {
   color: var(--button-text);
 }
 .topbar a.button.alt {
   color: var(--text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .topbar nav a:not(.button):hover,
+  .topbar nav a:not(.button):focus-visible {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    outline: none;
+  }
 }
 .brand {
   font-weight: 800;
