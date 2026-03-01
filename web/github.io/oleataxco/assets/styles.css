@@ -106,7 +106,11 @@ img { max-width: 100%; }
   font-weight: 700;
   border: 1px solid transparent;
 }
-a.button {
+a.button,
+.button,
+a.button:visited,
+a.button:hover,
+a.button:active {
   color: var(--button-text);
 }
 .button.alt {
@@ -114,7 +118,10 @@ a.button {
   color: var(--text);
   border-color: var(--line);
 }
-a.button.alt {
+a.button.alt,
+a.button.alt:visited,
+a.button.alt:hover,
+a.button.alt:active {
   color: var(--text);
 }
 .button:hover { opacity: 0.92; }
