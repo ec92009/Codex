@@ -17,7 +17,7 @@ Do not edit Olea Tax Co files from this project thread.
 ## Local Preview
 
 ```bash
-cd /Users/ecohen/Codex/web/github.io
+cd /Users/rookcohen/Codex/web/github.io
 python3 -m http.server 8000
 ```
 
@@ -39,7 +39,7 @@ If PDF content changes, regenerate PDFs from `source/` and keep the output files
 
 GitHub Pages deploy is handled by:
 
-- `/Users/ecohen/Codex/.github/workflows/deploy-oleamediaco-site.yml`
+- `/Users/rookcohen/Codex/.github/workflows/deploy-oleamediaco-site.yml`
 
 This workflow publishes this folder to:
 
