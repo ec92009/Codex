@@ -1,13 +1,13 @@
 # Olea Tax Co Project
 
-Local project workspace for Olea Tax Co concept pages used to decide final direction before a production CMS build.
+Local project workspace for the single Olea Tax Co draft website before a production CMS build.
 
 ## Scope
 
 Use this folder for Olea Tax Co work only:
 
-- Concept board index: `index.html`
-- Homepage directions: `concepts/`
+- Single draft homepage: `index.html`
+- Legacy concept references: `concepts/`
 - Shared styles/scripts: `assets/`
 - Planning notes: `content-workbook.md`
 
@@ -22,21 +22,19 @@ python3 -m http.server 8000
 
 Open `http://localhost:8000/oleataxco/`.
 
-## Concept Files
+## Current Build
 
-- `concepts/01-trust-ledger.html`
-- `concepts/02-modern-growth.html`
-- `concepts/03-neighborhood-advisor.html`
-
-Update copy and structure in the selected concept first, then backport approved shared changes only when requested.
+- Main draft site: `index.html`
+- Theme/script assets: `assets/`
+- Optional legacy concept files remain under `concepts/` for reference only
 
 ## Founder Photo
 
-All 3 concept pages now render a founder photo in the hero-side panel using:
+The current site uses this founder photo path:
 
 - `web/github.io/oleataxco/assets/kelly-portrait.jpg`
 
-Add/replace that file to update the image across Concepts 1-3.
+Add/replace that file to update the photo on the live draft homepage.
 
 ## Draft Disclaimer
 
