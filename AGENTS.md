@@ -38,6 +38,13 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 - Olea Media Co: `http://localhost:8000/oleamediaco/`
 - Olea Tax Co: `http://localhost:8000/oleataxco/`
 
+## Execution Discipline
+
+- Prefer deterministic tooling over manual repetition. Before creating new scripts, check whether an existing script or workflow already covers the task.
+- If a project includes `workflows/` and `tools/`, follow that flow: read the workflow first, then execute with the corresponding tool scripts.
+- Treat failures as a fix loop: read the full error, patch the tool/process, retest, and record the constraint in project docs so the issue does not repeat.
+- Keep secrets out of source files. Use `.env` and credential files (gitignored), and never commit API keys or tokens.
+- Use `.tmp/` for regenerable intermediates whenever practical; keep final deliverables in their project-owned locations.
 ## Python Hygiene
 
 - Do not commit virtual environments (`.venv/`).

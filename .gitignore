@@ -8,3 +8,6 @@
 **/.env.*
 **/token.json
 **/credentials.json
+**/.playwright-profile/
+**/logs/
+**/listing_report.*
