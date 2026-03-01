@@ -36,6 +36,7 @@ html[data-theme="dark"] body.theme-v5 {
   background: rgba(242,242,237,0.94);
   border-bottom: 2px solid var(--line);
 }
+html[data-theme="dark"] .theme-v5 .topbar { background: rgba(10, 15, 14, 0.84); }
 .theme-v5 .back-link,
 .theme-v5 .pill,
 .theme-v5 .lang-switch,
@@ -102,4 +103,10 @@ html[data-theme="dark"] body.theme-v5 {
   border-radius: 0;
   background: var(--line);
   color: #fff;
+}
+
+html[data-theme="dark"] .theme-v5 .lang-flag.is-active,
+html[data-theme="dark"] .theme-v5 .btn.primary,
+html[data-theme="dark"] .theme-v5 .process-list li > span {
+  color: #07110d;
 }

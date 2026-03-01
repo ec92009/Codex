@@ -250,6 +250,23 @@ main {
   line-height: 1.35;
 }
 
+html[data-theme="dark"] .section-shell {
+  background: linear-gradient(180deg, rgba(16, 24, 21, 0.94), rgba(13, 20, 18, 0.92));
+  border-color: rgba(177, 208, 188, 0.28);
+}
+
+html[data-theme="dark"] .review-banner {
+  border-color: rgba(244, 193, 95, 0.6);
+  background: linear-gradient(180deg, rgba(40, 33, 20, 0.96), rgba(31, 26, 17, 0.94));
+  color: #f3e4c8;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .review-banner strong {
+  background: rgba(134, 223, 188, 0.18);
+  color: #bff0db;
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -310,6 +327,14 @@ main {
   color: var(--ink);
 }
 
+html[data-theme="dark"] .hero h1 { color: #edf6f1; }
+html[data-theme="dark"] .lead { color: #b7c8bf; }
+html[data-theme="dark"] .btn-ghost {
+  background: rgba(14, 22, 19, 0.96);
+  border-color: rgba(177, 208, 188, 0.34);
+  color: #eef7f2;
+}
+
 .hero-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -331,6 +356,11 @@ main {
 .metric strong {
   font-size: 0.87rem;
   line-height: 1.2;
+}
+
+html[data-theme="dark"] .metric {
+  background: rgba(16, 24, 21, 0.96);
+  border-color: rgba(177, 208, 188, 0.28);
 }
 
 .hero-panel {
@@ -373,6 +403,7 @@ main {
   border-radius: 999px;
   background: rgba(255,255,255,0.8);
   border: 1px solid rgba(0,0,0,0.06);
+  color: #1a2420;
   z-index: 3;
 }
 .compare-label.before { left: 10px; }
@@ -428,6 +459,12 @@ main {
   animation: riseIn 700ms ease 200ms both;
 }
 
+html[data-theme="dark"] .panel-badge {
+  background: rgba(13, 20, 18, 0.96);
+  border-color: rgba(177, 208, 188, 0.34);
+  color: #e6f1eb;
+}
+
 .intro-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -454,6 +491,13 @@ main {
   border-color: rgba(255,255,255,0.08);
 }
 .info-card.accent p { color: rgba(238,242,239,0.9); }
+
+html[data-theme="dark"] .info-card {
+  background: rgba(16, 24, 21, 0.96);
+  border-color: rgba(177, 208, 188, 0.28);
+}
+
+html[data-theme="dark"] .info-card p { color: #b7c8bf; }
 
 .section-head {
   display: flex;
@@ -503,6 +547,14 @@ main {
 .stage-card ul { margin: 12px 0 0 18px; padding: 0; }
 .stage-card li { margin: 6px 0; color: #38443d; }
 
+html[data-theme="dark"] .stage-card {
+  background: rgba(16, 24, 21, 0.96);
+  border-color: rgba(177, 208, 188, 0.28);
+}
+
+html[data-theme="dark"] .stage-card p,
+html[data-theme="dark"] .stage-card li { color: #b7c8bf; }
+
 .pricing-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -535,6 +587,16 @@ main {
 }
 .price-note { margin: 8px 0 0; color: var(--muted); font-size: 0.85rem; line-height: 1.35; }
 
+html[data-theme="dark"] .price-card {
+  background: rgba(16, 24, 21, 0.96);
+  border-color: rgba(177, 208, 188, 0.28);
+}
+
+html[data-theme="dark"] .price-card.premium {
+  background: linear-gradient(180deg, rgba(42, 34, 22, 0.95), rgba(33, 28, 19, 0.94));
+  border-color: rgba(244, 193, 95, 0.62);
+}
+
 .process-list {
   list-style: none;
   margin: 6px 0 0;
@@ -566,6 +628,18 @@ main {
 .process-list h3 { margin: 2px 0 4px; font-size: 1rem; }
 .process-list p { margin: 0; color: #344039; line-height: 1.38; }
 
+html[data-theme="dark"] .process-list li {
+  background: rgba(16, 24, 21, 0.96);
+  border-color: rgba(177, 208, 188, 0.28);
+}
+
+html[data-theme="dark"] .process-list p { color: #b7c8bf; }
+
+html[data-theme="dark"] .process-list li > span {
+  background: rgba(134, 223, 188, 0.2);
+  color: #d9f8eb;
+}
+
 .cta-card {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -585,6 +659,15 @@ main {
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+
+html[data-theme="dark"] .cta-card {
+  border-color: rgba(244, 193, 95, 0.62);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(134, 223, 188, 0.18), transparent 45%),
+    linear-gradient(180deg, rgba(42, 34, 22, 0.95), rgba(33, 28, 19, 0.94));
+}
+
+html[data-theme="dark"] .cta-card p:not(.eyebrow) { color: #d7c7a6; }
 
 @keyframes floatIn {
   from { opacity: 0; transform: translateY(10px) scale(0.98); }

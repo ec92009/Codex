@@ -31,6 +31,7 @@ html[data-theme="dark"] body.theme-v4 {
 }
 
 .theme-v4 .topbar { background: rgba(234, 244, 244, 0.78); }
+html[data-theme="dark"] .theme-v4 .topbar { background: rgba(10, 15, 14, 0.84); }
 .theme-v4 .brand { letter-spacing: 0.06em; font-size: 1.1rem; }
 .theme-v4 .review-banner {
   background: linear-gradient(180deg, rgba(255,245,230,0.95), rgba(255,241,221,0.9));

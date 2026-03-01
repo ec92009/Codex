@@ -31,6 +31,7 @@ html[data-theme="dark"] body.theme-v2 {
 }
 
 .theme-v2 .topbar { background: rgba(247, 239, 224, 0.76); border-bottom: 1px solid var(--line); }
+html[data-theme="dark"] .theme-v2 .topbar { background: rgba(10, 15, 14, 0.84); }
 .theme-v2 .brand { font-size: 1.2rem; }
 .theme-v2 .hero { grid-template-columns: 1.05fr 0.95fr; }
 .theme-v2 .hero h1 { font-weight: 650; letter-spacing: -0.02em; }
