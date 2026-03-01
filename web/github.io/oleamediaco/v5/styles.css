@@ -69,6 +69,10 @@ html[data-theme="dark"] .theme-v5 .topbar { background: rgba(10, 15, 14, 0.84); 
   text-transform: uppercase;
   letter-spacing: -0.02em;
 }
+
+body[data-lang="fr"] .theme-v5 .hero h1 {
+  text-transform: none;
+}
 .theme-v5 .eyebrow { font-family: var(--font-mono); color: var(--accent); }
 .theme-v5 .btn.primary {
   background: var(--line);
