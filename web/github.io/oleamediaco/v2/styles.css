@@ -49,4 +49,17 @@ html[data-theme="dark"] .theme-v2 .topbar { background: rgba(10, 15, 14, 0.84); 
   background: linear-gradient(140deg, rgba(187,127,47,0.12), rgba(39,78,67,0.08));
 }
 .theme-v2 .hero-art { background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(250,242,228,0.75)); }
+.theme-v2 .hero-art {
+  width: 100vw;
+  max-width: none;
+  margin-inline: calc(50% - 50vw);
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+}
+.theme-v2 .compare-slider {
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+}
 .theme-v2 .art-frame { border-style: dashed; }
