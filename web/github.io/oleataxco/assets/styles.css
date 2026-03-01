@@ -640,13 +640,13 @@ a.button.alt:active {
     grid-column: span 12 !important;
   }
   .whoami-row {
-    grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.1fr);
+    grid-template-columns: 1fr;
   }
   .section-grid.whoami-row > .whoami-photo {
     grid-column: 1 !important;
   }
   .section-grid.whoami-row > .whoami-copy {
-    grid-column: 2 !important;
+    grid-column: 1 !important;
   }
   .cards.cols-3 {
     grid-template-columns: 1fr;
