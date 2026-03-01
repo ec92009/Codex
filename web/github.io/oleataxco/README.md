@@ -27,6 +27,7 @@ Open `http://localhost:8000/oleataxco/`.
 - Main draft site: `index.html`
 - Theme/script assets: `assets/`
 - Optional legacy concept files remain under `concepts/` for reference only
+- Includes a `Book a Call` section with an embedded scheduling calendar (Calendly URL placeholder)
 
 ## Founder Photo
 
@@ -52,3 +53,11 @@ GitHub Pages deploy is handled by:
 This workflow publishes this folder to:
 
 - `https://ec92009.github.io/Codex/oleataxco/`
+
+## Scheduling Link
+
+The booking section in `index.html` currently uses:
+
+- `https://calendly.com/oleataxco/intro-call`
+
+Replace that URL with Kelly's final scheduling link before production launch.

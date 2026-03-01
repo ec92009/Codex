@@ -359,6 +359,29 @@ img { max-width: 100%; }
   padding: 0.7rem 0.8rem;
   background: var(--surface-3);
 }
+.book-call-grid {
+  display: grid;
+  grid-template-columns: 0.75fr 1.25fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+.calendar-embed {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface-2);
+  min-height: 720px;
+}
+.calendar-embed iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 720px;
+  border: 0;
+  display: block;
+}
+.book-call-note {
+  margin-top: 0.7rem;
+}
 .quote {
   font-family: "Space Grotesk", sans-serif;
   font-size: 1.35rem;
@@ -587,6 +610,13 @@ img { max-width: 100%; }
   }
   .cards.cols-3 {
     grid-template-columns: 1fr;
+  }
+  .book-call-grid {
+    grid-template-columns: 1fr;
+  }
+  .calendar-embed,
+  .calendar-embed iframe {
+    min-height: 680px;
   }
 }
 
