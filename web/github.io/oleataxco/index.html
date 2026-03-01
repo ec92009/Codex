@@ -83,6 +83,28 @@
       </section>
     </section>
 
+    <section id="before-after" class="section panel">
+      <h2>Before / After</h2>
+      <p class="small">This slider starts at <strong>Before</strong> and slowly moves to <strong>After</strong>. You can take over at any time.</p>
+      <div class="before-after-block" data-before-after>
+        <div class="ba-columns">
+          <article class="ba-card ba-before">
+            <h3>Before</h3>
+            <p>Reactive tax deadlines, scattered records, and rushed year-end decisions.</p>
+          </article>
+          <article class="ba-card ba-after">
+            <h3>After</h3>
+            <p>Clear structure, proactive planning, and intentional decisions throughout the year.</p>
+          </article>
+        </div>
+        <div class="ba-slider-row">
+          <span>Before</span>
+          <input class="ba-slider" type="range" min="0" max="100" value="0" aria-label="Before to after slider" />
+          <span>After</span>
+        </div>
+      </div>
+    </section>
+
     <section id="services" class="section-grid">
       <section class="section panel span-12">
         <h2>Service packages</h2>
@@ -224,6 +246,62 @@
           option.textContent = toLabel(h, m);
           timeSelect.appendChild(option);
         }
+      }
+    })();
+
+    (function () {
+      var block = document.querySelector("[data-before-after]");
+      if (!block) return;
+      var slider = block.querySelector(".ba-slider");
+      var beforeCard = block.querySelector(".ba-before");
+      var afterCard = block.querySelector(".ba-after");
+      if (!slider || !beforeCard || !afterCard) return;
+
+      var userTookOver = false;
+      var start = null;
+      var durationMs = 14000;
+
+      function paint(value) {
+        var progress = Math.max(0, Math.min(100, Number(value)));
+        slider.value = String(progress);
+        slider.style.background =
+          "linear-gradient(to right, var(--accent) 0%, var(--accent) " +
+          progress +
+          "%, var(--surface-3) " +
+          progress +
+          "%, var(--surface-3) 100%)";
+
+        var beforeEmphasis = 1 - progress / 100;
+        var afterEmphasis = progress / 100;
+        beforeCard.style.opacity = String(0.65 + beforeEmphasis * 0.35);
+        afterCard.style.opacity = String(0.65 + afterEmphasis * 0.35);
+      }
+
+      function stopAuto() {
+        userTookOver = true;
+      }
+
+      slider.addEventListener("input", function () {
+        stopAuto();
+        paint(slider.value);
+      });
+      slider.addEventListener("pointerdown", stopAuto);
+      slider.addEventListener("mousedown", stopAuto);
+      slider.addEventListener("touchstart", stopAuto, { passive: true });
+      slider.addEventListener("keydown", stopAuto);
+
+      function step(timestamp) {
+        if (userTookOver) return;
+        if (start === null) start = timestamp;
+        var elapsed = timestamp - start;
+        var value = Math.min(100, (elapsed / durationMs) * 100);
+        paint(value);
+        if (value < 100) window.requestAnimationFrame(step);
+      }
+
+      paint(0);
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        window.requestAnimationFrame(step);
       }
     })();
   </script>

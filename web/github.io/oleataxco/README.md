@@ -28,6 +28,7 @@ Open `http://localhost:8000/oleataxco/`.
 - Theme/script assets: `assets/`
 - Optional legacy concept files remain under `concepts/` for reference only
 - Includes a `Book a Call` placeholder section with local date/time controls
+- Includes a `Before / After` slider that auto-animates from left to right until the user interacts
 
 ## Founder Photo
 
