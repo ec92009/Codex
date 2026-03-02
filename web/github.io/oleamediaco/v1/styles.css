@@ -27,6 +27,28 @@ html[data-theme="dark"] {
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand-2) 70%, white 30%);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -40px;
+  z-index: 100;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  text-decoration: none;
+  font-weight: 700;
+}
+.skip-link:focus { top: 10px; }
+
 body {
   margin: 0;
   font-family: "Manrope", system-ui, sans-serif;
@@ -307,7 +329,7 @@ html[data-theme="dark"] .review-banner strong {
   margin: 0;
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(2rem, 4vw, 3.5rem);
-  line-height: 0.95;
+  line-height: 1.04;
   color: #18211e;
 }
 .lead {
@@ -731,5 +753,14 @@ html[data-theme="dark"] .cta-card p:not(.eyebrow) { color: #d7c7a6; }
     border-left: 0;
     border-right: 0;
     aspect-ratio: 16 / 9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
