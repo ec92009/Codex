@@ -94,6 +94,30 @@ body {
 a { color: inherit; }
 img { max-width: 100%; }
 
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-2) 70%, white 30%);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -42px;
+  z-index: 120;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  text-decoration: none;
+  font-weight: 700;
+}
+.skip-link:focus {
+  top: 10px;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -105,6 +129,7 @@ img { max-width: 100%; }
   text-decoration: none;
   font-weight: 700;
   border: 1px solid transparent;
+  transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
 }
 a.button,
 .button,
@@ -124,7 +149,12 @@ a.button.alt:hover,
 a.button.alt:active {
   color: var(--text);
 }
-.button:hover { opacity: 0.92; }
+.button:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+.button:active { transform: translateY(0); }
 
 .eyebrow {
   margin: 0 0 0.5rem;
@@ -289,7 +319,7 @@ a.button.alt:active {
 }
 .hero-copy h1 {
   margin: 0.3rem 0 0.8rem;
-  line-height: 1.02;
+  line-height: 1.08;
   font-size: clamp(2rem, 4vw, 3.4rem);
 }
 .hero-copy p {
@@ -722,7 +752,10 @@ a.button.alt:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    scroll-behavior: auto;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
