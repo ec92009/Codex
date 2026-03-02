@@ -1,18 +1,18 @@
 :root {
   --bg: #f6f1eb;
   --text: #2a211b;
-  --muted: #6a594f;
-  --line: rgba(42, 33, 27, 0.1);
-  --card: rgba(255, 255, 255, 0.82);
-  --surface-1: rgba(255, 255, 255, 0.78);
-  --surface-2: rgba(255, 255, 255, 0.68);
-  --surface-3: rgba(255, 255, 255, 0.58);
+  --muted: #4f4037;
+  --line: rgba(42, 33, 27, 0.16);
+  --card: #ffffff;
+  --surface-1: #fffdfa;
+  --surface-2: #fbf4ec;
+  --surface-3: #f5eadf;
   --bg-glow-1: #f1e4d5;
   --bg-glow-2: #edd7c2;
   --accent: #8a4f2b;
   --accent-2: #d39056;
   --button-text: #ffffff;
-  --shadow: 0 18px 50px rgba(20, 16, 11, 0.08);
+  --shadow: 0 10px 26px rgba(20, 16, 11, 0.08);
   --radius: 18px;
 }
 
@@ -226,13 +226,13 @@ a.button.alt:active {
   border-radius: 14px;
   border: 1px solid var(--line);
   background: var(--surface-2);
-  backdrop-filter: blur(8px);
 }
 .topbar nav {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
   align-items: center;
+  margin-left: auto;
 }
 .topbar a {
   text-decoration: none;
@@ -262,6 +262,15 @@ a.button.alt:active {
   font-weight: 800;
   letter-spacing: 0.02em;
 }
+.brand-wrap {
+  display: grid;
+  gap: 0.08rem;
+}
+.brand-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
 
 .hero {
   display: grid;
@@ -287,6 +296,23 @@ a.button.alt:active {
   color: var(--muted);
   margin: 0 0 1rem;
   max-width: 55ch;
+}
+.trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 0.8rem;
+}
+.trust-strip span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.58rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  background: #ffffff;
+  color: #5b331d;
+  font-size: 0.79rem;
+  font-weight: 700;
 }
 .cta-row {
   display: flex;
@@ -379,6 +405,9 @@ a.button.alt:active {
 }
 .card h3 { margin-bottom: 0.3rem; }
 .card p, .card li { color: var(--muted); }
+.card li {
+  color: #473930;
+}
 .list-clean {
   list-style: none;
   padding: 0;
@@ -457,22 +486,20 @@ a.button.alt:active {
 }
 
 .theme-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
+  position: static;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   border: 1px solid var(--line);
-  background: var(--surface-1);
+  background: #ffffff;
   color: var(--text);
   border-radius: 999px;
-  padding: 0.35rem 0.55rem;
+  padding: 0.3rem 0.52rem;
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 0.86rem;
   cursor: pointer;
-  backdrop-filter: blur(8px);
 }
 
 .theme-toggle:focus-visible {
@@ -481,17 +508,17 @@ a.button.alt:active {
 }
 
 .theme-toggle .toggle-label {
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   letter-spacing: 0.01em;
   color: var(--muted);
   line-height: 1;
-  min-width: 2.15rem;
+  min-width: 1.9rem;
   text-align: center;
 }
 
 .theme-toggle .toggle-track {
-  width: 2.95rem;
-  height: 1.65rem;
+  width: 2.65rem;
+  height: 1.45rem;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--surface-3);
@@ -501,10 +528,10 @@ a.button.alt:active {
 
 .theme-toggle .toggle-thumb {
   position: absolute;
-  top: 0.12rem;
-  left: 0.15rem;
-  width: 1.25rem;
-  height: 1.25rem;
+  top: 0.1rem;
+  left: 0.13rem;
+  width: 1.05rem;
+  height: 1.05rem;
   border-radius: 999px;
   background: var(--text);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
@@ -516,7 +543,7 @@ a.button.alt:active {
 }
 
 .theme-toggle[aria-pressed="true"] .toggle-thumb {
-  transform: translateX(1.28rem);
+  transform: translateX(1.15rem);
   background: color-mix(in srgb, var(--button-text) 25%, #ffffff 75%);
 }
 
@@ -620,12 +647,12 @@ a.button.alt:active {
 .concept-neighborhood {
   --bg: #f6f1eb;
   --text: #2a211b;
-  --muted: #6a594f;
-  --line: rgba(42, 33, 27, 0.1);
-  --card: rgba(255,255,255,0.86);
-  --surface-1: rgba(255,255,255,0.8);
-  --surface-2: rgba(255,255,255,0.68);
-  --surface-3: rgba(255,255,255,0.58);
+  --muted: #4f4037;
+  --line: rgba(42, 33, 27, 0.16);
+  --card: #ffffff;
+  --surface-1: #fffdfa;
+  --surface-2: #fbf4ec;
+  --surface-3: #f5eadf;
   --accent: #8a4f2b;
   --accent-2: #d39056;
   --button-text: #ffffff;
@@ -682,6 +709,9 @@ a.button.alt:active {
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .topbar nav {
+    margin-left: 0;
   }
   .cards.cols-2 {
     grid-template-columns: 1fr;
