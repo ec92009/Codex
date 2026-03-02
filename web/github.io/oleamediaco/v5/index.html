@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Olea Media Co Mock Site - Version 5</title>
-  <meta name="description" content="Olea Media Co design exploration Version 5." />
+  <title>Olea Media Co - Grid Minimal</title>
+  <meta name="description" content="Grid minimal direction for Olea Media Co listing enhancement services." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="./styles.css" />
@@ -31,16 +31,11 @@
   </header>
 
   <main class="shell page-flow">
-    <section class="review-banner" role="note">
-      <strong data-i18n="review_badge">Mock Draft</strong>
-      <span data-i18n="review_text">Internal review only. Content, pricing, and visuals are placeholders for team feedback.</span>
-      <em class="variant-tag">Version 5</em>
-    </section>
-
     <section class="hero">
       <div class="hero-copy">
         <p class="eyebrow" data-i18n="eyebrow">Listing presentation that sells the visit</p>
         <h1 data-i18n="hero_title">Help agents upgrade weak listings before they lose buyer attention.</h1>
+        <p class="hero-kicker">Grid Minimal: direct service operator style with compact decision blocks.</p>
         <p class="hero-lead" data-i18n="hero_lead">Olea Media Co improves real-estate listing performance with a 4-stage service model.</p>
         <div class="hero-buttons">
           <a class="btn primary" href="#stages" data-i18n="hero_cta_primary">See the 4 stages</a>
@@ -54,9 +49,9 @@
       </div>
       <div class="hero-art">
         <figure class="compare-slider" data-compare-slider>
-          <img src="../assets/before.png" alt="" loading="lazy" />
+          <img src="../assets/before.png" alt="Original listing photo before enhancement" loading="lazy" />
           <div class="compare-after">
-            <img src="../assets/after.png" alt="" loading="lazy" />
+            <img src="../assets/after.png" alt="Enhanced listing photo after editing and staging treatment" loading="lazy" />
           </div>
           <figcaption class="compare-label before" data-i18n="before_tag">Before</figcaption>
           <figcaption class="compare-label after" data-i18n="after_tag">After</figcaption>
@@ -65,6 +60,16 @@
         </figure>
         <div class="art-note">Grid Minimal</div>
       </div>
+    </section>
+
+    <section class="panel matrix-panel" aria-label="Service and entry pricing matrix">
+      <h2>Service Matrix</h2>
+      <ul class="matrix-list">
+        <li><strong>Stage 1</strong><span>Photo cleanup</span><em>EUR 90+</em></li>
+        <li><strong>Stage 2</strong><span>New photo shoot</span><em>EUR 220+</em></li>
+        <li><strong>Stage 3</strong><span>Virtual staging</span><em>EUR 120+</em></li>
+        <li><strong>Stage 4</strong><span>Physical staging + shoot</span><em>EUR 650+</em></li>
+      </ul>
     </section>
 
     <section id="stages" class="panel">
@@ -124,13 +129,13 @@
 
     <section class="cta panel">
       <div>
-        <p class="eyebrow" data-i18n="cta_eyebrow">Mock site CTA</p>
-        <h2 data-i18n="cta_title">Book a pilot with 3 listings in 30 days</h2>
-        <p data-i18n="cta_body">Use this mock site as the base for a production website. Next step: add real before/after examples, WhatsApp contact, and booking flow.</p>
+        <p class="eyebrow" data-i18n="cta_eyebrow">Get Started</p>
+        <h2 data-i18n="cta_title">Start with a 3-listing pilot in 30 days</h2>
+        <p data-i18n="cta_body">Share 3 listings and we will propose the right stage mix, delivery timeline, and quote.</p>
       </div>
       <div class="hero-buttons">
         <a class="btn primary" href="mailto:hello@oleamediaco.com">hello@oleamediaco.com</a>
-        <a class="btn secondary" href="https://wa.me/34000000000" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="btn secondary" href="mailto:hello@oleamediaco.com?subject=Pilot%20request">Request callback</a>
       </div>
     </section>
   </main>

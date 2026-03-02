@@ -15,8 +15,8 @@ const translations = {
     before_tag: 'Before',
     after_tag: 'After',
     badge_text: 'Visual upgrades for agency listings',
-    review_badge: 'Mock Draft',
-    review_text: 'Internal review only. Content, pricing, and visuals are placeholders for team feedback.',
+    review_badge: 'Service Overview',
+    review_text: 'Visual services designed to improve listing quality and buyer response.',
     problem_title: 'The problem',
     problem_body: 'Many listings underperform because agents publish dark, distorted, or empty-looking photos. The result is fewer quality inquiries and a weaker first impression.',
     solution_title: 'The offer',
@@ -67,9 +67,9 @@ const translations = {
     pr3_body: 'Editing, photography, virtual staging, or physical staging depending on the package chosen.',
     pr4_title: 'Deliver listing-ready assets',
     pr4_body: 'Receive final files with a simple upload checklist for portals and social media.',
-    cta_eyebrow: 'Mock site CTA',
-    cta_title: 'Book a pilot with 3 listings in 30 days',
-    cta_body: 'Use this mock site as the base for a production website. Next step: add real before/after examples, WhatsApp contact, and booking flow.'
+    cta_eyebrow: 'Get Started',
+    cta_title: 'Start with a 3-listing pilot in 30 days',
+    cta_body: 'Share 3 listings and we will propose the right stage mix, delivery timeline, and quote.'
   },
   es: {
     corridor: 'Corredor Málaga - Marbella',
@@ -87,8 +87,8 @@ const translations = {
     before_tag: 'Antes',
     after_tag: 'Después',
     badge_text: 'Mejoras visuales para anuncios de agencias',
-    review_badge: 'Borrador Mock',
-    review_text: 'Solo para revisión interna. Contenido, precios y visuales son provisionales para recoger feedback del equipo.',
+    review_badge: 'Resumen del Servicio',
+    review_text: 'Servicios visuales diseñados para mejorar la calidad del anuncio y la respuesta de compradores.',
     problem_title: 'El problema',
     problem_body: 'Muchos anuncios rinden mal porque se publican fotos oscuras, deformadas o vacías. El resultado: menos contactos cualificados y peor primera impresión.',
     solution_title: 'La oferta',
@@ -139,9 +139,9 @@ const translations = {
     pr3_body: 'Edición, fotografía, staging virtual o staging real según el paquete elegido.',
     pr4_title: 'Entregamos materiales listos',
     pr4_body: 'Recibes archivos finales con checklist simple para portales y redes sociales.',
-    cta_eyebrow: 'CTA del mock',
-    cta_title: 'Reserva un piloto con 3 anuncios en 30 días',
-    cta_body: 'Usa este mock como base de una web real. Siguiente paso: ejemplos reales antes/después, WhatsApp y flujo de reserva.'
+    cta_eyebrow: 'Empezar',
+    cta_title: 'Empieza con un piloto de 3 anuncios en 30 días',
+    cta_body: 'Comparte 3 anuncios y te proponemos la combinación de etapas, calendario y presupuesto.'
   },
   fr: {
     corridor: 'Corridor Malaga - Marbella',
@@ -159,8 +159,8 @@ const translations = {
     before_tag: 'Avant',
     after_tag: 'Après',
     badge_text: "Améliorations visuelles pour annonces d'agence",
-    review_badge: 'Maquette',
-    review_text: "Révision interne uniquement. Contenu, tarifs et visuels sont provisoires pour recueillir les avis de l'équipe.",
+    review_badge: 'Apercu du Service',
+    review_text: "Services visuels concus pour ameliorer la qualite des annonces et la reponse des acheteurs.",
     problem_title: 'Le problème',
     problem_body: "Beaucoup d'annonces performent mal parce que les agents publient des photos sombres, déformées ou vides. Résultat : moins de contacts qualifiés et une première impression plus faible.",
     solution_title: "L'offre",
@@ -211,9 +211,9 @@ const translations = {
     pr3_body: 'Retouche, photographie, staging virtuel ou staging réel selon le package choisi.',
     pr4_title: 'Livraison des fichiers prêts à publier',
     pr4_body: 'Réception des fichiers finaux avec une checklist simple pour portails et réseaux sociaux.',
-    cta_eyebrow: 'CTA de la maquette',
-    cta_title: 'Réservez un pilote avec 3 annonces en 30 jours',
-    cta_body: "Utilisez cette maquette comme base d'un site réel. Prochaine étape : vrais exemples avant/après, WhatsApp et flux de réservation."
+    cta_eyebrow: 'Demarrer',
+    cta_title: 'Demarrez avec un pilote de 3 annonces en 30 jours',
+    cta_body: "Partagez 3 annonces et nous proposerons la bonne combinaison d'etapes, le delai et le devis."
   }
 };
 

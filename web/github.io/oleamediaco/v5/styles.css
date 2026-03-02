@@ -7,7 +7,7 @@
   --muted: #525252;
   --surface: #fbfbf8;
   --surface-2: #f8f8f4;
-  --line: #1b1b1b;
+  --line: #343434;
   --brand: #111111;
   --accent: #0d7a52;
   --shadow: none;
@@ -34,7 +34,7 @@ html[data-theme="dark"] body.theme-v5 {
 
 .theme-v5 .topbar {
   background: rgba(242,242,237,0.94);
-  border-bottom: 2px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 html[data-theme="dark"] .theme-v5 .topbar { background: rgba(10, 15, 14, 0.84); }
 .theme-v5 .back-link,
@@ -48,9 +48,9 @@ html[data-theme="dark"] .theme-v5 .topbar { background: rgba(10, 15, 14, 0.84); 
 .theme-v5 .price-card,
 .theme-v5 .process-list li,
 .theme-v5 .hero-art {
-  border-radius: 0;
+  border-radius: 6px;
   box-shadow: none;
-  border-width: 2px;
+  border-width: 1px;
 }
 .theme-v5 .brand {
   font-family: var(--font-mono);
@@ -68,6 +68,14 @@ html[data-theme="dark"] .theme-v5 .topbar { background: rgba(10, 15, 14, 0.84); 
   line-height: 0.96;
   text-transform: uppercase;
   letter-spacing: -0.02em;
+}
+.theme-v5 .hero-kicker {
+  margin: 10px 0 0;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 body[data-lang="fr"] .theme-v5 .hero h1 {
@@ -97,8 +105,8 @@ body[data-lang="fr"] .theme-v5 .hero h1 {
 .theme-v5 .stage-card.emphasis {
   background: #fff;
   color: var(--ink);
-  outline: 4px solid var(--accent);
-  outline-offset: -4px;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 .theme-v5 .stage-card.emphasis p { color: var(--muted); }
 .theme-v5 .price-card span { font-family: var(--font-mono); color: var(--accent); }
@@ -113,4 +121,48 @@ html[data-theme="dark"] .theme-v5 .lang-flag.is-active,
 html[data-theme="dark"] .theme-v5 .btn.primary,
 html[data-theme="dark"] .theme-v5 .process-list li > span {
   color: #07110d;
+}
+
+.theme-v5 .matrix-panel h2 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.theme-v5 .matrix-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.theme-v5 .matrix-list li {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 10px;
+  align-items: baseline;
+  border: 1px solid var(--line);
+  padding: 9px 10px;
+  background: var(--surface-2);
+}
+.theme-v5 .matrix-list strong {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+.theme-v5 .matrix-list span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.theme-v5 .matrix-list em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .theme-v5 .matrix-list li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
 }

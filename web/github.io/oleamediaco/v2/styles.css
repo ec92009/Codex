@@ -35,6 +35,12 @@ html[data-theme="dark"] .theme-v2 .topbar { background: rgba(10, 15, 14, 0.84); 
 .theme-v2 .brand { font-size: 1.2rem; }
 .theme-v2 .hero { grid-template-columns: 1fr; }
 .theme-v2 .hero h1 { font-weight: 650; letter-spacing: -0.02em; }
+.theme-v2 .hero-kicker {
+  margin: 10px 0 0;
+  font-size: 0.86rem;
+  color: var(--brand);
+  font-weight: 600;
+}
 .theme-v2 .panel-head h2 { font-weight: 600; }
 .theme-v2 .stage-card { position: relative; }
 .theme-v2 .stage-card::after {
@@ -50,16 +56,36 @@ html[data-theme="dark"] .theme-v2 .topbar { background: rgba(10, 15, 14, 0.84); 
 }
 .theme-v2 .hero-art { background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(250,242,228,0.75)); }
 .theme-v2 .hero-art {
-  width: 100vw;
-  max-width: none;
-  margin-inline: calc(50% - 50vw);
-  border-radius: 0;
-  border-left: 0;
-  border-right: 0;
+  min-height: 280px;
 }
 .theme-v2 .compare-slider {
-  border-radius: 0;
-  border-left: 0;
-  border-right: 0;
+  border-radius: 14px;
 }
 .theme-v2 .art-frame { border-style: dashed; }
+.theme-v2 .duo-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.theme-v2 .duo-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  padding: 14px;
+}
+.theme-v2 .duo-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+.theme-v2 .duo-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+  .theme-v2 .duo-panel {
+    grid-template-columns: 1fr;
+  }
+}
