@@ -99,7 +99,28 @@ html[data-theme="dark"] .site-header {
   border-radius: 999px;
 }
 
+.version-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.8);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.version-switch a {
+  text-decoration: none;
+  color: var(--muted);
+  line-height: 1;
+}
+.version-switch a:hover { color: var(--ink); }
+.version-switch a.is-active { color: var(--brand); }
+.version-switch span { color: var(--muted); opacity: 0.75; }
+
 html[data-theme="dark"] .header-link,
+html[data-theme="dark"] .version-switch,
 html[data-theme="dark"] .theme-toggle,
 html[data-theme="dark"] .lang-switch {
   background: rgba(12, 18, 16, 0.96);
