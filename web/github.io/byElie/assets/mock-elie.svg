@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="720" viewBox="0 0 720 720" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="80" y1="40" x2="640" y2="680" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5B7CFF"/>
+      <stop offset="1" stop-color="#27C6B8"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="720" rx="72" fill="url(#bg)"/>
+  <circle cx="360" cy="285" r="132" fill="white" fill-opacity="0.9"/>
+  <path d="M148 602c27-113 113-178 212-178s185 65 212 178" fill="white" fill-opacity="0.9"/>
+  <text x="360" y="675" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="64" font-weight="700">ELIE</text>
+</svg>
