@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303s"/>
-  <link rel="stylesheet" href="./v3/styles.css?v=20260303s"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303t"/>
+  <link rel="stylesheet" href="./v3/styles.css?v=20260303t"/>
 </head>
 <body class="v3">
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,7 +18,7 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — 03/03 @ 13:28</div>
+    <div class="brand">BY ELIE — 03/03 @ 13:31</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -34,9 +34,12 @@
     <section id="offers" class="panel carousel" aria-label="Offerings carousel">
       <div class="carousel-head">
         <h2>Offerings</h2>
-        
+        <div class="carousel-controls">
+          <button class="btn secondary" type="button" data-offers-prev>← Prev</button>
+          <button class="btn secondary" type="button" data-offers-next>Next →</button>
+        </div>
       </div>
-      <div class="carousel-wrap">
+      <div class="carousel-wrap" data-offers-wrap">
         <div class="carousel-track" data-carousel-track>
           <article class="card carousel-item"><div class="service-logo" aria-hidden="true">🧩</div><h3>3D Print Plans</h3><p>Downloadable STL/3MF packs for home and prosumer makers.</p><a class="btn secondary" href="./plans.html">Explore plans</a></article>
           <article class="card carousel-item"><div class="service-logo" aria-hidden="true">🖨️</div><h3>Printed Physical Items</h3><p>Custom and ready-made pieces produced in-house.</p><a class="btn secondary" href="./prints.html">View products</a></article>
@@ -66,6 +69,13 @@
   <script>
     const btn=document.querySelector('[data-theme-toggle]');
     btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
+
+    const offersWrap=document.querySelector('[data-offers-wrap]');
+    const prevBtn=document.querySelector('[data-offers-prev]');
+    const nextBtn=document.querySelector('[data-offers-next]');
+    const step=()=>Math.max(280, Math.floor((offersWrap?.clientWidth||320)*0.9));
+    prevBtn?.addEventListener('click',()=>offersWrap?.scrollBy({left:-step(), behavior:'smooth'}));
+    nextBtn?.addEventListener('click',()=>offersWrap?.scrollBy({left:step(), behavior:'smooth'}));
 
   </script>
 </body></html>
