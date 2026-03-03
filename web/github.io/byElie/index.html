@@ -30,11 +30,17 @@
         <a class="btn secondary" href="#contact">Request quote</a>
       </div>
     </section>
-    <section id="offers" class="panel grid">
-      <article class="card"><div class="service-logo" aria-hidden="true">🧩</div><h3>3D Print Plans</h3><p>Downloadable STL/3MF packs for home and prosumer makers.</p><a class="btn secondary" href="./plans.html">Explore plans</a></article>
-      <article class="card"><div class="service-logo" aria-hidden="true">🖨️</div><h3>Printed Physical Items</h3><p>Custom and ready-made pieces produced in-house.</p><a class="btn secondary" href="./prints.html">View products</a></article>
-      <article class="card"><div class="service-logo" aria-hidden="true">📸</div><h3>Photo Services</h3><p>Product, listing, and lifestyle image packages.</p><a class="btn secondary" href="./gallery.html">Open gallery</a></article>
-      <article class="card"><div class="service-logo" aria-hidden="true">🌐</div><h3>Website Design & Maintenance</h3><p>Design, launch, and ongoing updates for SMB sites.</p><a class="btn secondary" href="./web-design.html">See web services</a></article>
+    <section id="offers" class="panel carousel" aria-label="Offerings carousel">
+      <div class="carousel-track" data-carousel-track>
+        <article class="card carousel-item"><div class="service-logo" aria-hidden="true">🧩</div><h3>3D Print Plans</h3><p>Downloadable STL/3MF packs for home and prosumer makers.</p><a class="btn secondary" href="./plans.html">Explore plans</a></article>
+        <article class="card carousel-item"><div class="service-logo" aria-hidden="true">🖨️</div><h3>Printed Physical Items</h3><p>Custom and ready-made pieces produced in-house.</p><a class="btn secondary" href="./prints.html">View products</a></article>
+        <article class="card carousel-item"><div class="service-logo" aria-hidden="true">📸</div><h3>Photo Services</h3><p>Product, listing, and lifestyle image packages.</p><a class="btn secondary" href="./gallery.html">Open gallery</a></article>
+        <article class="card carousel-item"><div class="service-logo" aria-hidden="true">🌐</div><h3>Website Design & Maintenance</h3><p>Design, launch, and ongoing updates for SMB sites.</p><a class="btn secondary" href="./web-design.html">See web services</a></article>
+      </div>
+      <div class="carousel-controls">
+        <button class="btn secondary" type="button" data-carousel-prev>← Prev</button>
+        <button class="btn secondary" type="button" data-carousel-next>Next →</button>
+      </div>
     </section>
     <section class="panel" id="about">
       <h2>About Elie</h2>
@@ -56,5 +62,14 @@
   <script>
     const btn=document.querySelector('[data-theme-toggle]');
     btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
+
+    const track=document.querySelector('[data-carousel-track]');
+    const prev=document.querySelector('[data-carousel-prev]');
+    const next=document.querySelector('[data-carousel-next]');
+    if(track && prev && next){
+      const step=()=>track.clientWidth;
+      prev.addEventListener('click',()=>track.scrollBy({left:-step(),behavior:'smooth'}));
+      next.addEventListener('click',()=>track.scrollBy({left:step(),behavior:'smooth'}));
+    }
   </script>
 </body></html>
