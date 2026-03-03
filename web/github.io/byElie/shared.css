@@ -67,35 +67,10 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(2,1fr)}
 .carousel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .carousel-head h2{margin:0}
-.carousel-wrap{
-  position:relative;
-  height:clamp(320px,44vw,430px);
-  perspective:1200px;
-  transform-style:preserve-3d;
-  overflow:hidden;
-  cursor:grab;
-  touch-action:pan-y;
-}
-.carousel-wrap.is-dragging{cursor:grabbing}
-.carousel-track{
-  position:relative;
-  height:100%;
-  transform-style:preserve-3d;
-}
-.carousel-item{
-  position:absolute;
-  top:0;
-  left:50%;
-  width:min(560px,calc(100% - 56px));
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  transition:transform .44s cubic-bezier(.22,.65,.2,1),opacity .28s ease,filter .28s ease;
-  pointer-events:none;
-}
-.carousel-item.is-active{pointer-events:auto;filter:none}
-.carousel-item:not(.is-active){filter:saturate(.8) brightness(.95)}
-.carousel-item .btn{margin-top:auto}
+.carousel-wrap{position:relative;overflow:hidden}
+.carousel-track{display:flex;transition:transform .36s ease;will-change:transform}
+.carousel-item{position:relative;flex:0 0 100%;width:100%;min-height:0}
+.carousel-item .btn{margin-top:12px}
 .carousel-controls{display:flex;gap:8px;justify-content:flex-end}
 .carousel-item,.carousel-item *{-webkit-user-select:none;user-select:none}
 .no-select,.no-select *{-webkit-user-select:none!important;user-select:none!important}
@@ -130,5 +105,5 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .hero::after{content:"";position:absolute;right:-80px;top:-100px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--brand) 24%,transparent),transparent 65%);pointer-events:none}
 .footer-note{font-size:.85rem;color:var(--muted)}
 a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--brand) 75%,white 25%);outline-offset:2px}
-@media (max-width:840px){.grid{grid-template-columns:1fr}.about-grid{grid-template-columns:1fr}.carousel-wrap{height:clamp(300px,78vw,400px)}.carousel-item{width:min(520px,calc(100% - 18px))}.carousel-head{flex-direction:column;align-items:flex-start}.carousel-controls{width:100%;justify-content:flex-start}}
+@media (max-width:840px){.grid{grid-template-columns:1fr}.about-grid{grid-template-columns:1fr}.carousel-head{flex-direction:column;align-items:flex-start}.carousel-controls{width:100%;justify-content:flex-start}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}}

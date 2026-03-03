@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303_1407"/>
-  <link rel="stylesheet" href="./styles.css?v=20260303_1407"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303_1524"/>
+  <link rel="stylesheet" href="./styles.css?v=20260303_1524"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,7 +18,7 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — 03/03 @ 14:07</div>
+    <div class="brand">BY ELIE — 03/03 @ 15:24</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -72,54 +72,26 @@
     btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
 
     const offersWrap=document.querySelector('[data-offers-wrap]');
+    const offersTrack=document.querySelector('[data-offers-track]');
     const offerItems=Array.from(document.querySelectorAll('[data-offer-item]'));
     const offersDots=document.querySelector('[data-offers-dots]');
     const prevBtn=document.querySelector('[data-offers-prev]');
     const nextBtn=document.querySelector('[data-offers-next]');
 
-    const wrapIndex=(value,total)=>((value%total)+total)%total;
-    const relativeOffset=(index,active,total)=>{
-      let offset=index-active;
-      if(offset>total/2) offset-=total;
-      if(offset<-total/2) offset+=total;
-      return offset;
-    };
-
-    if(offersWrap && offerItems.length){
+    if(offersWrap && offersTrack && offerItems.length){
       let activeIndex=0;
-      let pointerState=null;
-      let suppressClick=false;
+      const total=offerItems.length;
 
-      const renderOffers=()=>{
-        const total=offerItems.length;
-        offerItems.forEach((item,index)=>{
-          const offset=relativeOffset(index,activeIndex,total);
-          const abs=Math.abs(offset);
-          const translate=offset*37;
-          const depth=-abs*140;
-          const rotate=offset*-17;
-          const scale=Math.max(.68,1-abs*.12);
-          item.style.transform=`translateX(-50%) translateX(${translate}%) translateZ(${depth}px) rotateY(${rotate}deg) scale(${scale})`;
-          item.style.opacity=abs>2?'0':String(Math.max(.22,1-abs*.32));
-          item.style.zIndex=String(50-abs*10);
-          const isActive=offset===0;
-          item.classList.toggle('is-active',isActive);
-          item.setAttribute('aria-hidden',isActive?'false':'true');
-          item.querySelectorAll('a,button').forEach((el)=>{el.tabIndex=isActive?0:-1;});
-        });
-
-        if(!offersDots) return;
-        offersDots.querySelectorAll('.carousel-dot').forEach((dot,index)=>{
-          const isActive=index===activeIndex;
-          dot.classList.toggle('is-active',isActive);
-          dot.setAttribute('aria-current',isActive?'true':'false');
+      const render=()=>{
+        offersTrack.style.transform=`translateX(-${activeIndex*100}%)`;
+        offersDots?.querySelectorAll('.carousel-dot').forEach((dot,i)=>{
+          const on=i===activeIndex;
+          dot.classList.toggle('is-active',on);
+          dot.setAttribute('aria-current',on?'true':'false');
         });
       };
 
-      const setActiveOffer=(nextIndex)=>{
-        activeIndex=wrapIndex(nextIndex,offerItems.length);
-        renderOffers();
-      };
+      const setActive=(i)=>{ activeIndex=(i+total)%total; render(); };
 
       if(offersDots){
         offersDots.innerHTML='';
@@ -129,61 +101,30 @@
           dot.className='carousel-dot';
           const label=item.querySelector('h3')?.textContent||`offer ${index+1}`;
           dot.setAttribute('aria-label',`Show ${label}`);
-          dot.addEventListener('click',()=>setActiveOffer(index));
+          dot.addEventListener('click',()=>setActive(index));
           offersDots.append(dot);
         });
       }
 
-      prevBtn?.addEventListener('click',()=>setActiveOffer(activeIndex-1));
-      nextBtn?.addEventListener('click',()=>setActiveOffer(activeIndex+1));
+      prevBtn?.addEventListener('click',()=>setActive(activeIndex-1));
+      nextBtn?.addEventListener('click',()=>setActive(activeIndex+1));
 
-      offersWrap.addEventListener('keydown',(event)=>{
-        if(event.key==='ArrowLeft'){
-          event.preventDefault();
-          setActiveOffer(activeIndex-1);
-        }
-        if(event.key==='ArrowRight'){
-          event.preventDefault();
-          setActiveOffer(activeIndex+1);
-        }
+      let touchStartX=null;
+      offersWrap.addEventListener('touchstart',(e)=>{touchStartX=e.touches[0]?.clientX??null;},{passive:true});
+      offersWrap.addEventListener('touchend',(e)=>{
+        if(touchStartX===null) return;
+        const endX=e.changedTouches[0]?.clientX??touchStartX;
+        const dx=endX-touchStartX;
+        if(Math.abs(dx)>42) setActive(activeIndex+(dx<0?1:-1));
+        touchStartX=null;
+      },{passive:true});
+
+      offersWrap.addEventListener('keydown',(e)=>{
+        if(e.key==='ArrowLeft'){e.preventDefault();setActive(activeIndex-1);} 
+        if(e.key==='ArrowRight'){e.preventDefault();setActive(activeIndex+1);} 
       });
 
-      const clearPointerState=()=>{
-        pointerState=null;
-        offersWrap.classList.remove('is-dragging');
-        document.body.classList.remove('no-select');
-      };
-
-      offersWrap.addEventListener('pointerdown',(event)=>{
-        if(event.pointerType==='mouse' && event.button!==0) return;
-        pointerState={id:event.pointerId,startX:event.clientX};
-        offersWrap.classList.add('is-dragging');
-        document.body.classList.add('no-select');
-        try{offersWrap.setPointerCapture(event.pointerId);}catch{}
-      });
-
-      offersWrap.addEventListener('pointerup',(event)=>{
-        if(!pointerState || event.pointerId!==pointerState.id) return;
-        const delta=event.clientX-pointerState.startX;
-        if(Math.abs(delta)>52){
-          setActiveOffer(activeIndex+(delta<0?1:-1));
-          suppressClick=true;
-        }
-        clearPointerState();
-      });
-
-      offersWrap.addEventListener('pointercancel',clearPointerState);
-      offersWrap.addEventListener('lostpointercapture',clearPointerState);
-
-      offersWrap.addEventListener('click',(event)=>{
-        if(!suppressClick) return;
-        event.preventDefault();
-        event.stopPropagation();
-        suppressClick=false;
-      },true);
-
-      renderOffers();
+      render();
     }
-
   </script>
 </body></html>
