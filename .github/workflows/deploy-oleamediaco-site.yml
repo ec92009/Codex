@@ -1,4 +1,4 @@
-name: Deploy Codex Pages (Olea Media Co + OleaTaxCo)
+name: Deploy Codex Pages (Olea Media Co + OleaTaxCo + By Elie)
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
     paths:
       - 'web/github.io/oleamediaco/**'
       - 'web/github.io/oleataxco/**'
+      - 'web/github.io/byElie/**'
       - '.github/workflows/deploy-oleamediaco-site.yml'
   workflow_dispatch:
 
@@ -30,13 +31,16 @@ jobs:
 
       - name: Prepare artifact
         run: |
-          mkdir -p _site/oleamediaco _site/oleataxco
+          mkdir -p _site/oleamediaco _site/oleataxco _site/byElie
 
           # Olea Media Co (existing concept set)
           cp -R web/github.io/oleamediaco/. _site/oleamediaco/
 
           # OleaTaxCo CPA website concept set
           cp -R web/github.io/oleataxco/. _site/oleataxco/
+
+          # By Elie (3D printing + services concept set)
+          cp -R web/github.io/byElie/. _site/byElie/
 
           # Simple landing page linking to both hosted concept sets
           cat > _site/index.html <<'EOF'
@@ -70,6 +74,11 @@ jobs:
                   <h2>Olea Tax Co. (CPA concepts)</h2>
                   <p>Kelly Olea website concept board with three homepage directions for SquareSpace planning.</p>
                   <a class="button" href="./oleataxco/">Open Olea Tax Co. concepts</a>
+                </section>
+                <section class="card">
+                  <h2>By Elie</h2>
+                  <p>3D print plans, physical products, photos, and website services concept variants.</p>
+                  <a class="button" href="./byElie/">Open By Elie</a>
                 </section>
               </div>
             </main>
