@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303g"/>
-  <link rel="stylesheet" href="./v3/styles.css?v=20260303g"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303h"/>
+  <link rel="stylesheet" href="./v3/styles.css?v=20260303h"/>
 </head>
 <body class="v3">
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -70,23 +70,22 @@
     const track=document.querySelector('[data-carousel-track]');
     if(track){
       let isDown=false, startX=0, startScroll=0;
-      track.addEventListener('pointerdown',(e)=>{
-        isDown=true;
-        startX=e.clientX;
-        startScroll=track.scrollLeft;
-        track.classList.add('is-dragging');
-        track.setPointerCapture?.(e.pointerId);
+
+      const start=(x)=>{isDown=true; startX=x; startScroll=track.scrollLeft; track.classList.add('is-dragging');};
+      const move=(x)=>{if(!isDown) return; const dx=x-startX; track.scrollLeft=startScroll-dx;};
+      const end=()=>{isDown=false; track.classList.remove('is-dragging');};
+
+      track.addEventListener('mousedown',(e)=>{ e.preventDefault(); start(e.pageX); });
+      window.addEventListener('mousemove',(e)=>move(e.pageX));
+      window.addEventListener('mouseup',end);
+
+      track.addEventListener('touchstart',(e)=>{ if(e.touches[0]) start(e.touches[0].pageX); }, {passive:true});
+      track.addEventListener('touchmove',(e)=>{ if(e.touches[0]) move(e.touches[0].pageX); }, {passive:true});
+      track.addEventListener('touchend',end, {passive:true});
+
+      track.querySelectorAll('a, button').forEach(el=>{
+        el.addEventListener('dragstart',(e)=>e.preventDefault());
       });
-      track.addEventListener('pointermove',(e)=>{
-        if(!isDown) return;
-        e.preventDefault();
-        const dx=e.clientX-startX;
-        track.scrollLeft=startScroll-dx;
-      });
-      const endDrag=(e)=>{isDown=false; track.classList.remove('is-dragging'); try{track.releasePointerCapture?.(e.pointerId);}catch{}}
-      track.addEventListener('pointerup',endDrag);
-      track.addEventListener('pointercancel',endDrag);
-      track.addEventListener('pointerleave',()=>{if(isDown) track.classList.remove('is-dragging');});
     }
   </script>
 </body></html>
