@@ -1,4 +1,0 @@
-body.v3 .hero{background:linear-gradient(160deg,color-mix(in srgb,var(--brand-2) 10%,var(--surface)),var(--surface));}
-body.v3 .grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-body.v3 .card{position:relative;overflow:hidden}
-body.v3 .card::after{content:"";position:absolute;right:-22px;top:-22px;width:70px;height:70px;border-radius:999px;background:color-mix(in srgb,var(--brand) 14%,transparent)}

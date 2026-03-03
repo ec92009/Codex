@@ -1,5 +1,0 @@
-body.v5 .grid{grid-template-columns:repeat(4,minmax(0,1fr));}
-body.v5 .card h3{font-size:.98rem}
-body.v5 .card p{font-size:.92rem}
-@media (max-width:980px){body.v5 .grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-@media (max-width:640px){body.v5 .grid{grid-template-columns:1fr;}}

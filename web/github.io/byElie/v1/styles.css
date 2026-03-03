@@ -1,3 +1,0 @@
-body.v1 .hero{background:linear-gradient(160deg,color-mix(in srgb,var(--brand) 12%,var(--surface)),var(--surface));}
-body.v1 .card:nth-child(1){border-color:color-mix(in srgb,var(--brand) 45%,var(--line));}
-body.v1 .card:nth-child(2){border-color:color-mix(in srgb,var(--brand-2) 45%,var(--line));}

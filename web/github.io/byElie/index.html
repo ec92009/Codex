@@ -4,10 +4,10 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303t"/>
-  <link rel="stylesheet" href="./v3/styles.css?v=20260303t"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303_1407"/>
+  <link rel="stylesheet" href="./styles.css?v=20260303_1407"/>
 </head>
-<body class="v3">
+<body>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="topbar shell">
     <nav class="version-switch" aria-label="Site navigation">
@@ -18,7 +18,7 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — 03/03 @ 13:31</div>
+    <div class="brand">BY ELIE — 03/03 @ 14:07</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -39,15 +39,16 @@
           <button class="btn secondary" type="button" data-offers-next>Next →</button>
         </div>
       </div>
-      <div class="carousel-wrap" data-offers-wrap">
-        <div class="carousel-track" data-carousel-track>
-          <article class="card carousel-item"><div class="service-logo" aria-hidden="true">🧩</div><h3>3D Print Plans</h3><p>Downloadable STL/3MF packs for home and prosumer makers.</p><a class="btn secondary" href="./plans.html">Explore plans</a></article>
-          <article class="card carousel-item"><div class="service-logo" aria-hidden="true">🖨️</div><h3>Printed Physical Items</h3><p>Custom and ready-made pieces produced in-house.</p><a class="btn secondary" href="./prints.html">View products</a></article>
-          <article class="card carousel-item"><div class="service-logo" aria-hidden="true">📸</div><h3>Photo Services</h3><p>Product, listing, and lifestyle image packages.</p><a class="btn secondary" href="./gallery.html">Open gallery</a></article>
-          <article class="card carousel-item"><div class="service-logo" aria-hidden="true">📐</div><h3>CAD on demand</h3><p>Custom modeling from idea, sketch, or reference into production-ready files.</p><a class="btn secondary" href="./cad-design.html">See CAD service</a></article>
-          <article class="card carousel-item"><div class="service-logo" aria-hidden="true">🌐</div><h3>Website Design & Maintenance</h3><p>Design, launch, and ongoing updates for SMB sites.</p><a class="btn secondary" href="./web-design.html">See web services</a></article>
+      <div class="carousel-wrap" data-offers-wrap tabindex="0">
+        <div class="carousel-track" data-offers-track>
+          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">🧩</div><h3>3D Print Plans</h3><p>Downloadable STL/3MF packs for home and prosumer makers.</p><a class="btn secondary" href="./plans.html">Explore plans</a></article>
+          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">🖨️</div><h3>Printed Physical Items</h3><p>Custom and ready-made pieces produced in-house.</p><a class="btn secondary" href="./prints.html">View products</a></article>
+          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">📸</div><h3>Photo Services</h3><p>Product, listing, and lifestyle image packages.</p><a class="btn secondary" href="./gallery.html">Open gallery</a></article>
+          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">📐</div><h3>CAD on demand</h3><p>Custom modeling from idea, sketch, or reference into production-ready files.</p><a class="btn secondary" href="./cad-design.html">See CAD service</a></article>
+          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">🌐</div><h3>Website Design & Maintenance</h3><p>Design, launch, and ongoing updates for SMB sites.</p><a class="btn secondary" href="./web-design.html">See web services</a></article>
         </div>
       </div>
+      <div class="carousel-dots" data-offers-dots aria-label="Offerings pagination"></div>
     </section>
     <section class="panel" id="about">
       <h2>About Elie</h2>
@@ -71,11 +72,118 @@
     btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
 
     const offersWrap=document.querySelector('[data-offers-wrap]');
+    const offerItems=Array.from(document.querySelectorAll('[data-offer-item]'));
+    const offersDots=document.querySelector('[data-offers-dots]');
     const prevBtn=document.querySelector('[data-offers-prev]');
     const nextBtn=document.querySelector('[data-offers-next]');
-    const step=()=>Math.max(280, Math.floor((offersWrap?.clientWidth||320)*0.9));
-    prevBtn?.addEventListener('click',()=>offersWrap?.scrollBy({left:-step(), behavior:'smooth'}));
-    nextBtn?.addEventListener('click',()=>offersWrap?.scrollBy({left:step(), behavior:'smooth'}));
+
+    const wrapIndex=(value,total)=>((value%total)+total)%total;
+    const relativeOffset=(index,active,total)=>{
+      let offset=index-active;
+      if(offset>total/2) offset-=total;
+      if(offset<-total/2) offset+=total;
+      return offset;
+    };
+
+    if(offersWrap && offerItems.length){
+      let activeIndex=0;
+      let pointerState=null;
+      let suppressClick=false;
+
+      const renderOffers=()=>{
+        const total=offerItems.length;
+        offerItems.forEach((item,index)=>{
+          const offset=relativeOffset(index,activeIndex,total);
+          const abs=Math.abs(offset);
+          const translate=offset*37;
+          const depth=-abs*140;
+          const rotate=offset*-17;
+          const scale=Math.max(.68,1-abs*.12);
+          item.style.transform=`translateX(-50%) translateX(${translate}%) translateZ(${depth}px) rotateY(${rotate}deg) scale(${scale})`;
+          item.style.opacity=abs>2?'0':String(Math.max(.22,1-abs*.32));
+          item.style.zIndex=String(50-abs*10);
+          const isActive=offset===0;
+          item.classList.toggle('is-active',isActive);
+          item.setAttribute('aria-hidden',isActive?'false':'true');
+          item.querySelectorAll('a,button').forEach((el)=>{el.tabIndex=isActive?0:-1;});
+        });
+
+        if(!offersDots) return;
+        offersDots.querySelectorAll('.carousel-dot').forEach((dot,index)=>{
+          const isActive=index===activeIndex;
+          dot.classList.toggle('is-active',isActive);
+          dot.setAttribute('aria-current',isActive?'true':'false');
+        });
+      };
+
+      const setActiveOffer=(nextIndex)=>{
+        activeIndex=wrapIndex(nextIndex,offerItems.length);
+        renderOffers();
+      };
+
+      if(offersDots){
+        offersDots.innerHTML='';
+        offerItems.forEach((item,index)=>{
+          const dot=document.createElement('button');
+          dot.type='button';
+          dot.className='carousel-dot';
+          const label=item.querySelector('h3')?.textContent||`offer ${index+1}`;
+          dot.setAttribute('aria-label',`Show ${label}`);
+          dot.addEventListener('click',()=>setActiveOffer(index));
+          offersDots.append(dot);
+        });
+      }
+
+      prevBtn?.addEventListener('click',()=>setActiveOffer(activeIndex-1));
+      nextBtn?.addEventListener('click',()=>setActiveOffer(activeIndex+1));
+
+      offersWrap.addEventListener('keydown',(event)=>{
+        if(event.key==='ArrowLeft'){
+          event.preventDefault();
+          setActiveOffer(activeIndex-1);
+        }
+        if(event.key==='ArrowRight'){
+          event.preventDefault();
+          setActiveOffer(activeIndex+1);
+        }
+      });
+
+      const clearPointerState=()=>{
+        pointerState=null;
+        offersWrap.classList.remove('is-dragging');
+        document.body.classList.remove('no-select');
+      };
+
+      offersWrap.addEventListener('pointerdown',(event)=>{
+        if(event.pointerType==='mouse' && event.button!==0) return;
+        pointerState={id:event.pointerId,startX:event.clientX};
+        offersWrap.classList.add('is-dragging');
+        document.body.classList.add('no-select');
+        try{offersWrap.setPointerCapture(event.pointerId);}catch{}
+      });
+
+      offersWrap.addEventListener('pointerup',(event)=>{
+        if(!pointerState || event.pointerId!==pointerState.id) return;
+        const delta=event.clientX-pointerState.startX;
+        if(Math.abs(delta)>52){
+          setActiveOffer(activeIndex+(delta<0?1:-1));
+          suppressClick=true;
+        }
+        clearPointerState();
+      });
+
+      offersWrap.addEventListener('pointercancel',clearPointerState);
+      offersWrap.addEventListener('lostpointercapture',clearPointerState);
+
+      offersWrap.addEventListener('click',(event)=>{
+        if(!suppressClick) return;
+        event.preventDefault();
+        event.stopPropagation();
+        suppressClick=false;
+      },true);
+
+      renderOffers();
+    }
 
   </script>
 </body></html>
