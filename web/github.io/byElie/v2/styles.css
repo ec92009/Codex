@@ -1,1 +1,3 @@
-body.v2 .hero{border-image:linear-gradient(120deg,color-mix(in srgb,var(--brand) 55%,transparent),color-mix(in srgb,var(--brand-2) 45%,transparent)) 1;}
+body.v2{--brand:#2b6cff;--brand-2:#27c1b6;}
+body.v2 .hero{border:1px solid color-mix(in srgb,var(--brand) 35%,var(--line));}
+body.v2 .card{background:linear-gradient(180deg,var(--surface-2),color-mix(in srgb,var(--surface-2) 80%,var(--brand) 20%));}

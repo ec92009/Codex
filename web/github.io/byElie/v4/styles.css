@@ -1,1 +1,5 @@
-body.v4 .hero{border-image:linear-gradient(120deg,color-mix(in srgb,var(--brand) 55%,transparent),color-mix(in srgb,var(--brand-2) 45%,transparent)) 1;}
+body.v4{--brand:#5b67ff;--brand-2:#65d6c7;}
+body.v4 h1{max-width:16ch;letter-spacing:-.015em}
+body.v4 .hero{padding:24px}
+body.v4 .panel{border-radius:22px}
+body.v4 .card{padding:16px}
