@@ -150,7 +150,7 @@ a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--b
     height:clamp(260px,28vw,340px);
     perspective:1700px;
     transform-style:preserve-3d;
-    overflow:visible;
+    overflow:hidden;
     scroll-snap-type:none;
   }
   .carousel-track{
@@ -172,8 +172,8 @@ a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--b
     pointer-events:none;
     flex:none;
     scroll-snap-align:none;
+    transform-origin:50% 40%;
   }
   .carousel-item.is-active{pointer-events:auto}
   .carousel-item:not(.is-active){filter:saturate(.88) brightness(.96)}
-  .carousel{overflow:visible}
 }
