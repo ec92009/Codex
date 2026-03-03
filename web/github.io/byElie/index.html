@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303q"/>
-  <link rel="stylesheet" href="./v3/styles.css?v=20260303q"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303r"/>
+  <link rel="stylesheet" href="./v3/styles.css?v=20260303r"/>
 </head>
 <body class="v3">
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,7 +18,7 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — 03/03 @ 13:23</div>
+    <div class="brand">BY ELIE — 03/03 @ 13:25</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -67,50 +67,5 @@
     const btn=document.querySelector('[data-theme-toggle]');
     btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
 
-    const track=document.querySelector('[data-carousel-track]');
-    if(track){
-      // Nudge by real scroll so cards remain reachable afterwards.
-      const maxScroll = () => Math.max(0, track.scrollWidth - track.clientWidth);
-      const nudge = () => {
-        const max = maxScroll();
-        if(max < 8) return;
-        const dist = Math.min(220, max);
-        track.scrollTo({ left: dist, behavior: 'smooth' });
-        setTimeout(() => track.scrollTo({ left: 0, behavior: 'smooth' }), 850);
-      };
-      setTimeout(nudge, 700);
-
-      // Enable drag/swipe still.
-      let isDown=false, startX=0, scrollLeft=0, moved=false;
-      track.addEventListener('mousedown', (e)=>{
-        isDown=true; moved=false;
-        startX=e.pageX - track.offsetLeft;
-        scrollLeft=track.scrollLeft;
-        track.classList.add('is-dragging');
-      });
-      window.addEventListener('mouseup', ()=>{ isDown=false; track.classList.remove('is-dragging'); });
-      track.addEventListener('mouseleave', ()=>{ isDown=false; track.classList.remove('is-dragging'); });
-      track.addEventListener('mousemove', (e)=>{
-        if(!isDown) return;
-        e.preventDefault();
-        const x=e.pageX - track.offsetLeft;
-        const walk=(x-startX)*1.1;
-        if(Math.abs(walk)>3) moved=true;
-        track.scrollLeft=scrollLeft-walk;
-      });
-      track.addEventListener('touchstart',(e)=>{
-        const t=e.touches[0]; if(!t) return;
-        isDown=true; moved=false; startX=t.pageX; scrollLeft=track.scrollLeft;
-      }, {passive:true});
-      track.addEventListener('touchmove',(e)=>{
-        const t=e.touches[0]; if(!isDown || !t) return;
-        const walk=(t.pageX-startX)*1.1;
-        if(Math.abs(walk)>3) moved=true;
-        track.scrollLeft=scrollLeft-walk;
-      }, {passive:true});
-      track.addEventListener('touchend',()=>{isDown=false;});
-      track.addEventListener('click',(e)=>{ if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; } }, true);
-      track.addEventListener('dragstart',(e)=>e.preventDefault());
-    }
   </script>
 </body></html>

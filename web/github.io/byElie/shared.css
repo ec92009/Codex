@@ -69,9 +69,6 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .carousel-head h2{margin:0}
 .carousel-wrap{position:relative;overflow:hidden;overscroll-behavior-x:contain}
 .carousel-track{
-  cursor:grab;
-  user-select:none;
-  -webkit-user-select:none;
   touch-action:pan-x;
   overscroll-behavior:contain;
   display:grid;
@@ -85,8 +82,6 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
   padding-bottom:6px;
 }
 .carousel-item{scroll-snap-align:start}
-.carousel-track.is-dragging{cursor:grabbing}
-
 .carousel-wrap::before,.carousel-wrap::after{content:"";position:absolute;top:0;bottom:6px;width:28px;z-index:2;pointer-events:none}
 .carousel-wrap::before{left:0;background:linear-gradient(90deg,var(--surface),transparent)}
 .carousel-wrap::after{right:0;background:linear-gradient(270deg,var(--surface),transparent)}
@@ -113,3 +108,7 @@ a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--b
 @media (max-width:840px){.grid{grid-template-columns:1fr}.about-grid{grid-template-columns:1fr}.carousel-track{grid-auto-columns:minmax(260px,85%)}.carousel-head{flex-direction:column;align-items:flex-start}.carousel-controls{width:100%;justify-content:flex-start}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}}
 
+
+.carousel-track::-webkit-scrollbar{height:10px}
+.carousel-track::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--brand) 35%,var(--line));border-radius:999px}
+.carousel-track::-webkit-scrollbar-track{background:color-mix(in srgb,var(--surface-2) 65%,transparent)}
