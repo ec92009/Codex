@@ -67,13 +67,15 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(2,1fr)}
 .carousel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .carousel-head h2{margin:0}
-.carousel-wrap{position:relative;overflow:hidden;overscroll-behavior-x:contain}
+.carousel-wrap{position:relative;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .carousel-track{
   touch-action:pan-x;
   overscroll-behavior:contain;
   display:grid;
+  width:max-content;
+  min-width:100%;
   grid-auto-flow:column;
-  grid-auto-columns:minmax(280px, 32%);
+  grid-auto-columns:minmax(280px, 32vw);
   gap:12px;
   overflow-x:auto;
   -webkit-overflow-scrolling:touch;
@@ -82,9 +84,6 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
   padding-bottom:6px;
 }
 .carousel-item{scroll-snap-align:start}
-.carousel-wrap::before,.carousel-wrap::after{content:"";position:absolute;top:0;bottom:6px;width:28px;z-index:2;pointer-events:none}
-.carousel-wrap::before{left:0;background:linear-gradient(90deg,var(--surface),transparent)}
-.carousel-wrap::after{right:0;background:linear-gradient(270deg,var(--surface),transparent)}
 .carousel-controls{display:flex;gap:8px;justify-content:flex-end}
 .card{border:1px solid var(--line);border-radius:14px;background:var(--surface-2);padding:14px}
 .card h3{margin:0 0 6px;font-size:1.06rem}
@@ -112,3 +111,7 @@ a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--b
 .carousel-track::-webkit-scrollbar{height:10px}
 .carousel-track::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--brand) 35%,var(--line));border-radius:999px}
 .carousel-track::-webkit-scrollbar-track{background:color-mix(in srgb,var(--surface-2) 65%,transparent)}
+
+.carousel-wrap::-webkit-scrollbar{height:10px}
+.carousel-wrap::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--brand) 35%,var(--line));border-radius:999px}
+.carousel-wrap{scrollbar-width:thin}
