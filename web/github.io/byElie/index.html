@@ -3,29 +3,43 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>By Elie | Selected Direction</title>
+  <title>By Elie | Creator Portfolio</title>
   <link rel="stylesheet" href="./shared.css"/>
+  <link rel="stylesheet" href="./v3/styles.css"/>
 </head>
-<body>
+<body class="v3">
   <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="topbar shell">
+    <nav class="version-switch" aria-label="Site navigation">
+      <a class="is-active" href="./">Home</a> <span>|</span>
+      <a href="./plans.html">3D Plans</a> <span>|</span>
+      <a href="./prints.html">Physical Prints</a> <span>|</span>
+      <a href="./web-design.html">Web Design</a> <span>|</span>
+      <a href="./gallery.html">Gallery</a>
+    </nav>
     <div class="brand">BY ELIE</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
     <section class="panel hero">
-      <p class="eyebrow">Selected concept</p>
-      <h1>By Elie — Creator Portfolio (Option 3)</h1>
-      <p class="lead">You selected Option 3. From here we branch into the 4 core offerings: 3D plans, physical prints, web design, and photo gallery.</p>
+      <p class="eyebrow">Creator Portfolio</p>
+      <h1>Sell digital plans, physical prints, photos, and web services from one premium brand.</h1>
+      <p class="lead">Visual-first storytelling for product and photo work.</p>
       <div class="cta">
-        <a class="btn primary" href="./v3/index.html">Open main site</a>
+        <a class="btn primary" href="#offers">See offers</a>
+        <a class="btn secondary" href="#contact">Request quote</a>
       </div>
     </section>
-    <section class="panel grid" aria-label="Offerings">
-      <article class="card"><h3>3D Plans</h3><p>Downloadable STL/3MF files and bundles.</p><a class="btn secondary" href="./plans.html">Open page</a></article>
-      <article class="card"><h3>3D Physical Prints</h3><p>Printed objects produced and shipped.</p><a class="btn secondary" href="./prints.html">Open page</a></article>
-      <article class="card"><h3>Web Design & Maintenance</h3><p>Build and maintain business websites.</p><a class="btn secondary" href="./web-design.html">Open page</a></article>
-      <article class="card"><h3>Photo Gallery</h3><p>Portfolio and service examples.</p><a class="btn secondary" href="./gallery.html">Open page</a></article>
+    <section id="offers" class="panel grid">
+      <article class="card"><h3>3D Print Plans</h3><p>Downloadable STL/3MF packs for home and prosumer makers.</p><a class="btn secondary" href="./plans.html">Explore plans</a></article>
+      <article class="card"><h3>Printed Physical Items</h3><p>Custom and ready-made pieces produced in-house.</p><a class="btn secondary" href="./prints.html">View products</a></article>
+      <article class="card"><h3>Photo Services</h3><p>Product, listing, and lifestyle image packages.</p><a class="btn secondary" href="./gallery.html">Open gallery</a></article>
+      <article class="card"><h3>Website Design & Maintenance</h3><p>Design, launch, and ongoing updates for SMB sites.</p><a class="btn secondary" href="./web-design.html">See web services</a></article>
+    </section>
+    <section class="panel" id="contact">
+      <h2>CTA concept</h2>
+      <p class="lead">Single conversion flow: choose product or service, then route to checkout or discovery call.</p>
+      <div class="cta"><a class="btn primary" href="#">Start now</a><a class="btn secondary" href="#">See pricing tiers</a></div>
     </section>
   </main>
   <script>
