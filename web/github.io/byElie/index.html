@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303_1554"/>
-  <link rel="stylesheet" href="./styles.css?v=20260303_1554"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303_1608"/>
+  <link rel="stylesheet" href="./styles.css?v=20260303_1608"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,7 +18,7 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — 03/03 @ 15:54</div>
+    <div class="brand">BY ELIE — 03/03 @ 16:08</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -82,8 +82,40 @@
       let activeIndex=0;
       const total=offerItems.length;
 
+      const isDesktop3D=()=>window.matchMedia('(min-width:1024px)').matches;
+      const wrapIndex=(n)=>((n%total)+total)%total;
+      const relOffset=(index)=>{
+        let d=index-activeIndex;
+        if(d>total/2) d-=total;
+        if(d<-total/2) d+=total;
+        return d;
+      };
+
       const render=()=>{
-        offersTrack.style.transform=`translateX(-${activeIndex*100}%)`;
+        if(isDesktop3D()){
+          offersTrack.style.transform='none';
+          offerItems.forEach((item,index)=>{
+            const off=relOffset(index);
+            const abs=Math.abs(off);
+            const tx=off*34;
+            const tz=-abs*130;
+            const ry=off*-16;
+            const sc=Math.max(.72,1-abs*.12);
+            item.style.transform=`translateX(-50%) translateX(${tx}%) translateZ(${tz}px) rotateY(${ry}deg) scale(${sc})`;
+            item.style.opacity=abs>2?'0':String(Math.max(.24,1-abs*.3));
+            item.style.zIndex=String(40-abs*10);
+            item.classList.toggle('is-active',off===0);
+          });
+        } else {
+          offersTrack.style.transform=`translateX(-${activeIndex*100}%)`;
+          offerItems.forEach((item,index)=>{
+            item.style.transform='';
+            item.style.opacity='';
+            item.style.zIndex='';
+            item.classList.toggle('is-active',index===activeIndex);
+          });
+        }
+
         offersDots?.querySelectorAll('.carousel-dot').forEach((dot,i)=>{
           const on=i===activeIndex;
           dot.classList.toggle('is-active',on);
@@ -91,7 +123,7 @@
         });
       };
 
-      const setActive=(i)=>{ activeIndex=(i+total)%total; render(); };
+      const setActive=(i)=>{ activeIndex=((i%total)+total)%total; render(); };
 
       if(offersDots){
         offersDots.innerHTML='';
@@ -124,6 +156,7 @@
         if(e.key==='ArrowRight'){e.preventDefault();setActive(activeIndex+1);} 
       });
 
+      window.addEventListener('resize',render);
       render();
     }
   </script>
