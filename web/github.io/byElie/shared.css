@@ -86,6 +86,10 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 }
 .carousel-item{scroll-snap-align:start}
 .carousel-track.is-dragging{cursor:grabbing}
+
+.carousel-wrap::before,.carousel-wrap::after{content:"";position:absolute;top:0;bottom:6px;width:28px;z-index:2;pointer-events:none}
+.carousel-wrap::before{left:0;background:linear-gradient(90deg,var(--surface),transparent)}
+.carousel-wrap::after{right:0;background:linear-gradient(270deg,var(--surface),transparent)}
 .carousel-controls{display:flex;gap:8px;justify-content:flex-end}
 .card{border:1px solid var(--line);border-radius:14px;background:var(--surface-2);padding:14px}
 .card h3{margin:0 0 6px;font-size:1.06rem}
