@@ -20,7 +20,7 @@ html[data-theme="light"]{
   --brand-2:#0caea1;
 }
 *{box-sizing:border-box}
-html,body{overflow-x:hidden}
+html,body{overflow-x:hidden;max-width:100%}
 body{
   margin:0;
   font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -47,7 +47,7 @@ body{
 .version-switch a{text-decoration:none;color:var(--muted);font-weight:700}
 .version-switch a.is-active{color:var(--brand)}
 .version-switch span{color:var(--muted)}
-main{padding:18px 0 38px;display:grid;gap:16px}
+main{padding:18px 0 38px;display:grid;gap:16px;overflow-x:clip}
 .panel{
   background:var(--surface);
   border:1px solid var(--line);
@@ -67,13 +67,13 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(2,1fr)}
 .carousel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .carousel-head h2{margin:0}
-.carousel-wrap{position:relative;overflow:hidden}
+.carousel-wrap{position:relative;overflow:hidden;overscroll-behavior-x:contain}
 .carousel-track{
   cursor:grab;
   user-select:none;
   -webkit-user-select:none;
   touch-action:pan-x;
-  overscroll-behavior-x:contain;
+  overscroll-behavior:contain;
   display:grid;
   grid-auto-flow:column;
   grid-auto-columns:minmax(280px, 32%);

@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303f"/>
-  <link rel="stylesheet" href="./v3/styles.css?v=20260303f"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303g"/>
+  <link rel="stylesheet" href="./v3/styles.css?v=20260303g"/>
 </head>
 <body class="v3">
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -79,6 +79,7 @@
       });
       track.addEventListener('pointermove',(e)=>{
         if(!isDown) return;
+        e.preventDefault();
         const dx=e.clientX-startX;
         track.scrollLeft=startScroll-dx;
       });
