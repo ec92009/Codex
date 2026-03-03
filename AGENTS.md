@@ -17,6 +17,7 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 - Keep `main` pushable; use branches for larger changes (branch prefix: `codex/`).
 - After modifying a project, update relevant `README.md` files and other necessary docs/config, then push to GitHub.
 - For each prompt in Codex, finish with a full update on GitHub, and print the local URL, the public URL, and the version number to expect upon hard refresh.
+- By Elie versioning scheme: use `major.minor` with two-digit minor; start at `3.10`; increment minor by `+0.01` each round (`3.11`, `3.12`, ...); at local midnight increment major and reset minor to `.00`.
 - Before pausing, update `/Users/ecohen/Codex/NEXT_STEPS.md` with current status and next command.
 
 ## Website Workspace Structure
