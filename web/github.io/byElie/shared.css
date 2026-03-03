@@ -110,9 +110,9 @@ a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--b
 
 
 @media (min-width:1024px){
-  .carousel-wrap{height:clamp(320px,34vw,420px);perspective:1200px;transform-style:preserve-3d;overflow:hidden}
+  .carousel-wrap{height:clamp(260px,28vw,340px);perspective:1200px;transform-style:preserve-3d;overflow:hidden}
   .carousel-track{position:relative;height:100%;transform-style:preserve-3d}
-  .carousel-item{position:absolute;top:0;left:50%;width:min(560px,calc(100% - 140px));height:100%;transition:transform .42s cubic-bezier(.22,.65,.2,1),opacity .24s ease,filter .24s ease;pointer-events:none}
+  .carousel-item{position:absolute;top:0;left:50%;width:min(430px,calc(100% - 260px));height:100%;transition:transform .42s cubic-bezier(.22,.65,.2,1),opacity .24s ease,filter .24s ease;pointer-events:none}
   .carousel-item.is-active{pointer-events:auto}
   .carousel-item:not(.is-active){filter:saturate(.88) brightness(.96)}
 }

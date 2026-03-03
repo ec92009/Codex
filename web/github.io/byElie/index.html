@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303_1701"/>
-  <link rel="stylesheet" href="./styles.css?v=20260303_1701"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303_1749"/>
+  <link rel="stylesheet" href="./styles.css?v=20260303_1749"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,7 +18,7 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v3.5</div>
+    <div class="brand">BY ELIE — 03/03 @ 17:49</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -97,9 +97,9 @@
           offerItems.forEach((item,index)=>{
             const off=relOffset(index);
             const abs=Math.abs(off);
-            const tx=off*34;
-            const tz=-abs*130;
-            const ry=off*-16;
+            const tx=off*42;
+            const tz=-abs*110;
+            const ry=off*-14;
             const sc=Math.max(.72,1-abs*.12);
             item.style.transform=`translateX(-50%) translateX(${tx}%) translateZ(${tz}px) rotateY(${ry}deg) scale(${sc})`;
             item.style.opacity=abs>2?'0':String(Math.max(.24,1-abs*.3));
