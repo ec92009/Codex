@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>By Elie | Web Design & Maintenance</title>
+  <link rel="stylesheet" href="./shared.css"/>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar shell">
+    <nav class="version-switch" aria-label="Site navigation">
+      <a href="./v3/index.html">Home</a> <span>|</span>
+      <a  href="./plans.html">3D Plans</a> <span>|</span>
+      <a  href="./prints.html">Physical Prints</a> <span>|</span>
+      <a class="is-active" href="./web-design.html">Web Design</a> <span>|</span>
+      <a  href="./gallery.html">Gallery</a>
+    </nav>
+    <div class="brand">BY ELIE</div>
+    <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
+  </header>
+  <main id="main-content" class="shell">
+    <section class="panel hero">
+      <p class="eyebrow">Service offering</p>
+      <h1>Web Design & Maintenance</h1>
+      <p class="lead">Offer website build + maintenance retainers with clear scope, SLA, and monthly deliverables.</p>
+      <div class="cta"><a class="btn primary" href="#inquiry">Request details</a><a class="btn secondary" href="./v3/index.html">Back to main</a></div>
+    </section>
+    <section class="panel grid">
+      <article class="card"><h3>Offer 1</h3><p>Starter package.</p></article>
+      <article class="card"><h3>Offer 2</h3><p>Popular package.</p></article>
+      <article class="card"><h3>Offer 3</h3><p>Premium package.</p></article>
+      <article class="card" id="inquiry"><h3>How to order</h3><p>Contact flow + quote confirmation + delivery timeline.</p></article>
+    </section>
+  </main>
+  <script>
+    const btn=document.querySelector('[data-theme-toggle]');
+    btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
+  </script>
+</body></html>

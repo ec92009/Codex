@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>By Elie | Concept Variants</title>
+  <title>By Elie | Selected Direction</title>
   <link rel="stylesheet" href="./shared.css"/>
 </head>
 <body>
@@ -13,19 +13,20 @@
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
-    <section class="panel">
-      <p class="eyebrow">Concept board</p>
-      <h1>By Elie — 3D Printing + Digital Products + Creative Services</h1>
-      <p class="lead">Pick one direction. All options keep the same business scope: 3D print plans, physical printed products, photo services, and website design/maintenance.</p>
+    <section class="panel hero">
+      <p class="eyebrow">Selected concept</p>
+      <h1>By Elie — Creator Portfolio (Option 3)</h1>
+      <p class="lead">You selected Option 3. From here we branch into the 4 core offerings: 3D plans, physical prints, web design, and photo gallery.</p>
+      <div class="cta">
+        <a class="btn primary" href="./v3/index.html">Open main site</a>
+      </div>
     </section>
-    <section class="panel grid" aria-label="Variant choices">
-      <article class="card"><h3>Option 1 — Premium Studio</h3><p>Dark, high-contrast, product-first.</p><a class="btn secondary" href="./v1/index.html">Open option 1</a></article>
-      <article class="card"><h3>Option 2 — Clean Commerce</h3><p>Stripe-like clarity for buying paths.</p><a class="btn secondary" href="./v2/index.html">Open option 2</a></article>
-      <article class="card"><h3>Option 3 — Creator Portfolio</h3><p>Gallery-forward with service blocks.</p><a class="btn secondary" href="./v3/index.html">Open option 3</a></article>
-      <article class="card"><h3>Option 4 — Editorial Minimal</h3><p>Airy typography, premium feel.</p><a class="btn secondary" href="./v4/index.html">Open option 4</a></article>
-      <article class="card"><h3>Option 5 — Conversion Grid</h3><p>Compact card-based conversion layout.</p><a class="btn secondary" href="./v5/index.html">Open option 5</a></article>
+    <section class="panel grid" aria-label="Offerings">
+      <article class="card"><h3>3D Plans</h3><p>Downloadable STL/3MF files and bundles.</p><a class="btn secondary" href="./plans.html">Open page</a></article>
+      <article class="card"><h3>3D Physical Prints</h3><p>Printed objects produced and shipped.</p><a class="btn secondary" href="./prints.html">Open page</a></article>
+      <article class="card"><h3>Web Design & Maintenance</h3><p>Build and maintain business websites.</p><a class="btn secondary" href="./web-design.html">Open page</a></article>
+      <article class="card"><h3>Photo Gallery</h3><p>Portfolio and service examples.</p><a class="btn secondary" href="./gallery.html">Open page</a></article>
     </section>
-    <p class="footer-note">Tip: each option has a 0|1..5 switch so you can jump back to this selector quickly.</p>
   </main>
   <script>
     const btn=document.querySelector('[data-theme-toggle]');
