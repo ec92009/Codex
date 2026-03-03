@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303p"/>
-  <link rel="stylesheet" href="./v3/styles.css?v=20260303p"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303q"/>
+  <link rel="stylesheet" href="./v3/styles.css?v=20260303q"/>
 </head>
 <body class="v3">
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,7 +18,7 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — 03/03 @ 13:20</div>
+    <div class="brand">BY ELIE — 03/03 @ 13:23</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -69,8 +69,16 @@
 
     const track=document.querySelector('[data-carousel-track]');
     if(track){
-      // Visible nudge cue so users see there are more offerings.
-      setTimeout(()=>track.classList.add('auto-nudge'), 700);
+      // Nudge by real scroll so cards remain reachable afterwards.
+      const maxScroll = () => Math.max(0, track.scrollWidth - track.clientWidth);
+      const nudge = () => {
+        const max = maxScroll();
+        if(max < 8) return;
+        const dist = Math.min(220, max);
+        track.scrollTo({ left: dist, behavior: 'smooth' });
+        setTimeout(() => track.scrollTo({ left: 0, behavior: 'smooth' }), 850);
+      };
+      setTimeout(nudge, 700);
 
       // Enable drag/swipe still.
       let isDown=false, startX=0, scrollLeft=0, moved=false;

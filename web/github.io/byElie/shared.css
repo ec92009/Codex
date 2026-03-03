@@ -113,5 +113,3 @@ a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--b
 @media (max-width:840px){.grid{grid-template-columns:1fr}.about-grid{grid-template-columns:1fr}.carousel-track{grid-auto-columns:minmax(260px,85%)}.carousel-head{flex-direction:column;align-items:flex-start}.carousel-controls{width:100%;justify-content:flex-start}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}}
 
-@keyframes offersNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-140px)}}
-.carousel-track.auto-nudge{animation:offersNudge 1.25s ease-in-out 2}
