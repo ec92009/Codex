@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303j"/>
-  <link rel="stylesheet" href="./v3/styles.css?v=20260303j"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303k"/>
+  <link rel="stylesheet" href="./v3/styles.css?v=20260303k"/>
 </head>
 <body class="v3">
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -69,39 +69,54 @@
 
     const track=document.querySelector('[data-carousel-track]');
     if(track){
-      let isDown=false, startX=0, startScroll=0, moved=false;
+      let isDown=false, startX=0, scrollLeft=0, moved=false;
 
-      const onDown=(clientX)=>{
-        isDown=true; moved=false;
-        startX=clientX;
-        startScroll=track.scrollLeft;
+      track.addEventListener('mousedown', (e)=>{
+        isDown=true;
+        moved=false;
+        startX=e.pageX - track.offsetLeft;
+        scrollLeft=track.scrollLeft;
         track.classList.add('is-dragging');
-      };
-      const onMove=(clientX)=>{
-        if(!isDown) return;
-        const dx=clientX-startX;
-        if(Math.abs(dx)>4) moved=true;
-        track.scrollLeft=startScroll-dx;
-      };
-      const onUp=()=>{
-        if(!isDown) return;
+      });
+
+      window.addEventListener('mouseup', ()=>{
         isDown=false;
         track.classList.remove('is-dragging');
-      };
-
-      track.addEventListener('pointerdown',(e)=>{
-        onDown(e.clientX);
-        track.setPointerCapture?.(e.pointerId);
       });
-      track.addEventListener('pointermove',(e)=>{
+
+      track.addEventListener('mouseleave', ()=>{
+        isDown=false;
+        track.classList.remove('is-dragging');
+      });
+
+      track.addEventListener('mousemove', (e)=>{
         if(!isDown) return;
         e.preventDefault();
-        onMove(e.clientX);
+        const x=e.pageX - track.offsetLeft;
+        const walk=(x-startX)*1.15;
+        if(Math.abs(walk)>3) moved=true;
+        track.scrollLeft=scrollLeft-walk;
       });
-      track.addEventListener('pointerup',(e)=>{ onUp(); try{track.releasePointerCapture?.(e.pointerId);}catch{} });
-      track.addEventListener('pointercancel',onUp);
 
-      track.addEventListener('dragstart',(e)=>e.preventDefault());
+      track.addEventListener('touchstart',(e)=>{
+        const t=e.touches[0];
+        if(!t) return;
+        isDown=true;
+        moved=false;
+        startX=t.pageX;
+        scrollLeft=track.scrollLeft;
+      }, {passive:true});
+
+      track.addEventListener('touchmove',(e)=>{
+        const t=e.touches[0];
+        if(!isDown || !t) return;
+        const walk=(t.pageX-startX)*1.1;
+        if(Math.abs(walk)>3) moved=true;
+        track.scrollLeft=scrollLeft-walk;
+      }, {passive:true});
+
+      track.addEventListener('touchend',()=>{isDown=false;});
+
       track.addEventListener('click',(e)=>{
         if(moved){
           e.preventDefault();
@@ -109,6 +124,8 @@
           moved=false;
         }
       }, true);
+
+      track.addEventListener('dragstart',(e)=>e.preventDefault());
     }
     }
   </script>
