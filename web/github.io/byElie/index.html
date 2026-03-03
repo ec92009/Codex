@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=20260303o"/>
-  <link rel="stylesheet" href="./v3/styles.css?v=20260303o"/>
+  <link rel="stylesheet" href="./shared.css?v=20260303p"/>
+  <link rel="stylesheet" href="./v3/styles.css?v=20260303p"/>
 </head>
 <body class="v3">
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,7 +18,7 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — 03/03 @ 13:18</div>
+    <div class="brand">BY ELIE — 03/03 @ 13:20</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -69,33 +69,8 @@
 
     const track=document.querySelector('[data-carousel-track]');
     if(track){
-      // Subtle auto-nudge so visitors notice the horizontal carousel.
-      const maxScroll = () => Math.max(0, track.scrollWidth - track.clientWidth);
-      const canScroll = () => maxScroll() > 8;
-
-      const animateTo = (target, ms=450) => {
-        const start = track.scrollLeft;
-        const delta = target - start;
-        const t0 = performance.now();
-        const step = (t) => {
-          const p = Math.min(1, (t - t0) / ms);
-          const ease = 1 - Math.pow(1 - p, 3);
-          track.scrollLeft = start + delta * ease;
-          if (p < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-      };
-
-      const nudge = () => {
-        if(!canScroll()) return;
-        const dist=Math.min(260, maxScroll());
-        animateTo(dist, 550);
-        setTimeout(()=>animateTo(0, 550), 900);
-      };
-
-      // Run after paint (and again once) so it's obvious.
-      setTimeout(nudge, 700);
-      setTimeout(nudge, 2200);
+      // Visible nudge cue so users see there are more offerings.
+      setTimeout(()=>track.classList.add('auto-nudge'), 700);
 
       // Enable drag/swipe still.
       let isDown=false, startX=0, scrollLeft=0, moved=false;
