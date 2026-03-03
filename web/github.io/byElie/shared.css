@@ -66,6 +66,7 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(2,1fr)}
 .carousel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .carousel-head h2{margin:0}
+.carousel-wrap{position:relative}
 .carousel-track{
   display:grid;
   grid-auto-flow:column;
@@ -77,6 +78,9 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 }
 .carousel-item{scroll-snap-align:start}
 .carousel-controls{display:flex;gap:8px;justify-content:flex-end}
+.carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 92%,transparent);color:var(--text);font-size:1.6rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;z-index:5;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.18)}
+.carousel-arrow.left{left:-10px}
+.carousel-arrow.right{right:-10px}
 .card{border:1px solid var(--line);border-radius:14px;background:var(--surface-2);padding:14px}
 .card h3{margin:0 0 6px;font-size:1.06rem}
 .card p{margin:0;color:var(--muted);line-height:1.45}
@@ -96,5 +100,5 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .hero::after{content:"";position:absolute;right:-80px;top:-100px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--brand) 24%,transparent),transparent 65%);pointer-events:none}
 .footer-note{font-size:.85rem;color:var(--muted)}
 a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--brand) 75%,white 25%);outline-offset:2px}
-@media (max-width:840px){.grid{grid-template-columns:1fr}.about-grid{grid-template-columns:1fr}.carousel-track{grid-auto-columns:minmax(260px,85%)}.carousel-head{flex-direction:column;align-items:flex-start}.carousel-controls{width:100%;justify-content:flex-start}}
+@media (max-width:840px){.grid{grid-template-columns:1fr}.about-grid{grid-template-columns:1fr}.carousel-track{grid-auto-columns:minmax(260px,85%)}.carousel-head{flex-direction:column;align-items:flex-start}.carousel-controls{width:100%;justify-content:flex-start}.carousel-arrow{display:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}}
