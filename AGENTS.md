@@ -16,6 +16,7 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 - Make small, clear commits; use `WIP:` commits if stopping mid-task.
 - Keep `main` pushable; use branches for larger changes (branch prefix: `codex/`).
 - After modifying a project, update relevant `README.md` files and other necessary docs/config, then push to GitHub.
+- For each prompt in Codex, finish with a full update on GitHub, and print the local URL, the public URL, and the version number to expect upon hard refresh.
 - Before pausing, update `/Users/ecohen/Codex/NEXT_STEPS.md` with current status and next command.
 
 ## Website Workspace Structure
