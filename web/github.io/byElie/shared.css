@@ -84,6 +84,7 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 }
 .carousel-item{scroll-snap-align:start}
 .carousel-track.is-dragging{cursor:grabbing}
+.carousel-track.is-dragging *{pointer-events:none}
 .carousel-controls{display:flex;gap:8px;justify-content:flex-end}
 .card{border:1px solid var(--line);border-radius:14px;background:var(--surface-2);padding:14px}
 .card h3{margin:0 0 6px;font-size:1.06rem}
