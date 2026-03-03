@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>By Elie | CAD Design</title>
+  <link rel="stylesheet" href="./shared.css"/>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar shell">
+    <nav class="version-switch" aria-label="Site navigation">
+      <a href="./">Home</a> <span>|</span>
+      <a href="./plans.html">3D Plans</a> <span>|</span>
+      <a href="./prints.html">Physical Prints</a> <span>|</span>
+      <a href="./web-design.html">Web Design</a> <span>|</span>
+      <a class="is-active" href="./cad-design.html">CAD Design</a> <span>|</span>
+      <a href="./gallery.html">Gallery</a>
+    </nav>
+    <div class="brand">BY ELIE</div>
+    <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
+  </header>
+  <main id="main-content" class="shell">
+    <section class="panel hero">
+      <div class="service-logo" aria-hidden="true">📐</div>
+      <p class="eyebrow">Design service</p>
+      <h1>CAD Design</h1>
+      <p class="lead">From idea, sketch, or photo to clean manufacturable CAD files ready for prototyping or production.</p>
+      <div class="cta"><a class="btn primary" href="#inquiry">Request quote</a><a class="btn secondary" href="./">Back to main</a></div>
+    </section>
+    <section class="panel grid">
+      <article class="card"><h3>Concept to CAD</h3><p>Translate concept into 3D geometry with dimensions and constraints.</p></article>
+      <article class="card"><h3>DFM pass</h3><p>Design-for-manufacturing cleanup for printability and assembly.</p></article>
+      <article class="card"><h3>File exports</h3><p>Deliver STL/STEP/3MF and revision-ready source package.</p></article>
+      <article class="card" id="inquiry"><h3>How it works</h3><p>Brief → quote → first draft → revisions → final delivery.</p></article>
+    </section>
+  </main>
+  <script>
+    const btn=document.querySelector('[data-theme-toggle]');
+    btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
+  </script>
+</body></html>
