@@ -144,3 +144,36 @@ a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--b
 
 
 .carousel{position:relative;overflow:hidden}
+@media (min-width:1024px){
+  .carousel-controls{display:flex;gap:8px;justify-content:flex-end}
+  .carousel-wrap{
+    height:clamp(260px,28vw,340px);
+    perspective:1700px;
+    transform-style:preserve-3d;
+    overflow:visible;
+    scroll-snap-type:none;
+  }
+  .carousel-track{
+    position:relative;
+    height:100%;
+    width:100%;
+    transform-style:preserve-3d;
+    display:block;
+    padding:0;
+  }
+  .carousel-item{
+    position:absolute;
+    top:0;
+    left:50%;
+    width:min(420px,calc(100% - 360px));
+    max-width:min(420px,calc(100% - 360px));
+    height:100%;
+    transition:transform .42s cubic-bezier(.22,.65,.2,1),opacity .24s ease,filter .24s ease;
+    pointer-events:none;
+    flex:none;
+    scroll-snap-align:none;
+  }
+  .carousel-item.is-active{pointer-events:auto}
+  .carousel-item:not(.is-active){filter:saturate(.88) brightness(.96)}
+  .carousel{overflow:visible}
+}
