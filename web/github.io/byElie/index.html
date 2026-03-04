@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=3.12"/>
-  <link rel="stylesheet" href="./styles.css?v=3.12"/>
+  <link rel="stylesheet" href="./shared.css?v=4.0"/>
+  <link rel="stylesheet" href="./styles.css?v=4.0"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,7 +18,7 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v3.12</div>
+    <div class="brand">BY ELIE — v4.0</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -34,6 +34,10 @@
     <section id="offers" class="panel carousel" aria-label="Offerings carousel">
       <div class="carousel-head">
         <h2>Offerings</h2>
+        <div class="carousel-controls">
+          <button class="btn secondary" type="button" data-offers-prev>← Prev</button>
+          <button class="btn secondary" type="button" data-offers-next>Next →</button>
+        </div>
       </div>
       <div class="carousel-wrap" data-offers-wrap tabindex="0">
         <div class="carousel-track" data-offers-track>
@@ -68,22 +72,25 @@
     btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
 
     const offersWrap=document.querySelector('[data-offers-wrap]');
+    const offersTrack=document.querySelector('[data-offers-track]');
     const offerItems=Array.from(document.querySelectorAll('[data-offer-item]'));
     const offersDots=document.querySelector('[data-offers-dots]');
+    const prevBtn=document.querySelector('[data-offers-prev]');
+    const nextBtn=document.querySelector('[data-offers-next]');
 
-    if(offersWrap && offerItems.length){
+    if(offersWrap && offersTrack && offerItems.length){
+      offersWrap.classList.add('is-enhanced');
       let activeIndex=0;
       const total=offerItems.length;
+      const wrapIndex=(n)=>((n%total)+total)%total;
+      const relOffset=(index)=>{
+        let d=index-activeIndex;
+        if(d>total/2) d-=total;
+        if(d<-total/2) d+=total;
+        return d;
+      };
 
-      /* Clear any inline styles from old carousel */
-      offerItems.forEach(item=>{
-        item.style.transform='';
-        item.style.opacity='';
-        item.style.zIndex='';
-        item.classList.remove('is-active');
-      });
-
-      const updateDots=()=>{
+      const updateDots=()=> {
         offersDots?.querySelectorAll('.carousel-dot').forEach((dot,i)=>{
           const on=i===activeIndex;
           dot.classList.toggle('is-active',on);
@@ -91,10 +98,34 @@
         });
       };
 
-      const scrollToIndex=(i)=>{
-        const item=offerItems[i];
-        if(!item) return;
-        item.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+      const profile=()=>{
+        const w=window.innerWidth||1280;
+        if(w<560) return {tx:36,tz:88,ry:13,scStep:0.11,minScale:0.7,minOpacity:0.22,maxDepth:1};
+        if(w<900) return {tx:52,tz:125,ry:16,scStep:0.13,minScale:0.66,minOpacity:0.2,maxDepth:2};
+        return {tx:68,tz:165,ry:20,scStep:0.16,minScale:0.62,minOpacity:0.18,maxDepth:2};
+      };
+
+      const render=()=>{
+        const p=profile();
+        offersTrack.style.transform='none';
+        offerItems.forEach((item,index)=>{
+          const off=relOffset(index);
+          const abs=Math.abs(off);
+          const tx=off*p.tx;
+          const tz=-abs*p.tz;
+          const ry=off*-p.ry;
+          const sc=Math.max(p.minScale,1-abs*p.scStep);
+          item.style.transform=`translateX(-50%) translateX(${tx}%) translateZ(${tz}px) rotateY(${ry}deg) scale(${sc})`;
+          item.style.opacity=abs>p.maxDepth?'0':String(Math.max(p.minOpacity,1-abs*.34));
+          item.style.zIndex=String(40-abs*10);
+          item.classList.toggle('is-active',off===0);
+        });
+        updateDots();
+      };
+
+      const setActive=(i)=>{
+        activeIndex=wrapIndex(i);
+        render();
       };
 
       /* Build dots */
@@ -106,41 +137,60 @@
           dot.className='carousel-dot';
           const label=item.querySelector('h3')?.textContent||`offer ${index+1}`;
           dot.setAttribute('aria-label',`Show ${label}`);
-          dot.addEventListener('click',()=>{
-            activeIndex=index;
-            scrollToIndex(index);
-            updateDots();
-          });
+          dot.addEventListener('click',()=>setActive(index));
           offersDots.append(dot);
         });
       }
 
-      /* Track scroll position to update active dot */
-      let scrollTimer;
-      offersWrap.addEventListener('scroll',()=>{
-        clearTimeout(scrollTimer);
-        scrollTimer=setTimeout(()=>{
-          const wrapRect=offersWrap.getBoundingClientRect();
-          const center=wrapRect.left+wrapRect.width/2;
-          let closest=0, closestDist=Infinity;
-          offerItems.forEach((item,i)=>{
-            const r=item.getBoundingClientRect();
-            const itemCenter=r.left+r.width/2;
-            const dist=Math.abs(itemCenter-center);
-            if(dist<closestDist){closestDist=dist;closest=i;}
-          });
-          activeIndex=closest;
-          updateDots();
-        },60);
-      },{passive:true});
+      prevBtn?.addEventListener('click',()=>setActive(activeIndex-1));
+      nextBtn?.addEventListener('click',()=>setActive(activeIndex+1));
 
       /* Keyboard navigation */
       offersWrap.addEventListener('keydown',(e)=>{
-        if(e.key==='ArrowLeft'){e.preventDefault();activeIndex=Math.max(0,activeIndex-1);scrollToIndex(activeIndex);updateDots();}
-        if(e.key==='ArrowRight'){e.preventDefault();activeIndex=Math.min(total-1,activeIndex+1);scrollToIndex(activeIndex);updateDots();}
+        if(e.key==='ArrowLeft'){e.preventDefault();setActive(activeIndex-1);}
+        if(e.key==='ArrowRight'){e.preventDefault();setActive(activeIndex+1);}
       });
 
-      updateDots();
+      let touchStartX=null;
+      offersWrap.addEventListener('touchstart',(e)=>{touchStartX=e.touches[0]?.clientX??null;},{passive:true});
+      offersWrap.addEventListener('touchend',(e)=>{
+        if(touchStartX===null) return;
+        const endX=e.changedTouches[0]?.clientX??touchStartX;
+        const dx=endX-touchStartX;
+        if(Math.abs(dx)>32) setActive(activeIndex+(dx<0?1:-1));
+        touchStartX=null;
+      },{passive:true});
+
+      /* Mouse / pointer drag (desktop) */
+      let pointerStartX=null;
+      let pointerDragging=false;
+      offersWrap.addEventListener('pointerdown',(e)=>{
+        if(e.pointerType==='mouse' && e.button!==0) return;
+        pointerStartX=e.clientX;
+        pointerDragging=true;
+        offersWrap.classList.add('is-dragging');
+      });
+      offersWrap.addEventListener('pointerup',(e)=>{
+        if(!pointerDragging || pointerStartX===null) return;
+        const dx=e.clientX-pointerStartX;
+        if(Math.abs(dx)>28) setActive(activeIndex+(dx<0?1:-1));
+        pointerStartX=null;
+        pointerDragging=false;
+        offersWrap.classList.remove('is-dragging');
+      });
+      offersWrap.addEventListener('pointerleave',()=>{
+        pointerStartX=null;
+        pointerDragging=false;
+        offersWrap.classList.remove('is-dragging');
+      });
+      offersWrap.addEventListener('pointercancel',()=>{
+        pointerStartX=null;
+        pointerDragging=false;
+        offersWrap.classList.remove('is-dragging');
+      });
+
+      window.addEventListener('resize',render);
+      render();
     }
   </script>
 </body></html>
