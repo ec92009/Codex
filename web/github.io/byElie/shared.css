@@ -70,34 +70,56 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .carousel-controls{display:flex;gap:8px;justify-content:flex-end}
 .carousel-wrap{
   position:relative;
+  overflow-x:auto;
+  overflow-y:hidden;
+  touch-action:pan-y;
+  -webkit-overflow-scrolling:touch;
+  cursor:grab;
+}
+.carousel-wrap.is-dragging{cursor:grabbing;}
+.carousel-track{
+  display:flex;
+  gap:12px;
+  width:max-content;
+  min-width:100%;
+  padding:0 2px;
+}
+.carousel-item{
+  position:relative;
+  width:min(440px,calc(100% - 20px));
+  max-width:min(440px,calc(100% - 20px));
+  min-height:220px;
+  transition:transform .42s cubic-bezier(.22,.65,.2,1),opacity .24s ease,filter .24s ease;
+  pointer-events:auto;
+  flex:0 0 min(440px,calc(100% - 20px));
+  transform-origin:50% 40%;
+}
+.carousel-wrap.is-enhanced{
   height:clamp(240px,52vw,340px);
   perspective:1700px;
   transform-style:preserve-3d;
   overflow:hidden;
-  touch-action:pan-y;
   isolation:isolate;
 }
-.carousel-track{
+.carousel-wrap.is-enhanced .carousel-track{
   position:relative;
   height:100%;
   width:100%;
   transform-style:preserve-3d;
   display:block;
+  min-width:0;
   padding:0;
 }
-.carousel-item{
+.carousel-wrap.is-enhanced .carousel-item{
   position:absolute;
   top:0;
   left:50%;
-  width:min(440px,calc(100% - 20px));
-  max-width:min(440px,calc(100% - 20px));
   height:100%;
-  transition:transform .42s cubic-bezier(.22,.65,.2,1),opacity .24s ease,filter .24s ease;
+  min-height:0;
   pointer-events:none;
   flex:none;
-  transform-origin:50% 40%;
-  min-height:0;
 }
+.carousel-wrap.is-enhanced .carousel-item.is-active{pointer-events:auto}
 .carousel-item .btn{margin-top:12px}
 .carousel-item.is-active{pointer-events:auto}
 .carousel-item:not(.is-active){filter:saturate(.88) brightness(.96)}
