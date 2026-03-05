@@ -8,6 +8,7 @@
   --brand:#5f7dff;
   --brand-2:#2bcdb8;
   --accent:#ff8f3d;
+  --btn-primary-fg:#081227;
   --radius:18px;
 }
 html[data-theme="light"]{
@@ -20,6 +21,7 @@ html[data-theme="light"]{
   --brand:#2f5cff;
   --brand-2:#0caea1;
   --accent:#f08a29;
+  --btn-primary-fg:#ffffff;
 }
 *{box-sizing:border-box}
 html,body{max-width:100%;overflow-x:clip}
@@ -89,7 +91,7 @@ body::before{
   border-bottom:1px solid color-mix(in srgb,var(--line) 45%,transparent);
 }
 .brand{font-weight:800;letter-spacing:.02em}
-.version-switch,.theme-toggle{border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:8px 12px;font-size:.85rem}
+.version-switch,.theme-toggle{border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:8px 12px;font-size:.85rem;color:var(--text)}
 .version-switch{display:inline-flex;gap:6px;align-items:center}
 .version-switch a{text-decoration:none;color:var(--muted);font-weight:700}
 .version-switch a.is-active{color:var(--brand)}
@@ -118,7 +120,7 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .btn{display:inline-flex;text-decoration:none;padding:10px 14px;border-radius:999px;border:1px solid var(--line);font-weight:700;transition:transform .14s ease,box-shadow .14s ease,background-color .14s ease}
 .btn.primary{
   background:linear-gradient(135deg,var(--brand),color-mix(in srgb,var(--brand) 64%,var(--brand-2) 24%,var(--accent) 12%));
-  color:white;border-color:transparent
+  color:var(--btn-primary-fg);border-color:transparent
 }
 .btn.secondary{background:var(--surface-2);color:var(--text)}
 .btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(0,0,0,.15)}
