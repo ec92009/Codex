@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Web Design & Maintenance</title>
-  <link rel="stylesheet" href="./shared.css?v=5.1"/>
+  <link rel="stylesheet" href="./shared.css?v=5.2"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -17,7 +17,7 @@
       <a  href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a  href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v5.1</div>
+    <div class="brand">BY ELIE — v5.2</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -28,15 +28,146 @@
       <p class="lead">Conversion-focused websites built for small businesses, then maintained through lightweight, AI-assisted content operations.</p>
       <div class="cta"><a class="btn primary" href="#inquiry">Request details</a><a class="btn secondary" href="./">Back to main</a></div>
     </section>
-    <section class="panel grid">
-      <article class="card"><h3>Launch Page Build</h3><p>Fast single-page site for a focused offer, including copy structure, visual direction, and basic analytics setup.</p></article>
-      <article class="card"><h3>Business Site System</h3><p>Multi-page website with service architecture, trust sections, and mobile-first performance tuned for leads.</p></article>
-      <article class="card"><h3>Maintenance + AI Ops</h3><p>Ongoing updates with ClawdBot-assisted drafting, content refreshes, and monthly optimization check-ins.</p></article>
-      <article class="card" id="inquiry"><h3>How to order</h3><p>We align on offer and audience, lock scope, then ship in milestones with a handover plan and optional retainer support.</p></article>
+    <section class="panel carousel" aria-label="Web services carousel">
+      <div class="carousel-head">
+        <h2>Packages</h2>
+        <div class="carousel-controls">
+          <button class="btn secondary" type="button" data-offers-prev>← Prev</button>
+          <button class="btn secondary" type="button" data-offers-next>Next →</button>
+        </div>
+      </div>
+      <div class="carousel-wrap" data-offers-wrap tabindex="0">
+        <div class="carousel-track" data-offers-track>
+          <article class="card carousel-item" data-offer-item><h3>Launch Page Build</h3><p>Fast single-page site for a focused offer, including copy structure, visual direction, and basic analytics setup.</p></article>
+          <article class="card carousel-item" data-offer-item><h3>Business Site System</h3><p>Multi-page website with service architecture, trust sections, and mobile-first performance tuned for leads.</p></article>
+          <article class="card carousel-item" data-offer-item><h3>Maintenance + AI Ops</h3><p>Ongoing updates with ClawdBot-assisted drafting, content refreshes, and monthly optimization check-ins.</p></article>
+          <article class="card carousel-item" data-offer-item id="inquiry"><h3>How to order</h3><p>We align on offer and audience, lock scope, then ship in milestones with a handover plan and optional retainer support.</p></article>
+        </div>
+      </div>
+      <div class="carousel-dots" data-offers-dots aria-label="Web services pagination"></div>
     </section>
   </main>
   <script>
     const btn=document.querySelector('[data-theme-toggle]');
     btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
+
+    const offersWrap=document.querySelector('[data-offers-wrap]');
+    const offersTrack=document.querySelector('[data-offers-track]');
+    const offerItems=Array.from(document.querySelectorAll('[data-offer-item]'));
+    const offersDots=document.querySelector('[data-offers-dots]');
+    const prevBtn=document.querySelector('[data-offers-prev]');
+    const nextBtn=document.querySelector('[data-offers-next]');
+
+    if(offersWrap && offersTrack && offerItems.length){
+      offersWrap.classList.add('is-enhanced');
+      let activeIndex=0;
+      const total=offerItems.length;
+      const wrapIndex=(n)=>((n%total)+total)%total;
+      const relOffset=(index)=>{
+        let d=index-activeIndex;
+        if(d>total/2) d-=total;
+        if(d<-total/2) d+=total;
+        return d;
+      };
+
+      const updateDots=()=> {
+        offersDots?.querySelectorAll('.carousel-dot').forEach((dot,i)=>{
+          const on=i===activeIndex;
+          dot.classList.toggle('is-active',on);
+          dot.setAttribute('aria-current',on?'true':'false');
+        });
+      };
+
+      const profile=()=>{
+        const w=window.innerWidth||1280;
+        if(w<560) return {tx:36,tz:88,ry:13,scStep:0.11,minScale:0.7,minOpacity:0.22,maxDepth:1};
+        if(w<900) return {tx:52,tz:125,ry:16,scStep:0.13,minScale:0.66,minOpacity:0.2,maxDepth:2};
+        return {tx:68,tz:165,ry:20,scStep:0.16,minScale:0.62,minOpacity:0.18,maxDepth:2};
+      };
+
+      const render=()=>{
+        const p=profile();
+        offersTrack.style.transform='none';
+        offerItems.forEach((item,index)=>{
+          const off=relOffset(index);
+          const abs=Math.abs(off);
+          const tx=off*p.tx;
+          const tz=-abs*p.tz;
+          const ry=off*-p.ry;
+          const sc=Math.max(p.minScale,1-abs*p.scStep);
+          item.style.transform=`translateX(-50%) translateX(${tx}%) translateZ(${tz}px) rotateY(${ry}deg) scale(${sc})`;
+          item.style.opacity=abs>p.maxDepth?'0':String(Math.max(p.minOpacity,1-abs*.34));
+          item.style.zIndex=String(40-abs*10);
+          item.classList.toggle('is-active',off===0);
+        });
+        updateDots();
+      };
+
+      const setActive=(i)=>{
+        activeIndex=wrapIndex(i);
+        render();
+      };
+
+      if(offersDots){
+        offersDots.innerHTML='';
+        offerItems.forEach((item,index)=>{
+          const dot=document.createElement('button');
+          dot.type='button';
+          dot.className='carousel-dot';
+          const label=item.querySelector('h3')?.textContent||`offer ${index+1}`;
+          dot.setAttribute('aria-label',`Show ${label}`);
+          dot.addEventListener('click',()=>setActive(index));
+          offersDots.append(dot);
+        });
+      }
+
+      prevBtn?.addEventListener('click',()=>setActive(activeIndex-1));
+      nextBtn?.addEventListener('click',()=>setActive(activeIndex+1));
+
+      offersWrap.addEventListener('keydown',(e)=>{
+        if(e.key==='ArrowLeft'){e.preventDefault();setActive(activeIndex-1);}
+        if(e.key==='ArrowRight'){e.preventDefault();setActive(activeIndex+1);}
+      });
+
+      let touchStartX=null;
+      offersWrap.addEventListener('touchstart',(e)=>{touchStartX=e.touches[0]?.clientX??null;},{passive:true});
+      offersWrap.addEventListener('touchend',(e)=>{
+        if(touchStartX===null) return;
+        const endX=e.changedTouches[0]?.clientX??touchStartX;
+        const dx=endX-touchStartX;
+        if(Math.abs(dx)>32) setActive(activeIndex+(dx<0?1:-1));
+        touchStartX=null;
+      },{passive:true});
+
+      let pointerStartX=null;
+      let pointerDragging=false;
+      offersWrap.addEventListener('pointerdown',(e)=>{
+        if(e.pointerType==='mouse' && e.button!==0) return;
+        pointerStartX=e.clientX;
+        pointerDragging=true;
+        offersWrap.classList.add('is-dragging');
+      });
+      offersWrap.addEventListener('pointerup',(e)=>{
+        if(!pointerDragging || pointerStartX===null) return;
+        const dx=e.clientX-pointerStartX;
+        if(Math.abs(dx)>28) setActive(activeIndex+(dx<0?1:-1));
+        pointerStartX=null;
+        pointerDragging=false;
+        offersWrap.classList.remove('is-dragging');
+      });
+      offersWrap.addEventListener('pointerleave',()=>{
+        pointerStartX=null;
+        pointerDragging=false;
+        offersWrap.classList.remove('is-dragging');
+      });
+      offersWrap.addEventListener('pointercancel',()=>{
+        pointerStartX=null;
+        pointerDragging=false;
+        offersWrap.classList.remove('is-dragging');
+      });
+
+      window.addEventListener('resize',render);
+      render();
+    }
   </script>
 </body></html>
