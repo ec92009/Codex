@@ -131,7 +131,7 @@ html[data-theme="light"] .theme-v3 .frame-b {
 .theme-v3 .hero, .theme-v3 .panel, .theme-v3 .review-banner {
   backdrop-filter: blur(6px);
 }
-.theme-v3 .hero h1 { line-height: 0.9; letter-spacing: -0.03em; }
+.theme-v3 .hero h1 { line-height: 1.03; letter-spacing: -0.02em; }
 .theme-v3 .metric, .theme-v3 .stage-card, .theme-v3 .price-card, .theme-v3 .process-list li {
   background: rgba(15, 22, 20, 0.9);
 }
