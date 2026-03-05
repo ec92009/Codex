@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | 3D Physical Prints</title>
-  <link rel="stylesheet" href="./shared.css?v=5.8"/>
+  <link rel="stylesheet" href="./shared.css?v=5.9"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -17,7 +17,7 @@
       <a  href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a  href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v5.8</div>
+    <div class="brand">BY ELIE — v5.9</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -45,6 +45,15 @@
         </div>
       </div>
       <div class="carousel-dots" data-offers-dots aria-label="Physical prints pagination"></div>
+    </section>
+
+    <section class="panel metrics" id="results">
+      <h2>Quick results</h2>
+      <div class="metrics-grid">
+        <article class="metric"><span class="metric-value" data-count="32" data-suffix="+">0</span><span class="metric-label">Projects delivered</span></article>
+        <article class="metric"><span class="metric-value" data-count="96" data-suffix="%">0</span><span class="metric-label">Client satisfaction target</span></article>
+        <article class="metric"><span class="metric-value" data-count="48" data-suffix="h">0</span><span class="metric-label">Typical first draft turnaround</span></article>
+      </div>
     </section>
   </main>
   <script>
@@ -169,5 +178,31 @@
       window.addEventListener('resize',render);
       render();
     }
+
+    const metricEls=[...document.querySelectorAll('.metric-value')];
+    if(metricEls.length){
+      const runCounter=(el)=>{
+        const target=parseInt(el.dataset.count||'0',10);
+        const suffix=el.dataset.suffix||'';
+        const duration=900;
+        const start=performance.now();
+        const tick=(now)=>{
+          const p=Math.min(1,(now-start)/duration);
+          const eased=1-Math.pow(1-p,3);
+          el.textContent=`${Math.round(target*eased)}${suffix}`;
+          if(p<1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      };
+      const io=new IntersectionObserver((entries)=>{
+        entries.forEach((entry)=>{
+          if(!entry.isIntersecting) return;
+          runCounter(entry.target);
+          io.unobserve(entry.target);
+        });
+      },{threshold:.45});
+      metricEls.forEach((el)=>io.observe(el));
+    }
+
   </script>
 </body></html>
