@@ -1,0 +1,60 @@
+name: Deploy Codex Pages Fallback
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages-fallback'
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p _site/oleamediaco _site/oleataxco _site/byElie
+          cp -R web/github.io/oleamediaco/. _site/oleamediaco/
+          cp -R web/github.io/oleataxco/. _site/oleataxco/
+          cp -R web/github.io/byElie/. _site/byElie/
+          cat > _site/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Codex Concept Sites</title></head>
+          <body style="font-family:system-ui,sans-serif;padding:24px">
+            <h1>Codex Hosted Concept Sites</h1>
+            <ul>
+              <li><a href="./oleamediaco/">Olea Media Co</a></li>
+              <li><a href="./oleataxco/">Olea Tax Co concepts</a></li>
+              <li><a href="./byElie/">By Elie</a></li>
+            </ul>
+          </body></html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
