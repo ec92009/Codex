@@ -155,6 +155,9 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
   pointer-events:auto;
   flex:0 0 min(440px,calc(100% - 20px));
   transform-origin:50% 40%;
+  text-decoration:none;
+  color:inherit;
+  cursor:pointer;
 }
 .carousel-wrap.is-enhanced{
   height:clamp(240px,52vw,340px);
@@ -185,6 +188,13 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .carousel-item .btn{margin-top:12px}
 .carousel-item.is-active{pointer-events:auto}
 .carousel-item:not(.is-active){filter:saturate(.88) brightness(.96)}
+.carousel-item:focus-visible{outline:2px solid color-mix(in srgb,var(--brand) 70%,white 30%);outline-offset:2px}
+.card-link-label{
+  margin:12px 0 0;
+  font-weight:800;
+  letter-spacing:.01em;
+  color:color-mix(in srgb,var(--brand) 82%,var(--text) 18%);
+}
 .carousel-item,.carousel-item *{-webkit-user-select:none;user-select:none}
 .no-select,.no-select *{-webkit-user-select:none!important;user-select:none!important}
 .carousel-dots{display:flex;gap:8px;justify-content:center;margin-top:12px}
