@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=5.12"/>
-  <link rel="stylesheet" href="./styles.css?v=5.12"/>
+  <link rel="stylesheet" href="./shared.css?v=5.13"/>
+  <link rel="stylesheet" href="./styles.css?v=5.13"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,12 +18,12 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v5.12</div>
+    <div class="brand">BY ELIE — v5.13</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
     <section class="panel hero">
-      <p class="version-pill" aria-label="Current version">Version 5.12</p>
+      <p class="version-pill" aria-label="Current version">Version 5.13</p>
       <p class="eyebrow">Creator Portfolio</p>
       <h1>A lifetime of creation and engineering skills at your service</h1>
       <p class="lead">I blend hands-on building, CAD thinking, and AI-assisted systems (including ClawdBot workflows) to ship visual assets people can buy, print, and trust.</p>
@@ -38,11 +38,11 @@
       </div>
       <div class="carousel-wrap" data-offers-wrap tabindex="0">
         <div class="carousel-track" data-offers-track>
-          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">🧩</div><h3>3D Print Plans</h3><p>Clean, tested STL/3MF releases built for real-world printers with practical tolerances and licensing ready for your shop.</p><a class="btn secondary" href="./plans.html">Explore plans</a></article>
-          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">🖨️</div><h3>Printed Physical Items</h3><p>From one-off prototypes to small production runs, I print, finish, and quality-check every part before delivery.</p><a class="btn secondary" href="./prints.html">View products</a></article>
-          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">📸</div><h3>Photo Services</h3><p>Marketplace-ready product photos with lighting, composition, and edits tuned for conversion instead of just aesthetics.</p><a class="btn secondary" href="./gallery.html">Open gallery</a></article>
-          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">📐</div><h3>CAD on demand</h3><p>Idea-to-file modeling with revision loops, printability checks, and exports your manufacturer or printer can use immediately.</p><a class="btn secondary" href="./cad-design.html">See CAD service</a></article>
-          <article class="card carousel-item" data-offer-item><div class="service-logo" aria-hidden="true">🌐</div><h3>Website Design & Maintenance</h3><p>Business websites that stay up-to-date with AI-assisted content operations and fast iteration as your offer evolves.</p><a class="btn secondary" href="./web-design.html">See web services</a></article>
+          <article class="card carousel-item" data-offer-item data-href="./plans.html"><div class="service-logo" aria-hidden="true">🧩</div><h3>3D Print Plans</h3><p>Clean, tested STL/3MF releases built for real-world printers with practical tolerances and licensing ready for your shop.</p></article>
+          <article class="card carousel-item" data-offer-item data-href="./prints.html"><div class="service-logo" aria-hidden="true">🖨️</div><h3>Printed Physical Items</h3><p>From one-off prototypes to small production runs, I print, finish, and quality-check every part before delivery.</p></article>
+          <article class="card carousel-item" data-offer-item data-href="./gallery.html"><div class="service-logo" aria-hidden="true">📸</div><h3>Photo Services</h3><p>Marketplace-ready product photos with lighting, composition, and edits tuned for conversion instead of just aesthetics.</p></article>
+          <article class="card carousel-item" data-offer-item data-href="./cad-design.html"><div class="service-logo" aria-hidden="true">📐</div><h3>CAD on demand</h3><p>Idea-to-file modeling with revision loops, printability checks, and exports your manufacturer or printer can use immediately.</p></article>
+          <article class="card carousel-item" data-offer-item data-href="./web-design.html"><div class="service-logo" aria-hidden="true">🌐</div><h3>Website Design & Maintenance</h3><p>Business websites that stay up-to-date with AI-assisted content operations and fast iteration as your offer evolves.</p></article>
         </div>
       </div>
       <div class="carousel-dots" data-offers-dots aria-label="Offerings pagination"></div>
@@ -209,8 +209,8 @@
           if(dragMoved) return;
           const interactive=e.target.closest('a,button,input,textarea,select,label');
           if(interactive) return;
-          const link=item.querySelector('a[href]');
-          if(link) window.location.href=link.getAttribute('href');
+          const href=item.dataset.href || item.querySelector('a[href]')?.getAttribute('href');
+          if(href) window.location.href=href;
         });
       });
 
