@@ -4,8 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=5.6"/>
-  <link rel="stylesheet" href="./styles.css?v=5.6"/>
+  <link rel="stylesheet" href="./shared.css?v=5.7"/>
+  <link rel="stylesheet" href="./styles.css?v=5.7"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,12 +18,12 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v5.6</div>
+    <div class="brand">BY ELIE — v5.7</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
     <section class="panel hero">
-      <p class="version-pill" aria-label="Current version">Version 5.6</p>
+      <p class="version-pill" aria-label="Current version">Version 5.7</p>
       <p class="eyebrow">Creator Portfolio</p>
       <h1>A lifetime of creation and engineering skills at your service</h1>
       <p class="lead">I blend hands-on building, CAD thinking, and AI-assisted systems (including ClawdBot workflows) to ship visual assets people can buy, print, and trust.</p>
@@ -167,7 +167,6 @@
         const dx=touchLastX-touchStartX;
         if(Math.abs(dx)>10){
           touchDragging=true;
-          suppressClickUntil=Date.now()+450;
         }
       },{passive:true});
       offersWrap.addEventListener('touchend',(e)=>{
@@ -192,9 +191,6 @@
         pointerStartX=e.clientX;
         pointerLastX=e.clientX;
         pointerDragging=false;
-        if(typeof offersWrap.setPointerCapture==='function'){
-          offersWrap.setPointerCapture(e.pointerId);
-        }
         offersWrap.classList.add('is-dragging');
       });
       offersWrap.addEventListener('pointermove',(e)=>{
@@ -203,7 +199,6 @@
         const dx=pointerLastX-pointerStartX;
         if(Math.abs(dx)>10){
           pointerDragging=true;
-          suppressClickUntil=Date.now()+450;
         }
       });
       offersWrap.addEventListener('pointerup',(e)=>{
@@ -235,8 +230,7 @@
         window.location.href=href;
       };
       offersTrack.addEventListener('click',(e)=>{
-        const card=e.target.closest('[data-href]');
-        if(!card) return;
+        const card=e.target.closest('[data-href]') || offerItems[activeIndex];
         if(Date.now()<suppressClickUntil || pointerDragging || touchDragging){
           e.preventDefault();
           e.stopPropagation();
