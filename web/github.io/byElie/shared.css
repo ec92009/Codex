@@ -276,3 +276,60 @@ a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--b
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}}
 .carousel{position:relative;overflow:hidden}
+
+.hero h1{
+  font-family:"Bebas Neue","Oswald","Arial Narrow",sans-serif;
+  font-size:clamp(2.4rem,6.5vw,5.4rem);
+  letter-spacing:.01em;
+}
+.hero .lead{max-width:62ch}
+
+.signature-strip{
+  padding:10px 16px;
+  border-style:dashed;
+  border-color:color-mix(in srgb,var(--accent) 44%,var(--line));
+  background:linear-gradient(120deg,color-mix(in srgb,var(--surface) 84%,var(--accent) 16%),var(--surface));
+}
+.signature-strip p{
+  margin:0;
+  font-family:"Bebas Neue","Oswald",sans-serif;
+  font-size:clamp(1.2rem,3.6vw,2rem);
+  letter-spacing:.12em;
+  white-space:nowrap;
+  animation:signature-slide 18s linear infinite;
+}
+@keyframes signature-slide{
+  from{transform:translateX(2%)}
+  to{transform:translateX(-18%)}
+}
+
+.metrics-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+.metric{
+  border:1px solid color-mix(in srgb,var(--brand) 30%,var(--line));
+  border-radius:14px;
+  background:color-mix(in srgb,var(--surface-2) 82%,transparent);
+  padding:14px;
+}
+.metric-value{
+  display:block;
+  font-family:"Bebas Neue","Oswald",sans-serif;
+  font-size:clamp(2.2rem,5vw,4rem);
+  line-height:.9;
+  color:color-mix(in srgb,var(--text) 88%,var(--accent) 12%);
+}
+.metric-label{
+  display:block;
+  margin-top:8px;
+  color:var(--muted);
+  font-size:.92rem;
+  line-height:1.35;
+}
+
+@media (max-width:840px){
+  .metrics-grid{grid-template-columns:1fr}
+  .signature-strip p{white-space:normal;animation:none;letter-spacing:.08em}
+}
