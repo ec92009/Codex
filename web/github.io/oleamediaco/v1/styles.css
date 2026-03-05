@@ -169,6 +169,19 @@ html[data-theme="dark"] .lang-switch {
   cursor: pointer;
 }
 
+.build-version {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 0.32rem 0.62rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .theme-toggle:focus-visible {
   outline: 2px solid var(--brand-2);
   outline-offset: 2px;
