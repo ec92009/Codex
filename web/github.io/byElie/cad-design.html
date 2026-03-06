@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | CAD on demand</title>
-  <link rel="stylesheet" href="./shared.css?v=5.13"/>
+  <link rel="stylesheet" href="./shared.css?v=6.0"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -17,7 +17,7 @@
       <a class="is-active" href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v5.13</div>
+    <div class="brand">BY ELIE — v6.0</div>
     <button class="theme-toggle" type="button" data-theme-toggle>Theme</button>
   </header>
   <main id="main-content" class="shell">
@@ -53,8 +53,15 @@
     </section>
   </main>
   <script>
+    const root=document.documentElement;
+    const key='byelie-theme';
+    const saved=localStorage.getItem(key);
+    if(saved==='light' || saved==='dark') root.dataset.theme=saved;
     const btn=document.querySelector('[data-theme-toggle]');
-    btn?.addEventListener('click',()=>{const r=document.documentElement; r.dataset.theme=r.dataset.theme==='light'?'dark':'light';});
+    btn?.addEventListener('click',()=>{
+      root.dataset.theme=root.dataset.theme==='light'?'dark':'light';
+      localStorage.setItem(key,root.dataset.theme);
+    });
 
     const offersWrap=document.querySelector('[data-offers-wrap]');
     const offersTrack=document.querySelector('[data-offers-track]');
