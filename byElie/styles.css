@@ -1,0 +1,7 @@
+body .hero{
+  background:
+    radial-gradient(420px 260px at 86% -6%, color-mix(in srgb,var(--brand-2) 20%, transparent), transparent 70%),
+    radial-gradient(360px 240px at -4% 92%, color-mix(in srgb,var(--accent) 14%, transparent), transparent 72%),
+    linear-gradient(160deg,color-mix(in srgb,var(--brand-2) 10%,var(--surface)),var(--surface));
+}
+body .grid{grid-template-columns:repeat(2,minmax(0,1fr));}
