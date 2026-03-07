@@ -2,6 +2,12 @@
 
 Repo-level working preferences for `/Users/ecohen/Codex`.
 
+## Response Protocol
+
+- If a request may take more than ~5 seconds, send a quick acknowledgment first (e.g., "got it"), then follow with results.
+- If results are immediate, respond directly with results.
+- For website changes meant to be viewed externally, always push to GitHub immediately after each change.
+
 ## Defaults
 
 - Prefer Python for scripts and automation tasks.
@@ -16,9 +22,18 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 - Make small, clear commits; use `WIP:` commits if stopping mid-task.
 - Keep `main` pushable; use branches for larger changes (branch prefix: `codex/`).
 - After modifying a project, update relevant `README.md` files and other necessary docs/config, then push to GitHub.
-- For each prompt in Codex, finish with a full update on GitHub, and print the local URL, the public URL, and the version number to expect upon hard refresh.
-- By Elie versioning scheme: use `major.minor` with two-digit minor; start at `3.10`; increment minor by `+0.01` each round (`3.11`, `3.12`, ...); at local midnight increment major and reset minor to `.00`.
+- For each modification cycle in Codex, increment the version number, push updates, and report: local URL, GitHub Pages URL, and the new version to expect on refresh.
+- By Elie (and Codex projects) versioning scheme: use `vX.Y` where `X` is the current day of month and `Y` increments for each new iteration that day (example on March 4: `v4.0`, `v4.1`, `v4.2`).
 - Before pausing, update `/Users/ecohen/Codex/NEXT_STEPS.md` with current status and next command.
+
+## Skills
+
+- `frontend-design` skill: `skills/frontend-design/SKILL.md`
+  - Use for premium front-end refinement (hierarchy, spacing, typography, non-breaking visual iterations).
+- `video-to-website` skill: `skills/video-to-website/SKILL.md`
+  - Use to turn a video into a premium scroll-driven website with GSAP/Lenis/canvas choreography.
+- `video-to-webpage` skill: `skills/video-to-webpage/SKILL.md`
+  - Use to turn a video into a premium scroll-driven single web page experience.
 
 ## Website Workspace Structure
 
