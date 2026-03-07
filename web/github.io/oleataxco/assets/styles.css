@@ -355,6 +355,13 @@ a.button.alt:active {
   gap: 0.8rem;
   align-content: start;
 }
+.hero-side .card {
+  background: var(--surface-1);
+}
+.hero-side .card p,
+.hero-side .card li {
+  color: var(--text);
+}
 .profile-shot {
   margin: 0;
   border: 1px solid var(--line);
