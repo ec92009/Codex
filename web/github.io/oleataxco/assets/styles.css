@@ -436,7 +436,7 @@ a.button.alt:active {
 .card h3 { margin-bottom: 0.3rem; }
 .card p, .card li { color: var(--muted); }
 .card li {
-  color: #473930;
+  color: var(--text);
 }
 .list-clean {
   list-style: none;
