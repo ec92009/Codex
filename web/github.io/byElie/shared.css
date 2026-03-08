@@ -1,26 +1,26 @@
 :root {
-  --bg:#070c18;
-  --surface:#111b31;
-  --surface-2:#1a2845;
-  --text:#eaf1ff;
-  --muted:#9db0d8;
-  --line:#2b3b62;
-  --brand:#5f7dff;
-  --brand-2:#2bcdb8;
-  --accent:#ff8f3d;
-  --btn-primary-fg:#081227;
-  --radius:18px;
+  --bg:#030712;
+  --surface:#0b1121;
+  --surface-2:#141f36;
+  --text:#f8fafc;
+  --muted:#94a3a6;
+  --line:#1e293b;
+  --brand:#e2e8f0;
+  --brand-2:#94a3b8;
+  --accent:#334155;
+  --btn-primary-fg:#030712;
+  --radius:0;
 }
 html[data-theme="light"]{
-  --bg:#eef4ff;
+  --bg:#f8fafc;
   --surface:#ffffff;
-  --surface-2:#f5f8ff;
-  --text:#0f1a34;
-  --muted:#4f628a;
-  --line:#d2ddf4;
-  --brand:#2f5cff;
-  --brand-2:#0caea1;
-  --accent:#f08a29;
+  --surface-2:#f1f5f9;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:#e2e8f0;
+  --brand:#0f172a;
+  --brand-2:#334155;
+  --accent:#cbd5e1;
   --btn-primary-fg:#ffffff;
 }
 *{box-sizing:border-box}
@@ -42,21 +42,15 @@ body::before{
   inset:0;
   pointer-events:none;
   background:
-    linear-gradient(color-mix(in srgb,var(--line) 16%,transparent) 1px,transparent 1px),
-    linear-gradient(90deg,color-mix(in srgb,var(--line) 16%,transparent) 1px,transparent 1px);
-  background-size:48px 48px;
-  opacity:.2;
+    linear-gradient(color-mix(in srgb,var(--line) 30%,transparent) 1px,transparent 1px),
+    linear-gradient(90deg,color-mix(in srgb,var(--line) 30%,transparent) 1px,transparent 1px);
+  background-size:64px 64px;
+  opacity:.15;
   z-index:-1;
 }
 .panel{
-  background:
-    linear-gradient(155deg,color-mix(in srgb,var(--surface) 86%,#fff 14%),var(--surface));
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:20px;
-  box-shadow:0 18px 40px rgba(7,15,30,.16);
+  padding:60px 20px;
   position:relative;
-  overflow:hidden;
 }
 .panel::before{
   content:"";
@@ -119,10 +113,9 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 .btn{display:inline-flex;text-decoration:none;padding:10px 14px;border-radius:999px;border:1px solid var(--line);font-weight:700;transition:transform .14s ease,box-shadow .14s ease,background-color .14s ease}
 .btn.primary{
-  background-color:var(--brand);
-  background-image:linear-gradient(135deg,var(--brand),var(--brand-2));
-  color:var(--btn-primary-fg);
-  border-color:var(--brand);
+  background-color:var(--text);
+  color:var(--bg);
+  border-color:var(--text);
 }
 .btn.secondary{background:var(--surface-2);color:var(--text)}
 .btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(0,0,0,.15)}
@@ -211,14 +204,9 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 }
 .carousel-dot.is-active{opacity:1;transform:scale(1.25);background:var(--brand)}
 .card{
-  border:1px solid var(--line);
-  border-radius:14px;
-  background:
-    linear-gradient(145deg,color-mix(in srgb,var(--surface-2) 88%,#fff 12%),var(--surface-2));
   padding:16px;
   position:relative;
   overflow:hidden;
-  box-shadow:0 10px 24px rgba(6,12,26,.14);
 }
 .card::before{
   content:"";
@@ -245,11 +233,11 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 .card p{margin:0;color:var(--muted);line-height:1.5}
 .card .btn{margin-top:10px}
 .service-logo{
-  width:44px;height:44px;border-radius:12px;
+  width:44px;height:44px;border-radius:0;
   display:inline-flex;align-items:center;justify-content:center;
   margin-bottom:10px;font-size:1.2rem;font-weight:700;
-  background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 24%,var(--surface-2)),color-mix(in srgb,var(--brand-2) 24%,var(--surface-2)));
-  border:1px solid color-mix(in srgb,var(--brand) 35%,var(--line));
+  background:transparent;
+  border:1px solid var(--line);
   color:var(--text);
 }
 .about-grid{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:start}
@@ -309,10 +297,9 @@ a:focus-visible,button:focus-visible{outline:2px solid color-mix(in srgb,var(--b
   gap:12px;
 }
 .metric{
-  border:1px solid color-mix(in srgb,var(--brand) 30%,var(--line));
-  border-radius:14px;
-  background:color-mix(in srgb,var(--surface-2) 82%,transparent);
-  padding:14px;
+  background:transparent;
+  padding:24px 0;
+  border-top:1px solid var(--line);
 }
 .metric-value{
   display:block;
