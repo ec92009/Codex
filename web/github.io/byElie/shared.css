@@ -1,26 +1,26 @@
 :root {
-  --bg:#030712;
-  --surface:#0b1121;
-  --surface-2:#141f36;
-  --text:#f8fafc;
-  --muted:#94a3a6;
-  --line:#1e293b;
-  --brand:#e2e8f0;
-  --brand-2:#94a3b8;
-  --accent:#334155;
-  --btn-primary-fg:#030712;
+  --bg:#0e1014;       /* Deepest charcoal / dark slate */
+  --surface:#15181e;  /* Rich dark card surface */
+  --surface-2:#1b1f26;/* Subtle elevation */
+  --text:#f0f1f4;     /* Soft white */
+  --muted:#a3a7af;    /* Less stark gray */
+  --line:#2c313c;     /* Soft dark border */
+  --brand:#d8dadd;    /* Soft silver/pearl */
+  --brand-2:#7f8595;  /* Muted grey-blue */
+  --accent:#3e4757;   /* Elegant slate accent */
+  --btn-primary-fg:#0e1014;
   --radius:0;
 }
 html[data-theme="light"]{
-  --bg:#f8fafc;
-  --surface:#ffffff;
-  --surface-2:#f1f5f9;
-  --text:#0f172a;
-  --muted:#64748b;
-  --line:#e2e8f0;
-  --brand:#0f172a;
-  --brand-2:#334155;
-  --accent:#cbd5e1;
+  --bg:#fbfaf8;       /* Warm ivory/paper */
+  --surface:#ffffff;  /* Pure white */
+  --surface-2:#f4f2ec;/* Oat / Sand surface */
+  --text:#24221f;     /* Deep espresso */
+  --muted:#7c756e;    /* Warm stone gray */
+  --line:#e4ddd4;     /* Soft beige line */
+  --brand:#24221f;    /* Primary brand deep color */
+  --brand-2:#5e6863;  /* Muted sage */
+  --accent:#d1c8bb;   /* Soft clay accent */
   --btn-primary-fg:#ffffff;
 }
 *{box-sizing:border-box}
