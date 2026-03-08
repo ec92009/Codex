@@ -137,6 +137,12 @@
       display: grid;
       grid-template-rows: auto 1fr;
       padding-left: 20px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+    .card:hover .thumb h3 {
+      color: var(--brand); /* highlight indication */
     }
     .thumb {
       position: relative;
@@ -219,9 +225,8 @@
     <header>
       <h1 class="title">Olea Media Co Website Style Variants</h1>
       <p class="subtitle">Five mock website directions for the same 4-stage offering. Each version keeps the multilingual switch (EN/ES/FR) so the team can evaluate both design and readability.</p>
-      <p class="subtitle"><strong>Version 8.7</strong></p>
+      <p class="subtitle"><strong>Version 8.8</strong></p>
       <div class="toolbar">
-        <a class="pill primary" href="./v1/index.html">Open Version 1</a>
         <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
         <a class="pill" href="./OleaMediaCo-Offer-EN.pdf" target="_blank" rel="noopener">PDF EN</a>
         <a class="pill" href="./OleaMediaCo-Oferta-ES.pdf" target="_blank" rel="noopener">PDF ES</a>
@@ -238,50 +243,45 @@
       </div>
     </div>
     <section class="grid" data-carousel>
-      <article class="card">
+      <a href="./v1/index.html" class="card">
         <div class="thumb t1"><span class="badge">V1</span><h3>Spatial Interface</h3></div>
         <div class="body">
           <div class="meta"><span class="tag">Glassmorphism</span><span class="tag">High blur</span><span class="tag">Fluid 3D</span></div>
           <p>An iOS/VisionOS inspired direction. Relies on translucent layers, high-end motion, deep shadows, and an ultra-smooth fluid UI that feels incredibly modern and native.</p>
-          <div class="actions"><a class="primary" href="./v1/index.html">Open V1</a></div>
         </div>
-      </article>
+      </a>
 
-      <article class="card">
+      <a href="./v2/index.html" class="card">
         <div class="thumb t2"><span class="badge">V2</span><h3>Cinematic Dark</h3></div>
         <div class="body">
           <div class="meta"><span class="tag">Edge-to-edge</span><span class="tag">Deep blacks</span><span class="tag">Moody</span></div>
           <p>A dramatic, immersive design prioritizing massive full-bleed imagery and video. Uses stark kinetic typography over absolute dark backgrounds for maximum visual impact.</p>
-          <div class="actions"><a class="primary" href="./v2/index.html">Open V2</a></div>
         </div>
-      </article>
+      </a>
 
-      <article class="card">
+      <a href="./v3/index.html" class="card">
         <div class="thumb t3"><span class="badge">V3</span><h3>Neoclassical Editorial</h3></div>
         <div class="body">
           <div class="meta"><span class="tag">Oversized headings</span><span class="tag">Hairlines</span><span class="tag">Gallery pacing</span></div>
           <p>A sophisticated, gallery-like layout. Vast amounts of negative space, highly refined typography, and extreme minimalism. Built for high-ticket luxury positioning.</p>
-          <div class="actions"><a class="primary" href="./v3/index.html">Open V3</a></div>
         </div>
-      </article>
+      </a>
 
-      <article class="card">
+      <a href="./v4/index.html" class="card">
         <div class="thumb t4"><span class="badge">V4</span><h3>Technical Brutalism</h3></div>
         <div class="body">
           <div class="meta"><span class="tag">Exposed grids</span><span class="tag">Monospace</span><span class="tag">Data-dense</span></div>
           <p>A high-contrast monochrome design that fully exposes the layout grid. Uses monospace typography and raw structuring. Perfect for a highly capable, operator-led brand.</p>
-          <div class="actions"><a class="primary" href="./v4/index.html">Open V4</a></div>
         </div>
-      </article>
+      </a>
 
-      <article class="card">
+      <a href="./v5/index.html" class="card">
         <div class="thumb t5"><span class="badge">V5</span><h3>Tactile Organic</h3></div>
         <div class="body">
           <div class="meta"><span class="tag">Earthy tones</span><span class="tag">Soft grain</span><span class="tag">Approachable</span></div>
           <p>An inviting, human-centric aesthetic. Uses warm, desaturated tones, subtle noise/texture overlays, and fluid, rounded borders to feel premium yet highly accessible.</p>
-          <div class="actions"><a class="primary" href="./v5/index.html">Open V5</a></div>
         </div>
-      </article>
+      </a>
     </section>
 
     <footer>Tip: ask each reviewer to pick 1 favorite and 1 runner-up, then explain why in one sentence.</footer>
