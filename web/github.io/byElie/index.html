@@ -12,8 +12,8 @@
       } catch {}
     })();
   </script>
-  <link rel="stylesheet" href="./shared.css?v=8.7"/>
-  <link rel="stylesheet" href="./styles.css?v=8.7"/>
+  <link rel="stylesheet" href="./shared.css?v=8.8"/>
+  <link rel="stylesheet" href="./styles.css?v=8.8"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -26,12 +26,12 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v8.7</div>
+    <div class="brand">BY ELIE — v8.8</div>
     <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
   </header>
   <main id="main-content" class="shell">
     <section class="panel hero">
-      <p class="version-pill" aria-label="Current version">Version 8.7</p>
+      <p class="version-pill" aria-label="Current version">Version 8.8</p>
       <p class="eyebrow">Creator Portfolio</p>
       <h1>A lifetime of creation and engineering skills at your service</h1>
       <p class="lead">I blend hands-on building, CAD thinking, and AI-assisted systems (including ClawdBot workflows) to ship visual assets people can buy, print, and trust.</p>
@@ -174,12 +174,19 @@
 
       let wheelDeltaX=0;
       let wheelResetTimer=null;
+      const carouselInView=()=>{
+        const r=offersWrap.getBoundingClientRect();
+        const vh=window.innerHeight||document.documentElement.clientHeight;
+        return r.top < vh*0.8 && r.bottom > vh*0.2;
+      };
       offersWrap.addEventListener('wheel',(e)=>{
-        const horizontalIntent=Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey;
+        if(!carouselInView()) return;
+        const mostlyHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.35;
+        const horizontalIntent = mostlyHorizontal || (e.shiftKey && Math.abs(e.deltaY)>0);
         if(!horizontalIntent) return;
         e.preventDefault();
-        wheelDeltaX += e.deltaX || e.deltaY;
-        if(Math.abs(wheelDeltaX) > 28){
+        wheelDeltaX += mostlyHorizontal ? e.deltaX : e.deltaY;
+        if(Math.abs(wheelDeltaX) > 34){
           setActive(activeIndex + (wheelDeltaX > 0 ? 1 : -1));
           wheelDeltaX = 0;
         }
