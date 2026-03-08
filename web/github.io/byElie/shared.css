@@ -3,10 +3,10 @@
   --surface:#15181e;  /* Rich dark card surface */
   --surface-2:#1b1f26;/* Subtle elevation */
   --text:#f0f1f4;     /* Soft white */
-  --muted:#a3a7af;    /* Less stark gray */
-  --line:#2c313c;     /* Soft dark border */
+  --muted:#b8bcc4;    /* Better contrast gray */
+  --line:#3a4150;     /* Better contrast line */
   --brand:#d8dadd;    /* Soft silver/pearl */
-  --brand-2:#7f8595;  /* Muted grey-blue */
+  --brand-2:#9ea5b8;  /* Higher contrast grey-blue */
   --accent:#3e4757;   /* Elegant slate accent */
   --btn-primary-fg:#0e1014;
   --radius:0;
@@ -16,10 +16,10 @@ html[data-theme="light"]{
   --surface:#ffffff;  /* Pure white */
   --surface-2:#f4f2ec;/* Oat / Sand surface */
   --text:#24221f;     /* Deep espresso */
-  --muted:#7c756e;    /* Warm stone gray */
-  --line:#e4ddd4;     /* Soft beige line */
+  --muted:#5c5651;    /* Higher contrast stone gray */
+  --line:#d8d0c6;     /* Clearer beige line */
   --brand:#24221f;    /* Primary brand deep color */
-  --brand-2:#5e6863;  /* Muted sage */
+  --brand-2:#3b4540;  /* Higher contrast sage */
   --accent:#d1c8bb;   /* Soft clay accent */
   --btn-primary-fg:#ffffff;
 }
@@ -90,6 +90,11 @@ body::before{
 .version-switch a{text-decoration:none;color:var(--muted);font-weight:700}
 .version-switch a.is-active{color:var(--brand)}
 .version-switch span{color:var(--muted)}
+
+html[data-theme="light"] .mode-dark { display: none; }
+html[data-theme="dark"] .mode-light { display: none; }
+.theme-toggle { font-weight: 700; width: 68px; text-align: center; }
+
 main{padding:18px 0 38px;display:grid;gap:16px}
 .eyebrow{margin:0 0 8px;font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--brand);font-weight:800}
 .version-pill{
