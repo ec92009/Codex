@@ -13,7 +13,7 @@
   --shadow: 0 18px 34px rgba(20, 63, 74, 0.10);
   --radius: 24px;
   --font-body: 'Sora', system-ui, sans-serif;
-  --font-display: 'Playfair Display', Georgia, serif;
+  --font-display: system-ui, sans-serif;
 }
 
 body.theme-v4 {

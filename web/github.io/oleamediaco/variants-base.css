@@ -11,7 +11,7 @@
   --shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
   --radius: 18px;
   --font-body: system-ui, sans-serif;
-  --font-display: Georgia, serif;
+  --font-display: system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --shell: 1180px;
 }

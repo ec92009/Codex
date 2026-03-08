@@ -99,7 +99,7 @@ html[data-theme="dark"] .site-header {
 
 .brand-block { display: flex; flex-direction: column; gap: 2px; }
 .brand {
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   letter-spacing: 0.12em;
   font-weight: 700;
   font-size: 1.25rem;
@@ -340,7 +340,7 @@ html[data-theme="dark"] .review-banner strong {
 }
 .hero h1 {
   margin: 0;
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 1.04;
   color: #18211e;
@@ -537,7 +537,7 @@ html[data-theme="dark"] .panel-badge {
 .section-head h2,
 .cta-card h2 {
   margin: 0;
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   font-size: clamp(1.45rem, 2vw, 2.2rem);
   line-height: 1;
 }
@@ -593,7 +593,7 @@ html[data-theme="dark"] .info-card p { color: #b7c8bf; }
 .stage-card.highlight p,
 .stage-card.highlight li { color: rgba(238,244,240,0.9); }
 .stage-number {
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   color: var(--brand-2);
   font-size: 1.4rem;
   font-weight: 700;
@@ -638,7 +638,7 @@ html[data-theme="dark"] .stage-card li { color: #b7c8bf; }
 .price-card h3 { margin: 5px 0 8px; font-size: 1rem; }
 .price-value {
   margin: 0;
-  font-family: "Cormorant Garamond", Georgia, serif;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
 }
