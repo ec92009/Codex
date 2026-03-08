@@ -108,16 +108,7 @@
       justify-content: space-between;
       gap: 8px;
     }
-    .carousel-controls { display: flex; gap: 8px; }
-    .carousel-btn {
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: rgba(255,255,255,.78);
-      color: var(--ink);
-      padding: 7px 11px;
-      font-weight: 700;
-      cursor: pointer;
-    }
+
     .grid {
       margin: 0 0 28px;
       display: flex;
@@ -192,8 +183,7 @@
     }
     html[data-theme="dark"] .pill,
     html[data-theme="dark"] .theme-toggle,
-    html[data-theme="dark"] .actions a,
-    html[data-theme="dark"] .carousel-btn {
+    html[data-theme="dark"] .actions a {
       background: rgba(11,17,15,.96);
       color: #eaf3ee;
       border-color: rgba(177,208,188,.36);
@@ -225,7 +215,7 @@
     <header>
       <h1 class="title">Olea Media Co Website Style Variants</h1>
       <p class="subtitle">Five mock website directions for the same 4-stage offering. Each version keeps the multilingual switch (EN/ES/FR) so the team can evaluate both design and readability.</p>
-      <p class="subtitle"><strong>Version 8.8</strong></p>
+      <p class="subtitle"><strong>Version 8.9</strong></p>
       <div class="toolbar">
         <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
         <a class="pill" href="./OleaMediaCo-Offer-EN.pdf" target="_blank" rel="noopener">PDF EN</a>
@@ -237,10 +227,7 @@
 
     <div class="carousel-head">
       <strong>Variant carousel</strong>
-      <div class="carousel-controls">
-        <button class="carousel-btn" type="button" data-prev>← Prev</button>
-        <button class="carousel-btn" type="button" data-next>Next →</button>
-      </div>
+
     </div>
     <section class="grid" data-carousel>
       <a href="./v1/index.html" class="card">
@@ -286,22 +273,7 @@
 
     <footer>Tip: ask each reviewer to pick 1 favorite and 1 runner-up, then explain why in one sentence.</footer>
   </div>
-  <script>
-    (() => {
-      const track = document.querySelector('[data-carousel]');
-      if (!track) return;
-      const cards = Array.from(track.querySelectorAll('.card'));
-      const prev = document.querySelector('[data-prev]');
-      const next = document.querySelector('[data-next]');
-      let idx = 0;
-      const go = (n) => {
-        idx = (n + cards.length) % cards.length;
-        cards[idx]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
-      };
-      prev?.addEventListener('click', () => go(idx - 1));
-      next?.addEventListener('click', () => go(idx + 1));
-    })();
-  </script>
+
   <script src="./theme-toggle.js"></script>
 </body>
 </html>
