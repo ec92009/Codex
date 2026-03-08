@@ -12,7 +12,7 @@
       } catch {}
     })();
   </script>
-  <link rel="stylesheet" href="./shared.css?v=8.5"/>
+  <link rel="stylesheet" href="./shared.css?v=8.6"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -25,7 +25,7 @@
       <a class="is-active" href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v8.5</div>
+    <div class="brand">BY ELIE — v8.6</div>
     <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
   </header>
   <main id="main-content" class="shell">
@@ -145,6 +145,21 @@
         if(e.key==='ArrowLeft'){e.preventDefault();setActive(activeIndex-1);}
         if(e.key==='ArrowRight'){e.preventDefault();setActive(activeIndex+1);}
       });
+
+      let wheelDeltaX=0;
+      let wheelResetTimer=null;
+      offersWrap.addEventListener('wheel',(e)=>{
+        const horizontalIntent=Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey;
+        if(!horizontalIntent) return;
+        e.preventDefault();
+        wheelDeltaX += e.deltaX || e.deltaY;
+        if(Math.abs(wheelDeltaX) > 28){
+          setActive(activeIndex + (wheelDeltaX > 0 ? 1 : -1));
+          wheelDeltaX = 0;
+        }
+        clearTimeout(wheelResetTimer);
+        wheelResetTimer=setTimeout(()=>{wheelDeltaX=0;},120);
+      },{passive:false});
 
       let touchStartX=null;
       offersWrap.addEventListener('touchstart',(e)=>{touchStartX=e.touches[0]?.clientX??null;},{passive:true});
