@@ -10,37 +10,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #efe8db;
-      --ink: #18211d;
-      --muted: #617068;
-      --line: rgba(0,0,0,.09);
-      --brand: #1f4f3e;
-      --accent: #c28735;
-      --on-brand: #ffffff;
-      --card: rgba(255,252,246,.82);
-      --shadow: 0 20px 45px rgba(39, 45, 33, .10);
-      --r: 18px;
+      --bg: #0e1014; 
+      --surface: #15181e; 
+      --ink: #f0f1f4; 
+      --muted: #b8bcc4;
+      --line: #3a4150;
+      --brand: #d8dadd;
+      --accent: #3e4757;
+      --on-brand: #0e1014;
+      --r: 0;
     }
-    html[data-theme="dark"] {
-      --bg: #0b1110;
-      --ink: #eaf2ee;
-      --muted: #b0c2b8;
-      --line: rgba(177,208,188,.2);
-      --brand: #86dfbc;
-      --accent: #f4c15f;
-      --on-brand: #07110d;
-      --card: rgba(15,22,20,.85);
-      --shadow: 0 20px 45px rgba(0, 0, 0, .36);
+    html[data-theme="light"] {
+      --bg: #fbfaf8;
+      --surface: #ffffff;
+      --ink: #24221f;
+      --muted: #5c5651;
+      --line: #d8d0c6;
+      --brand: #24221f;
+      --accent: #d1c8bb;
+      --on-brand: #ffffff;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: "Plus Jakarta Sans", system-ui, sans-serif;
       color: var(--ink);
-      background:
-        radial-gradient(circle at 8% 5%, rgba(31,79,62,.12), transparent 38%),
-        radial-gradient(circle at 95% 0%, rgba(194,135,53,.12), transparent 30%),
-        linear-gradient(180deg, #f3ecdf, #ede5d7 44%, #e7dfd2);
+      background: var(--bg);
     }
     .shell { width: min(1200px, calc(100% - 24px)); margin-inline: auto; }
     header {
@@ -51,9 +46,9 @@
     .title {
       margin: 0;
       font-family: "Cormorant Garamond", Georgia, serif;
-      font-size: clamp(2rem, 4vw, 3.1rem);
+      font-size: clamp(2.4rem, 6vw, 4.4rem);
       line-height: .95;
-      color: #141c18;
+      color: var(--ink);
     }
     .subtitle {
       margin: 0;
@@ -82,58 +77,21 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: .42rem;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(255,255,255,.78);
-      color: var(--ink);
-      min-width: 6.4rem;
-      height: 1.95rem;
-      padding: .2rem .45rem;
-      cursor: pointer;
-    }
-    .theme-toggle:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-    .theme-toggle .toggle-track {
-      width: 2.95rem;
-      height: 100%;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.55);
-      position: relative;
-    }
-    .theme-toggle .toggle-label {
-      font-size: .7rem;
-      font-weight: 700;
-      line-height: 1;
+      background: transparent;
       color: var(--muted);
-      min-width: 1.9rem;
-      text-align: center;
+      height: 38px;
+      padding: 0 16px;
+      font-size: .85rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      width: 76px;
     }
-    .theme-toggle .toggle-thumb {
-      position: absolute;
-      top: .12rem;
-      left: .15rem;
-      width: 1.2rem;
-      height: 1.2rem;
-      border-radius: 999px;
-      background: var(--ink);
-      box-shadow: 0 2px 8px rgba(0,0,0,.24);
-      transition: transform 180ms ease, background 180ms ease;
-    }
-    .theme-toggle[aria-pressed="true"] .toggle-track {
-      background: color-mix(in srgb, var(--accent) 72%, rgba(255,255,255,.55) 28%);
-    }
-    .theme-toggle[aria-pressed="true"] .toggle-thumb {
-      transform: translateX(1.28rem);
-      background: color-mix(in srgb, var(--on-brand) 35%, #ffffff 65%);
-    }
-    .theme-toggle[aria-pressed="true"] .toggle-label-dark,
-    .theme-toggle[aria-pressed="false"] .toggle-label-light {
-      color: var(--ink);
-    }
+    .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    html[data-theme="light"] .mode-dark { display: none; }
+    html[data-theme="dark"] .mode-light { display: none; }
     .notice {
       margin-top: 10px;
       border: 1px solid rgba(194,135,53,.28);
@@ -172,62 +130,32 @@
     .card {
       flex: 0 0 min(560px, 90vw);
       scroll-snap-align: start;
-      background: var(--card);
-      border: 1px solid rgba(0,0,0,.08);
-      border-radius: var(--r);
-      box-shadow: var(--shadow);
+      background: transparent;
+      border-left: 1px solid var(--line);
+      border-radius: 0;
       overflow: hidden;
       display: grid;
-      grid-template-rows: 160px 1fr;
+      grid-template-rows: auto 1fr;
+      padding-left: 20px;
     }
     .thumb {
       position: relative;
-      border-bottom: 1px solid rgba(0,0,0,.06);
-      overflow: hidden;
-      padding: 12px;
-      display: grid;
-      align-content: end;
-      gap: 8px;
+      margin-bottom: 24px;
+      padding-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
-    .thumb::before,
-    .thumb::after { content: ""; position: absolute; border-radius: 16px; }
-    .thumb::before { width: 42%; height: 62%; left: 8%; top: 14%; opacity: .65; }
-    .thumb::after { width: 48%; height: 58%; right: 7%; bottom: 12%; opacity: .65; }
-    .t1 { background: linear-gradient(180deg, #f7f2e8, #efe6d6); }
-    .t1::before { background: rgba(30,91,71,.14); transform: rotate(-7deg); }
-    .t1::after { background: rgba(194,135,53,.14); transform: rotate(6deg); }
-    .t2 { background: linear-gradient(180deg, #f7eedf, #eddfc8); }
-    .t2::before { background: rgba(187,127,47,.18); border: 1px dashed rgba(0,0,0,.06); }
-    .t2::after { background: rgba(39,78,67,.12); border: 1px dashed rgba(0,0,0,.06); }
-    .t3 { background: linear-gradient(180deg, #101716, #0b100f); color: #eef5ef; }
-    .t3::before { background: rgba(134,223,188,.16); }
-    .t3::after { background: rgba(244,193,95,.12); }
-    .t4 { background: linear-gradient(180deg, #eef8f7, #e5efee); }
-    .t4::before { background: rgba(20,107,112,.14); border-radius: 999px; }
-    .t4::after { background: rgba(239,138,73,.14); border-radius: 999px; }
-    .t5 { background:
-      linear-gradient(#dcdcd3 1px, transparent 1px),
-      linear-gradient(90deg, #dcdcd3 1px, transparent 1px),
-      #f2f2ed; background-size: 22px 22px; }
-    .t5::before { background: rgba(0,0,0,.04); border: 2px solid rgba(0,0,0,.6); border-radius: 0; }
-    .t5::after { background: rgba(13,122,82,.08); border: 2px solid rgba(0,0,0,.6); border-radius: 0; }
     .thumb .badge {
-      position: relative;
-      z-index: 1;
-      align-self: start;
-      justify-self: start;
-      padding: 5px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.08);
-      background: rgba(255,255,255,.85);
+      align-self: flex-start;
+      font-size: 2.2rem;
       font-weight: 800;
-      font-size: .72rem;
-      letter-spacing: .08em;
-      text-transform: uppercase;
+      color: var(--brand);
+      line-height: 1;
+      font-family: "Cormorant Garamond", Georgia, serif;
     }
-    .t3 .badge { background: rgba(14,22,20,.9); border-color: rgba(255,255,255,.08); color: #dff5ea; }
-    .thumb h3 { position: relative; z-index: 1; margin: 0; font-size: 1.05rem; }
-    .body { padding: 14px; display: grid; gap: 10px; align-content: start; }
+    .thumb h3 { margin: 0; font-size: 1.6rem; color: var(--ink); }
+    .body { display: grid; gap: 14px; align-content: start; }
     .meta { display: flex; flex-wrap: wrap; gap: 6px; }
     .tag {
       border: 1px solid var(--line);
@@ -237,7 +165,7 @@
       color: var(--muted);
       background: rgba(255,255,255,.65);
     }
-    .body p { margin: 0; color: #3c4742; line-height: 1.42; }
+    .body p { margin: 0; color: var(--muted); line-height: 1.42; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .actions a {
       text-decoration: none;
@@ -275,32 +203,7 @@
       color: #d3e3db;
       border-color: rgba(177,208,188,.30);
     }
-    html[data-theme="dark"] .thumb .badge {
-      background: rgba(10,15,14,.90);
-      color: #eaf3ee;
-      border-color: rgba(177,208,188,.34);
-    }
     html[data-theme="dark"] .thumb h3 { color: #f2f7f4; }
-    html[data-theme="dark"] .t1,
-    html[data-theme="dark"] .t2,
-    html[data-theme="dark"] .t4,
-    html[data-theme="dark"] .t5 {
-      background: linear-gradient(180deg, #18211e, #101715);
-    }
-    html[data-theme="dark"] .t1::before,
-    html[data-theme="dark"] .t2::before,
-    html[data-theme="dark"] .t4::before,
-    html[data-theme="dark"] .t5::before {
-      background: rgba(134,223,188,.16);
-      border-color: rgba(177,208,188,.28);
-    }
-    html[data-theme="dark"] .t1::after,
-    html[data-theme="dark"] .t2::after,
-    html[data-theme="dark"] .t4::after,
-    html[data-theme="dark"] .t5::after {
-      background: rgba(244,193,95,.16);
-      border-color: rgba(244,193,95,.28);
-    }
     html[data-theme="dark"] .notice {
       border-color: rgba(244,193,95,.32);
       background: linear-gradient(180deg, rgba(56,43,20,.72), rgba(36,28,15,.72));
@@ -316,10 +219,10 @@
     <header>
       <h1 class="title">Olea Media Co Website Style Variants</h1>
       <p class="subtitle">Five mock website directions for the same 4-stage offering. Each version keeps the multilingual switch (EN/ES/FR) so the team can evaluate both design and readability.</p>
-      <p class="subtitle"><strong>Version 5.4</strong></p>
+      <p class="subtitle"><strong>Version 6.0</strong></p>
       <div class="toolbar">
         <a class="pill primary" href="./v1/index.html">Open Version 1</a>
-        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle color theme">Theme</button>
+        <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
         <a class="pill" href="./OleaMediaCo-Offer-EN.pdf" target="_blank" rel="noopener">PDF EN</a>
         <a class="pill" href="./OleaMediaCo-Oferta-ES.pdf" target="_blank" rel="noopener">PDF ES</a>
         <a class="pill" href="./OleaMediaCo-Offre-FR.pdf" target="_blank" rel="noopener">PDF FR</a>
