@@ -18,12 +18,12 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v8.3</div>
+    <div class="brand">BY ELIE — v8.4</div>
     <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
   </header>
   <main id="main-content" class="shell">
     <section class="panel hero">
-      <p class="version-pill" aria-label="Current version">Version 8.3</p>
+      <p class="version-pill" aria-label="Current version">Version 8.4</p>
       <p class="eyebrow">Creator Portfolio</p>
       <h1>A lifetime of creation and engineering skills at your service</h1>
       <p class="lead">I blend hands-on building, CAD thinking, and AI-assisted systems (including ClawdBot workflows) to ship visual assets people can buy, print, and trust.</p>
@@ -211,9 +211,15 @@
         offersWrap.classList.remove('is-dragging');
       });
 
-      offerItems.forEach((item)=>{
+      offerItems.forEach((item, index)=>{
         item.addEventListener('click',(e)=>{
           if(dragMoved) return;
+          const off=relOffset(index);
+          if(off !== 0) {
+            e.preventDefault();
+            setActive(index);
+            return;
+          }
           const interactive=e.target.closest('a,button,input,textarea,select,label');
           if(interactive) return;
           const href=item.dataset.href || item.querySelector('a[href]')?.getAttribute('href');
