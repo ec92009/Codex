@@ -4,8 +4,16 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
-  <link rel="stylesheet" href="./shared.css?v=8.0"/>
-  <link rel="stylesheet" href="./styles.css?v=8.0"/>
+  <script>
+    (() => {
+      try {
+        const saved = localStorage.getItem('byelie-theme');
+        if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+      } catch {}
+    })();
+  </script>
+  <link rel="stylesheet" href="./shared.css?v=8.5"/>
+  <link rel="stylesheet" href="./styles.css?v=8.5"/>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,12 +26,12 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v8.4</div>
+    <div class="brand">BY ELIE — v8.5</div>
     <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
   </header>
   <main id="main-content" class="shell">
     <section class="panel hero">
-      <p class="version-pill" aria-label="Current version">Version 8.4</p>
+      <p class="version-pill" aria-label="Current version">Version 8.5</p>
       <p class="eyebrow">Creator Portfolio</p>
       <h1>A lifetime of creation and engineering skills at your service</h1>
       <p class="lead">I blend hands-on building, CAD thinking, and AI-assisted systems (including ClawdBot workflows) to ship visual assets people can buy, print, and trust.</p>
@@ -78,8 +86,6 @@
   <script>
     const root=document.documentElement;
     const key='byelie-theme';
-    const saved=localStorage.getItem(key);
-    if(saved==='light' || saved==='dark') root.dataset.theme=saved;
     const btn=document.querySelector('[data-theme-toggle]');
     btn?.addEventListener('click',()=>{
       root.dataset.theme=root.dataset.theme==='light'?'dark':'light';
