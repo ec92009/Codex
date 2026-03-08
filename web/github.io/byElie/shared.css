@@ -204,9 +204,12 @@ h2{margin:0 0 8px;font-size:clamp(1.25rem,2vw,1.8rem)}
 }
 .carousel-dot.is-active{opacity:1;transform:scale(1.25);background:var(--brand)}
 .card{
-  padding:16px;
+  padding:24px;
   position:relative;
   overflow:hidden;
+  background:color-mix(in srgb, var(--surface) 95%, transparent);
+  border:1px solid color-mix(in srgb, var(--line) 40%, transparent);
+  border-radius:12px;
 }
 .card::before{
   content:"";
