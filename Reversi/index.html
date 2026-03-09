@@ -78,7 +78,7 @@
         <button id="hintBtn" class="btn" type="button">Hints: <small id="hintState">ON</small></button>
       </div>
       <div id="status" class="status">Black to move.</div>
-      <div class="status" style="text-align:center">Version v9.2</div>
+      <div class="status" style="text-align:center">Version v9.3</div>
     </div>
   </div>
 
@@ -260,10 +260,20 @@
 
     function undoMove(){
       if(aiBusy || !history.length) return;
-      const prev=history.pop();
+
+      // Step back once
+      let prev=history.pop();
       board=prev.board.map(r=>r.slice());
       current=prev.current;
-      statusEl.textContent=prev.status || `${nameOf(current)} to move.`;
+
+      // If resulting turn is AI, step back again so human gets their previous turn back.
+      while (playerType(current)==='ai' && history.length){
+        prev=history.pop();
+        board=prev.board.map(r=>r.slice());
+        current=prev.current;
+      }
+
+      statusEl.textContent=`${nameOf(current)} to move.`;
       render();
     }
 
