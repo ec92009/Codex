@@ -21,12 +21,16 @@
     .label{font-size:13px;color:var(--muted)}
     input[type="range"]{accent-color:var(--accent)}
     .status{padding:8px 14px;background:#0b0d11;color:var(--muted);font-size:13px;border-top:1px solid #1c2129}
+    .shape-panel{display:none;padding:10px;background:#0b0f17;border-top:1px solid #1d2433;gap:8px;flex-wrap:wrap}
+    .shape-panel.open{display:flex}
+    .shape-btn{border:1px solid #2b313b;background:#11151c;color:#d9e1ef;padding:7px 10px;border-radius:9px;cursor:pointer;font-weight:700}
+    .shape-btn.active{background:#16a34a;color:#05150d;border-color:#13b95b}
   </style>
 </head>
 <body>
 <div class="app">
   <div class="shell">
-    <div class="top"><div class="title">Conway — Game of Life</div><div>Version v9.1</div></div>
+    <div class="top"><div class="title">Conway — Game of Life</div><div>Version v9.2</div></div>
     <div class="board-wrap"><canvas id="c" width="860" height="860"></canvas></div>
     <div class="toolbar">
       <div class="group">
@@ -34,11 +38,21 @@
         <button id="step" class="btn">Step</button>
         <button id="clear" class="btn">Clear</button>
         <button id="random" class="btn">Random</button>
+        <button id="shapesBtn" class="btn">Shapes</button>
       </div>
       <div class="group">
         <span class="label">Speed</span><input id="speed" type="range" min="2" max="25" value="10" />
         <span class="label">Cell size</span><input id="cell" type="range" min="6" max="24" value="12" />
       </div>
+    </div>
+    <div id="shapePanel" class="shape-panel">
+      <button class="shape-btn active" data-shape="single">Single Cell</button>
+      <button class="shape-btn" data-shape="glider">Glider</button>
+      <button class="shape-btn" data-shape="blinker">Blinker</button>
+      <button class="shape-btn" data-shape="toad">Toad</button>
+      <button class="shape-btn" data-shape="beacon">Beacon</button>
+      <button class="shape-btn" data-shape="lwss">LWSS</button>
+      <button class="shape-btn" data-shape="pulsar">Pulsar</button>
     </div>
     <div id="status" class="status">Paused · Gen 0 · Alive 0</div>
   </div>
@@ -47,13 +61,14 @@
   const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
   const playBtn=document.getElementById('play'),stepBtn=document.getElementById('step');
   const clearBtn=document.getElementById('clear'),randBtn=document.getElementById('random');
+  const shapesBtn=document.getElementById('shapesBtn'), shapePanel=document.getElementById('shapePanel');
   const speed=document.getElementById('speed'),cellRange=document.getElementById('cell');
   const status=document.getElementById('status');
 
   let cell=12, cols=Math.floor(canvas.width/cell), rows=Math.floor(canvas.height/cell);
   let grid=Array.from({length:rows},()=>Array(cols).fill(0));
   let running=false, gen=0, t=null;
-  let stableTicks=0;
+  let selectedShape='single';
 
   function placePattern(cells, r0, c0){
     for(const [dr,dc] of cells){
@@ -61,6 +76,18 @@
       grid[r][c]=1;
     }
   }
+
+  const SHAPES={
+    glider:[[0,1],[1,2],[2,0],[2,1],[2,2]],
+    blinker:[[0,0],[0,1],[0,2]],
+    toad:[[0,1],[0,2],[0,3],[1,0],[1,1],[1,2]],
+    beacon:[[0,0],[0,1],[1,0],[1,1],[2,2],[2,3],[3,2],[3,3]],
+    lwss:[[0,1],[0,4],[1,0],[2,0],[3,0],[3,4],[4,0],[4,1],[4,2],[4,3]],
+    pulsar:[[-2,-4],[-2,-3],[-2,-2],[-2,2],[-2,3],[-2,4],[-4,-2],[-3,-2],[-1,-2],[1,-2],[3,-2],[4,-2],
+            [-4,2],[-3,2],[-1,2],[1,2],[3,2],[4,2],[2,-4],[2,-3],[2,-2],[2,2],[2,3],[2,4],
+            [-2,-8],[-2,-7],[-2,-6],[-2,6],[-2,7],[-2,8],[-8,-2],[-7,-2],[-6,-2],[6,-2],[7,-2],[8,-2],
+            [-8,2],[-7,2],[-6,2],[6,2],[7,2],[8,2],[2,-8],[2,-7],[2,-6],[2,6],[2,7],[2,8]]
+  };
 
   function seedClassicPatterns(){
     // Glider
@@ -131,7 +158,11 @@
     const r=canvas.getBoundingClientRect();
     const x=e.clientX-r.left, y=e.clientY-r.top;
     const c=Math.floor(x*(canvas.width/r.width)/cell), rr=Math.floor(y*(canvas.height/r.height)/cell);
-    if(rr>=0&&rr<rows&&c>=0&&c<cols){ grid[rr][c]=grid[rr][c]?0:1; draw(); }
+    if(rr>=0&&rr<rows&&c>=0&&c<cols){
+      if(selectedShape==='single'){ grid[rr][c]=grid[rr][c]?0:1; }
+      else { placePattern(SHAPES[selectedShape]||[], rr, c); }
+      draw();
+    }
   });
 
   playBtn.onclick=()=>{
@@ -144,6 +175,8 @@
   stepBtn.onclick=()=>{ if(running) return; tick(); };
   clearBtn.onclick=()=>{ running=false; clearTimeout(t); playBtn.textContent='Play'; gen=0; grid=Array.from({length:rows},()=>Array(cols).fill(0)); draw(); };
   randBtn.onclick=()=>{ running=false; clearTimeout(t); playBtn.textContent='Play'; gen=0; grid=Array.from({length:rows},()=>Array(cols).fill(0).map(()=>Math.random()<0.26?1:0)); draw(); };
+  shapesBtn.onclick=()=>shapePanel.classList.toggle('open');
+  shapePanel.querySelectorAll('.shape-btn').forEach(b=>b.onclick=()=>{ selectedShape=b.dataset.shape; shapePanel.querySelectorAll('.shape-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); });
   speed.oninput=()=>{ if(running){ clearTimeout(t); loop(); } };
   cellRange.oninput=()=>{ cell=Number(cellRange.value); resizeGrid(); };
 
