@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conway — Game of Life</title>
+  <style>
+    :root{--bg:#0b0b0b;--panel:#171a22;--line:#2f3542;--text:#f4f7ff;--muted:#aeb7c7;--accent:#14b95f;--accent2:#0aa564;}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;color:var(--text)}
+    .app{min-height:100%;display:grid;place-items:center;padding:10px}
+    .shell{width:min(900px,100vw - 10px);background:#000;box-shadow:0 16px 36px rgba(0,0,0,.45);overflow:hidden}
+    .top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#0d0f14;border-bottom:1px solid #1e2330}
+    .title{font-weight:800;letter-spacing:.02em}
+    .board-wrap{background:#0f131b;padding:12px;display:grid;place-items:center}
+    canvas{width:min(860px,96vw);height:min(860px,96vw);max-height:70vh;background:#0b1020;border:1px solid #283043;image-rendering:pixelated}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px;background:#060708;border-top:1px solid #1d2026}
+    .group{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{border:1px solid #2b313b;background:#11151c;color:#f4f7ff;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+    .btn.primary{background:var(--accent2);color:#06130d;border-color:#0f8f57}
+    .label{font-size:13px;color:var(--muted)}
+    input[type="range"]{accent-color:var(--accent)}
+    .status{padding:8px 14px;background:#0b0d11;color:var(--muted);font-size:13px;border-top:1px solid #1c2129}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="shell">
+    <div class="top"><div class="title">Conway — Game of Life</div><div>Version v9.0</div></div>
+    <div class="board-wrap"><canvas id="c" width="860" height="860"></canvas></div>
+    <div class="toolbar">
+      <div class="group">
+        <button id="play" class="btn primary">Play</button>
+        <button id="step" class="btn">Step</button>
+        <button id="clear" class="btn">Clear</button>
+        <button id="random" class="btn">Random</button>
+      </div>
+      <div class="group">
+        <span class="label">Speed</span><input id="speed" type="range" min="2" max="25" value="10" />
+        <span class="label">Cell size</span><input id="cell" type="range" min="6" max="24" value="12" />
+      </div>
+    </div>
+    <div id="status" class="status">Paused · Gen 0 · Alive 0</div>
+  </div>
+</div>
+<script>
+  const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+  const playBtn=document.getElementById('play'),stepBtn=document.getElementById('step');
+  const clearBtn=document.getElementById('clear'),randBtn=document.getElementById('random');
+  const speed=document.getElementById('speed'),cellRange=document.getElementById('cell');
+  const status=document.getElementById('status');
+
+  let cell=12, cols=Math.floor(canvas.width/cell), rows=Math.floor(canvas.height/cell);
+  let grid=Array.from({length:rows},()=>Array(cols).fill(0));
+  let running=false, gen=0, t=null;
+
+  function resizeGrid(){
+    cols=Math.floor(canvas.width/cell); rows=Math.floor(canvas.height/cell);
+    grid=Array.from({length:rows},()=>Array(cols).fill(0)); gen=0; draw();
+  }
+
+  function draw(){
+    ctx.fillStyle='#0b1020'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle='rgba(70,88,120,.35)'; ctx.lineWidth=1;
+    for(let x=0;x<=cols;x++){ctx.beginPath();ctx.moveTo(x*cell,0);ctx.lineTo(x*cell,rows*cell);ctx.stroke();}
+    for(let y=0;y<=rows;y++){ctx.beginPath();ctx.moveTo(0,y*cell);ctx.lineTo(cols*cell,y*cell);ctx.stroke();}
+    let alive=0;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]){
+      alive++;
+      ctx.fillStyle='#11c06a';
+      ctx.fillRect(c*cell+1,r*cell+1,cell-1,cell-1);
+    }
+    status.textContent=`${running?'Running':'Paused'} · Gen ${gen} · Alive ${alive}`;
+  }
+
+  function neigh(r,c){
+    let n=0;
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+      if(!dr&&!dc) continue;
+      const rr=(r+dr+rows)%rows, cc=(c+dc+cols)%cols;
+      n+=grid[rr][cc];
+    }
+    return n;
+  }
+
+  function tick(){
+    const next=Array.from({length:rows},()=>Array(cols).fill(0));
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const a=grid[r][c], n=neigh(r,c);
+      next[r][c]= (a && (n===2||n===3)) || (!a && n===3) ? 1:0;
+    }
+    grid=next; gen++; draw();
+  }
+
+  function loop(){ if(!running) return; tick(); t=setTimeout(loop, Math.round(1000/Number(speed.value))); }
+
+  canvas.addEventListener('click',e=>{
+    const r=canvas.getBoundingClientRect();
+    const x=e.clientX-r.left, y=e.clientY-r.top;
+    const c=Math.floor(x*(canvas.width/r.width)/cell), rr=Math.floor(y*(canvas.height/r.height)/cell);
+    if(rr>=0&&rr<rows&&c>=0&&c<cols){ grid[rr][c]=grid[rr][c]?0:1; draw(); }
+  });
+
+  playBtn.onclick=()=>{
+    running=!running;
+    playBtn.textContent=running?'Pause':'Play';
+    playBtn.classList.toggle('primary',!running?false:true);
+    if(running) loop(); else clearTimeout(t);
+    draw();
+  };
+  stepBtn.onclick=()=>{ if(running) return; tick(); };
+  clearBtn.onclick=()=>{ running=false; clearTimeout(t); playBtn.textContent='Play'; gen=0; grid=Array.from({length:rows},()=>Array(cols).fill(0)); draw(); };
+  randBtn.onclick=()=>{ running=false; clearTimeout(t); playBtn.textContent='Play'; gen=0; grid=Array.from({length:rows},()=>Array(cols).fill(0).map(()=>Math.random()<0.26?1:0)); draw(); };
+  speed.oninput=()=>{ if(running){ clearTimeout(t); loop(); } };
+  cellRange.oninput=()=>{ cell=Number(cellRange.value); resizeGrid(); };
+
+  draw();
+</script>
+</body>
+</html>
