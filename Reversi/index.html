@@ -73,11 +73,12 @@
 
       <div class="toolbar">
         <button id="newBtn" class="btn" type="button"><span class="ico">⦿</span> New</button>
+        <button id="undoBtn" class="btn" type="button">UNDO</button>
         <button id="settingsBtn" class="btn" type="button">Settings</button>
         <button id="hintBtn" class="btn" type="button">Hints: <small id="hintState">ON</small></button>
       </div>
       <div id="status" class="status">Black to move.</div>
-      <div class="status" style="text-align:center">Version v9.1</div>
+      <div class="status" style="text-align:center">Version v9.2</div>
     </div>
   </div>
 
@@ -132,6 +133,7 @@
     const blackTurnEl=el('blackTurn'), whiteTurnEl=el('whiteTurn'), statusEl=el('status');
 
     let board=[], current=BLACK, aiBusy=false;
+    const history=[];
     const settings={ black:'person', white:'person', difficulty:'hard', showMoves:true, animation:true };
 
     function inBounds(r,c){ return r>=0&&r<SIZE&&c>=0&&c<SIZE; }
@@ -165,6 +167,7 @@
 
     function doMove(r,c){
       const flips=flipsForMove(r,c,current); if(!flips.length) return false;
+      history.push({ board: board.map(row=>row.slice()), current, status: statusEl.textContent });
       board[r][c]=current; for(const [rr,cc] of flips) board[rr][cc]=current;
       advanceTurn(); return true;
     }
@@ -251,7 +254,17 @@
     function init(){
       board=Array.from({length:SIZE},()=>Array(SIZE).fill(EMPTY));
       board[3][3]=WHITE; board[3][4]=BLACK; board[4][3]=BLACK; board[4][4]=WHITE;
+      history.length=0;
       current=BLACK; aiBusy=false; statusEl.textContent='Black to move.'; render(); maybeAiMove();
+    }
+
+    function undoMove(){
+      if(aiBusy || !history.length) return;
+      const prev=history.pop();
+      board=prev.board.map(r=>r.slice());
+      current=prev.current;
+      statusEl.textContent=prev.status || `${nameOf(current)} to move.`;
+      render();
     }
 
     // Settings UI
@@ -280,6 +293,7 @@
     }
 
     el('newBtn').onclick=init;
+    el('undoBtn').onclick=undoMove;
     el('hintBtn').onclick=()=>{ settings.showMoves=!settings.showMoves; render(); };
 
     init();
