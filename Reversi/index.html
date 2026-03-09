@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reversi</title>
+  <style>
+    :root{
+      --bg:#0b0b0b;
+      --board:#0aa564;
+      --board-dark:#07814f;
+      --grid:rgba(0,0,0,.20);
+      --hint:#b7f5d4;
+      --panel:#23262d;
+      --panel-line:#3a3f49;
+      --text:#f5f6f7;
+      --muted:#bcc2cd;
+      --black:#0d1015;
+      --white:#eceef1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;color:var(--text)}
+    .app{min-height:100%;display:grid;place-items:center;padding:12px}
+    .shell{width:min(760px,100vw - 12px);background:#000;border-radius:0;overflow:hidden;box-shadow:0 16px 36px rgba(0,0,0,.45)}
+
+    .board-wrap{position:relative;aspect-ratio:1/1;background:var(--board);
+      background-image:
+        radial-gradient(circle at center, color-mix(in srgb, var(--board-dark) 20%, transparent), transparent 55%),
+        linear-gradient(to right, var(--grid) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+      background-size:100% 100%, calc(100%/8) 100%, 100% calc(100%/8);
+      border-top:2px solid rgba(255,255,255,.08);
+      border-bottom:2px solid rgba(0,0,0,.25);
+    }
+    .board{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr)}
+    .cell{position:relative;border:none;background:transparent;cursor:pointer}
+    .cell:focus-visible{outline:2px solid #fff;outline-offset:-2px}
+    .hint{position:absolute;left:50%;top:50%;width:12px;height:12px;border-radius:50%;background:var(--hint);transform:translate(-50%,-50%);opacity:.75}
+    .disc{position:absolute;left:50%;top:50%;width:74%;aspect-ratio:1/1;border-radius:50%;transform:translate(-50%,-50%);
+      box-shadow:0 8px 12px rgba(0,0,0,.35), inset 0 -2px 3px rgba(0,0,0,.22), inset 0 2px 2px rgba(255,255,255,.22);
+      transition:transform .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .disc.black{background:var(--black)}
+    .disc.white{background:var(--white)}
+
+    .scorebar{display:flex;justify-content:center;gap:24px;align-items:center;padding:14px 12px;background:linear-gradient(#2a2f38,#21252d);border-top:1px solid var(--panel-line);border-bottom:1px solid var(--panel-line)}
+    .score{display:flex;align-items:center;gap:8px;color:var(--text);font-weight:700;font-size:42px;line-height:1}
+    .legend{display:flex;align-items:center;gap:10px}
+    .mini{width:46px;height:46px;border-radius:50%;position:relative;box-shadow:0 8px 12px rgba(0,0,0,.35)}
+    .mini.black{background:var(--black)}
+    .mini.white{background:var(--white)}
+    .mini.turn::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;background:#22d06e;box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+
+    .toolbar{display:flex;justify-content:space-between;align-items:center;padding:14px;background:#060708;border-top:1px solid #1d2026}
+    .btn{display:inline-flex;align-items:center;gap:10px;border:1px solid #2b313b;background:#11151c;color:#f4f7ff;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+    .btn small{color:var(--muted);font-weight:600}
+    .ico{width:26px;height:26px;display:grid;place-items:center;background:#0e8550;border-radius:4px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.15)}
+    .status{padding:8px 14px;background:#0b0d11;color:var(--muted);font-size:13px;border-top:1px solid #1c2129}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="shell">
+      <div class="board-wrap">
+        <div id="board" class="board" aria-label="Reversi board"></div>
+      </div>
+
+      <div class="scorebar">
+        <div class="score" id="blackScore">2</div>
+        <div class="legend">
+          <div id="blackTurn" class="mini black turn" title="Black"></div>
+          <div id="whiteTurn" class="mini white" title="White"></div>
+        </div>
+        <div class="score" id="whiteScore">2</div>
+      </div>
+
+      <div class="toolbar">
+        <button id="newBtn" class="btn" type="button"><span class="ico">⦿</span> New</button>
+        <button id="hintBtn" class="btn" type="button">Hints: <small id="hintState">ON</small></button>
+      </div>
+      <div id="status" class="status">Black to move.</div>
+      <div class="status" style="text-align:center;border-top:1px solid #1c2129">Version v9.0</div>
+    </div>
+  </div>
+
+  <script>
+    const SIZE = 8;
+    const EMPTY = 0, BLACK = 1, WHITE = 2;
+    const DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+    const boardEl = document.getElementById('board');
+    const blackScoreEl = document.getElementById('blackScore');
+    const whiteScoreEl = document.getElementById('whiteScore');
+    const blackTurnEl = document.getElementById('blackTurn');
+    const whiteTurnEl = document.getElementById('whiteTurn');
+    const statusEl = document.getElementById('status');
+    const newBtn = document.getElementById('newBtn');
+    const hintBtn = document.getElementById('hintBtn');
+    const hintState = document.getElementById('hintState');
+
+    let board = [];
+    let current = BLACK;
+    let showHints = true;
+
+    function init() {
+      board = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+      board[3][3] = WHITE;
+      board[3][4] = BLACK;
+      board[4][3] = BLACK;
+      board[4][4] = WHITE;
+      current = BLACK;
+      render();
+    }
+
+    function inBounds(r,c){ return r>=0 && r<SIZE && c>=0 && c<SIZE; }
+    function other(p){ return p===BLACK ? WHITE : BLACK; }
+
+    function flipsForMove(r,c,p){
+      if (board[r][c] !== EMPTY) return [];
+      const all = [];
+      for (const [dr,dc] of DIRS) {
+        let rr = r + dr, cc = c + dc;
+        const line = [];
+        while (inBounds(rr,cc) && board[rr][cc] === other(p)) {
+          line.push([rr,cc]);
+          rr += dr; cc += dc;
+        }
+        if (line.length && inBounds(rr,cc) && board[rr][cc] === p) {
+          all.push(...line);
+        }
+      }
+      return all;
+    }
+
+    function legalMoves(p){
+      const moves = [];
+      for (let r=0;r<SIZE;r++) {
+        for (let c=0;c<SIZE;c++) {
+          const flips = flipsForMove(r,c,p);
+          if (flips.length) moves.push({r,c,flips});
+        }
+      }
+      return moves;
+    }
+
+    function applyMove(r,c){
+      const flips = flipsForMove(r,c,current);
+      if (!flips.length) return;
+      board[r][c] = current;
+      for (const [rr,cc] of flips) board[rr][cc] = current;
+
+      let next = other(current);
+      const nextMoves = legalMoves(next);
+      if (nextMoves.length) {
+        current = next;
+      } else if (legalMoves(current).length) {
+        statusEl.textContent = `${nameOf(next)} has no legal moves. ${nameOf(current)} continues.`;
+      } else {
+        endGame();
+      }
+      render();
+    }
+
+    function countPieces(){
+      let b=0,w=0;
+      for (const row of board) for (const v of row) {
+        if (v===BLACK) b++; else if (v===WHITE) w++;
+      }
+      return {b,w};
+    }
+
+    function nameOf(p){ return p===BLACK ? 'Black' : 'White'; }
+
+    function endGame(){
+      const {b,w} = countPieces();
+      if (b>w) statusEl.textContent = `Game over. Black wins ${b}–${w}.`;
+      else if (w>b) statusEl.textContent = `Game over. White wins ${w}–${b}.`;
+      else statusEl.textContent = `Game over. Draw ${b}–${w}.`;
+    }
+
+    function render(){
+      const moves = legalMoves(current);
+      boardEl.innerHTML = '';
+
+      for (let r=0;r<SIZE;r++) {
+        for (let c=0;c<SIZE;c++) {
+          const cell = document.createElement('button');
+          cell.className = 'cell';
+          cell.setAttribute('aria-label', `Row ${r+1}, col ${c+1}`);
+          cell.addEventListener('click', () => applyMove(r,c));
+
+          const v = board[r][c];
+          if (v !== EMPTY) {
+            const d = document.createElement('div');
+            d.className = `disc ${v===BLACK ? 'black' : 'white'}`;
+            cell.appendChild(d);
+          } else if (showHints && moves.some(m => m.r===r && m.c===c)) {
+            const h = document.createElement('div');
+            h.className = 'hint';
+            cell.appendChild(h);
+          }
+          boardEl.appendChild(cell);
+        }
+      }
+
+      const {b,w} = countPieces();
+      blackScoreEl.textContent = b;
+      whiteScoreEl.textContent = w;
+      blackTurnEl.classList.toggle('turn', current===BLACK);
+      whiteTurnEl.classList.toggle('turn', current===WHITE);
+
+      if (!(statusEl.textContent || '').startsWith('Game over') && !statusEl.textContent.includes('continues')) {
+        statusEl.textContent = `${nameOf(current)} to move.`;
+      }
+    }
+
+    newBtn.addEventListener('click', init);
+    hintBtn.addEventListener('click', () => {
+      showHints = !showHints;
+      hintState.textContent = showHints ? 'ON' : 'OFF';
+      render();
+    });
+
+    init();
+  </script>
+</body>
+</html>
