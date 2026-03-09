@@ -58,6 +58,10 @@
     .toggle .knob{position:absolute;top:5px;left:6px;width:44px;height:44px;border-radius:50%;background:#f2f3f5;transition:left .18s ease}
     .toggle.on .knob{left:66px}
     .subtle{color:#b7bfca;font-size:13px}
+
+    .confetti-wrap{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:60}
+    .confetti{position:absolute;width:10px;height:14px;opacity:.95;animation:fall 1400ms linear forwards}
+    @keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:.9}}
   </style>
 </head>
 <body>
@@ -78,7 +82,8 @@
         <button id="hintBtn" class="btn" type="button">Hints: <small id="hintState">ON</small></button>
       </div>
       <div id="status" class="status">Black to move.</div>
-      <div class="status" style="text-align:center">Version v9.3</div>
+      <div id="tally" class="status">Tally — Wins: 0 · Losses: 0</div>
+      <div class="status" style="text-align:center">Version v9.4</div>
     </div>
   </div>
 
@@ -91,12 +96,12 @@
       <div class="sheet-body">
         <div class="row"><strong>Black:</strong>
           <div class="seg" id="blackModeSeg">
-            <button data-mode="person">Person</button><button data-mode="ai">iPhone</button>
+            <button data-mode="person">Person</button><button data-mode="ai">AI</button>
           </div>
         </div>
         <div class="row"><strong>White:</strong>
           <div class="seg" id="whiteModeSeg">
-            <button data-mode="person">Person</button><button data-mode="ai">iPhone</button>
+            <button data-mode="person">Person</button><button data-mode="ai">AI</button>
           </div>
         </div>
         <div class="row"><strong>Difficulty:</strong>
@@ -134,11 +139,30 @@
 
     let board=[], current=BLACK, aiBusy=false;
     const history=[];
-    const settings={ black:'person', white:'person', difficulty:'hard', showMoves:true, animation:true };
+    const settings={ black:'person', white:'ai', difficulty:'hard', showMoves:true, animation:true };
+    const tallyKey='reversi-tally-v1';
+    let tally=JSON.parse(localStorage.getItem(tallyKey)||'{"wins":0,"losses":0}');
 
     function inBounds(r,c){ return r>=0&&r<SIZE&&c>=0&&c<SIZE; }
     function other(p){ return p===BLACK?WHITE:BLACK; }
     function nameOf(p){ return p===BLACK?'Black':'White'; }
+    function updateTallyUI(){ el('tally').textContent=`Tally — Wins: ${tally.wins} · Losses: ${tally.losses}`; }
+    function burstConfetti(){
+      const wrap=document.createElement('div'); wrap.className='confetti-wrap';
+      const colors=['#ffd166','#ef476f','#06d6a0','#118ab2','#ffffff','#c77dff'];
+      for(let i=0;i<120;i++){
+        const c=document.createElement('span'); c.className='confetti';
+        c.style.left=(Math.random()*100)+'vw';
+        c.style.top='-8vh';
+        c.style.background=colors[(Math.random()*colors.length)|0];
+        c.style.transform=`translateY(0) rotate(${Math.random()*240}deg)`;
+        c.style.animationDelay=(Math.random()*180)+'ms';
+        c.style.animationDuration=(900+Math.random()*900)+'ms';
+        wrap.appendChild(c);
+      }
+      document.body.appendChild(wrap);
+      setTimeout(()=>wrap.remove(),2200);
+    }
 
     function flipsForMove(r,c,p){
       if(board[r][c]!==EMPTY) return [];
@@ -189,10 +213,26 @@
 
     function endGame(){
       const {b,w}=countPieces();
-      if(b>w) statusEl.textContent=`Game over. Black wins ${b}–${w}.`;
-      else if(w>b) statusEl.textContent=`Game over. White wins ${w}–${b}.`;
-      else statusEl.textContent=`Game over. Draw ${b}–${w}.`;
+      const humanColor = settings.black==='person' ? BLACK : (settings.white==='person' ? WHITE : null);
+      let winner=null;
+      if(b>w) { statusEl.textContent=`Game over. Black wins ${b}–${w}.`; winner=BLACK; }
+      else if(w>b) { statusEl.textContent=`Game over. White wins ${w}–${b}.`; winner=WHITE; }
+      else { statusEl.textContent=`Game over. Draw ${b}–${w}.`; }
+
+      if(winner!==null){
+        burstConfetti();
+        if(humanColor!==null){
+          if(winner===humanColor) tally.wins += 1;
+          else tally.losses += 1;
+          localStorage.setItem(tallyKey, JSON.stringify(tally));
+          updateTallyUI();
+        }
+      }
+
       render();
+      setTimeout(()=>{
+        if(confirm('Start a new game?')) init();
+      },120);
     }
 
     function pickAiMove(p){
@@ -229,7 +269,7 @@
     function maybeAiMove(){
       if(playerType(current)!=='ai') return;
       const move=pickAiMove(current); if(!move) return;
-      aiBusy=true; statusEl.textContent=`${nameOf(current)} (iPhone) thinking…`;
+      aiBusy=true; statusEl.textContent=`${nameOf(current)} (AI) thinking…`;
       setTimeout(()=>{ aiBusy=false; doMove(move.r,move.c); }, 280);
     }
 
@@ -255,7 +295,7 @@
       board=Array.from({length:SIZE},()=>Array(SIZE).fill(EMPTY));
       board[3][3]=WHITE; board[3][4]=BLACK; board[4][3]=BLACK; board[4][4]=WHITE;
       history.length=0;
-      current=BLACK; aiBusy=false; statusEl.textContent='Black to move.'; render(); maybeAiMove();
+      current=BLACK; aiBusy=false; statusEl.textContent='Black to move.'; updateTallyUI(); render(); maybeAiMove();
     }
 
     function undoMove(){
