@@ -23,7 +23,7 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 - Keep `main` pushable; use branches for larger changes (branch prefix: `codex/`).
 - After modifying a project, update relevant `README.md` files and other necessary docs/config, then push to GitHub.
 - For each modification cycle in Codex, increment the version number, push updates, and report: local URL, GitHub Pages URL, and the new version to expect on refresh.
-- By Elie (and Codex projects) versioning scheme: use `vX.Y` where `X` is the current day of month and `Y` increments for each new iteration that day (example on March 4: `v4.0`, `v4.1`, `v4.2`).
+- By Elie (and Codex projects) versioning scheme: use `vX.Y` where `X` is the number of days since `2026-02-28` and `Y` increments for each new iteration that day-index (example: `2026-03-10` => `X=10` => `v10.0`, `v10.1`, `v10.2`).
 - Before pausing, update `/Users/ecohen/Codex/NEXT_STEPS.md` with current status and next command.
 
 ## Skills
