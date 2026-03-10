@@ -65,10 +65,10 @@ main { width: min(1200px, calc(100% - 40px)); margin: 40px auto; display: flex; 
 .hero-panel { position: relative; width: 100%; aspect-ratio: 16/10; }
 .compare-slider { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; margin: 0; }
 .compare-slider img { width: 100%; height: 100%; object-fit: cover; }
-.compare-after { position: absolute; inset: 0; clip-path: inset(0 50% 0 0); }
+.compare-after { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--split, 50%)) 0 0); }
 .compare-label { position: absolute; top: 12px; z-index: 10; padding: 4px 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background: rgba(255,255,255,0.8); color: #000; }
 .compare-label.before { left: 12px; } .compare-label.after { right: 12px; }
-.compare-divider { position: absolute; top:0; bottom:0; left: 50%; width:2px; background:#fff; transform: translateX(-50%); z-index: 10; pointer-events: none;}
+.compare-divider { position: absolute; top:0; bottom:0; left: var(--split, 50%); width:2px; background:#fff; transform: translateX(-50%); z-index: 10; pointer-events: none;}
 .compare-range { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 20; opacity: 0; cursor: ew-resize; margin:0;}
 .panel-badge { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); z-index: 30; padding: 10px 20px; white-space: nowrap; font-weight: 700; }
 
