@@ -62,7 +62,7 @@ main { width: min(1200px, calc(100% - 40px)); margin: 40px auto; display: flex; 
 }
 .hero-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 30px; }
 .metric { padding: 16px; }
-.hero-panel { position: relative; width: 100%; aspect-ratio: 16/10; }
+.hero-panel { position: relative; width: 100%; aspect-ratio: 4/3; min-height: 280px; }
 .compare-slider { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; margin: 0; }
 .compare-slider img { width: 100%; height: 100%; object-fit: cover; }
 .compare-after { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--split, 50%)) 0 0); }
@@ -79,13 +79,19 @@ h3 { font-family: var(--font-display); margin: 0; }
 p { margin: 0; line-height: 1.5; color: var(--muted); }
 .eyebrow { text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em; margin-bottom: 8px; font-size: 0.85rem; color: var(--brand); }
 
+.compare-label{top:10px!important;bottom:auto!important}
+.art-note{position:static!important;margin-top:10px!important;justify-self:center}
+
 @media (max-width: 900px) {
   .hero, .intro-grid, .stage-grid { grid-template-columns: 1fr; }
   .pricing-grid { grid-template-columns: 1fr 1fr; }
   .cta-card { grid-template-columns: 1fr; }
-  .hero-panel { max-height: 400px; }
+  .hero-panel { max-height:none; min-height:260px; }
+  .compare-slider{aspect-ratio:4/3;}
 }
 @media (max-width: 600px) {
+  .hero-panel{min-height:240px;}
+  .compare-slider{aspect-ratio:4/3;}
   .pricing-grid { grid-template-columns: 1fr; }
   .hero-metrics { grid-template-columns: 1fr; }
   .site-header { flex-direction: column; align-items: stretch; gap: 16px; }
