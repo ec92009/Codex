@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conway — Game of Life</title>
+  <style>
+    :root{--bg:#0b0b0b;--panel:#171a22;--line:#2f3542;--text:#f4f7ff;--muted:#aeb7c7;--accent:#14b95f;--accent2:#0aa564;}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;color:var(--text)}
+    .app{min-height:100%;display:grid;place-items:center;padding:10px}
+    .shell{width:min(900px,100vw - 10px);background:#000;box-shadow:0 16px 36px rgba(0,0,0,.45);overflow:hidden}
+    .top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#0d0f14;border-bottom:1px solid #1e2330}
+    .title{font-weight:800;letter-spacing:.02em}
+    .board-wrap{background:#0f131b;padding:12px;display:grid;place-items:center}
+    canvas{width:min(860px,96vw);height:min(860px,96vw);max-height:70vh;background:#0b1020;border:1px solid #283043;image-rendering:pixelated}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px;background:#060708;border-top:1px solid #1d2026}
+    .group{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{border:1px solid #2b313b;background:#11151c;color:#f4f7ff;padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+    .btn.primary{background:var(--accent2);color:#06130d;border-color:#0f8f57}
+    .label{font-size:13px;color:var(--muted)}
+    input[type="range"]{accent-color:var(--accent)}
+    .status{padding:8px 14px;background:#0b0d11;color:var(--muted);font-size:13px;border-top:1px solid #1c2129}
+    .shape-panel{display:none;padding:10px;background:#0b0f17;border-top:1px solid #1d2433;gap:8px;flex-wrap:wrap}
+    .shape-panel.open{display:flex}
+    .shape-btn{border:1px solid #2b313b;background:#11151c;color:#d9e1ef;padding:7px 10px;border-radius:9px;cursor:pointer;font-weight:700}
+    .shape-btn.active{background:#16a34a;color:#05150d;border-color:#13b95b}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="shell">
+    <div class="top"><div class="title">Conway — Game of Life</div><div>Version v9.5</div></div>
+    <div class="board-wrap"><canvas id="c" width="860" height="860"></canvas></div>
+    <div class="toolbar">
+      <div class="group">
+        <button id="play" class="btn primary">Play</button>
+        <button id="step" class="btn">Step</button>
+        <button id="clear" class="btn">Clear</button>
+        <button id="random" class="btn">Random</button>
+        <button id="shapesBtn" class="btn">Shapes</button>
+      </div>
+      <div class="group">
+        <span class="label">Speed</span><input id="speed" type="range" min="2" max="25" value="10" />
+        <span class="label">Cell size</span><input id="cell" type="range" min="6" max="24" value="12" />
+      </div>
+    </div>
+    <div id="shapePanel" class="shape-panel">
+      <button class="shape-btn active" data-shape="single">Single Cell</button>
+      <button class="shape-btn" data-shape="glider">Glider</button>
+      <button class="shape-btn" data-shape="blinker">Blinker</button>
+      <button class="shape-btn" data-shape="toad">Toad</button>
+      <button class="shape-btn" data-shape="beacon">Beacon</button>
+      <button class="shape-btn" data-shape="lwss">LWSS</button>
+      <button class="shape-btn" data-shape="pulsar">Pulsar</button>
+    </div>
+    <div id="status" class="status">Paused · Gen 0 · Alive 0</div>
+  </div>
+</div>
+<script>
+  const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+  const playBtn=document.getElementById('play'),stepBtn=document.getElementById('step');
+  const clearBtn=document.getElementById('clear'),randBtn=document.getElementById('random');
+  const shapesBtn=document.getElementById('shapesBtn'), shapePanel=document.getElementById('shapePanel');
+  const speed=document.getElementById('speed'),cellRange=document.getElementById('cell');
+  const status=document.getElementById('status');
+
+  let cell=12, cols=Math.floor(canvas.width/cell), rows=Math.floor(canvas.height/cell);
+  let grid=Array.from({length:rows},()=>Array(cols).fill(0));
+  let running=false, gen=0, t=null;
+  let selectedShape='single';
+  let injectCycle=0;
+
+  function placePattern(cells, r0, c0){
+    for(const [dr,dc] of cells){
+      const r=(r0+dr+rows)%rows, c=(c0+dc+cols)%cols;
+      grid[r][c]=1;
+    }
+  }
+
+  const SHAPES={
+    glider:[[0,1],[1,2],[2,0],[2,1],[2,2]],
+    blinker:[[0,0],[0,1],[0,2]],
+    toad:[[0,1],[0,2],[0,3],[1,0],[1,1],[1,2]],
+    beacon:[[0,0],[0,1],[1,0],[1,1],[2,2],[2,3],[3,2],[3,3]],
+    lwss:[[0,1],[0,4],[1,0],[2,0],[3,0],[3,4],[4,0],[4,1],[4,2],[4,3]],
+    pulsar:[[-2,-4],[-2,-3],[-2,-2],[-2,2],[-2,3],[-2,4],[-4,-2],[-3,-2],[-1,-2],[1,-2],[3,-2],[4,-2],
+            [-4,2],[-3,2],[-1,2],[1,2],[3,2],[4,2],[2,-4],[2,-3],[2,-2],[2,2],[2,3],[2,4],
+            [-2,-8],[-2,-7],[-2,-6],[-2,6],[-2,7],[-2,8],[-8,-2],[-7,-2],[-6,-2],[6,-2],[7,-2],[8,-2],
+            [-8,2],[-7,2],[-6,2],[6,2],[7,2],[8,2],[2,-8],[2,-7],[2,-6],[2,6],[2,7],[2,8]]
+  };
+
+  function cellColor(v){
+    if(v===1) return '#11c06a';
+    const hue=(v*47)%360;
+    return `hsl(${hue} 85% 58%)`;
+  }
+
+  function injectRandomCells(){
+    injectCycle += 1;
+    const colorId = 1000 + injectCycle;
+    const attempts = Math.max(40, Math.floor(rows * cols * 0.06));
+    let added = 0;
+    for(let i=0;i<attempts;i++){
+      const r = (Math.random()*rows)|0;
+      const c = (Math.random()*cols)|0;
+      if(grid[r][c]===0){
+        grid[r][c]=colorId;
+        added++;
+      }
+    }
+    return added;
+  }
+
+  function seedClassicPatterns(){
+    // Glider
+    placePattern([[0,1],[1,2],[2,0],[2,1],[2,2]], 2, 2);
+    // Blinker
+    placePattern([[0,0],[0,1],[0,2]], 8, 24);
+    // Toad
+    placePattern([[0,1],[0,2],[0,3],[1,0],[1,1],[1,2]], 16, 12);
+    // Beacon
+    placePattern([[0,0],[0,1],[1,0],[1,1],[2,2],[2,3],[3,2],[3,3]], 22, 28);
+    // Lightweight spaceship (LWSS)
+    placePattern([[0,1],[0,4],[1,0],[2,0],[3,0],[3,4],[4,0],[4,1],[4,2],[4,3]], 30, 6);
+  }
+
+
+  function resizeGrid(){
+    cols=Math.floor(canvas.width/cell); rows=Math.floor(canvas.height/cell);
+    grid=Array.from({length:rows},()=>Array(cols).fill(0)); gen=0; seedClassicPatterns(); draw();
+  }
+
+  function draw(){
+    ctx.fillStyle='#0b1020'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle='rgba(70,88,120,.35)'; ctx.lineWidth=1;
+    for(let x=0;x<=cols;x++){ctx.beginPath();ctx.moveTo(x*cell,0);ctx.lineTo(x*cell,rows*cell);ctx.stroke();}
+    for(let y=0;y<=rows;y++){ctx.beginPath();ctx.moveTo(0,y*cell);ctx.lineTo(cols*cell,y*cell);ctx.stroke();}
+    let alive=0;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]){
+      alive++;
+      ctx.fillStyle=cellColor(grid[r][c]);
+      ctx.fillRect(c*cell+1,r*cell+1,cell-1,cell-1);
+    }
+    status.textContent=`${running?'Running':'Paused'} · Gen ${gen} · Alive ${alive}`;
+  }
+
+  function neigh(r,c){
+    let n=0;
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+      if(!dr&&!dc) continue;
+      const rr=(r+dr+rows)%rows, cc=(c+dc+cols)%cols;
+      n += grid[rr][cc] ? 1 : 0;
+    }
+    return n;
+  }
+
+  function tick(){
+    const next=Array.from({length:rows},()=>Array(cols).fill(0));
+    let changed=false;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const a=grid[r][c], n=neigh(r,c);
+      const nv = (a && (n===2||n===3)) ? a : ((!a && n===3) ? 1 : 0);
+      next[r][c]=nv;
+      if(Boolean(nv)!==Boolean(a)) changed=true;
+    }
+    grid=next; gen++;
+
+    if(gen % 50 === 0){
+      const added = injectRandomCells();
+      if(added>0) changed = true;
+    }
+
+    if(!changed){
+      running=false; clearTimeout(t);
+      draw();
+      status.textContent=`Stable state reached at generation ${gen}. Simulation stopped.`;
+      playBtn.textContent='Play';
+      return;
+    }
+    draw();
+  }
+
+  function loop(){ if(!running) return; tick(); t=setTimeout(loop, Math.round(1000/Number(speed.value))); }
+
+  canvas.addEventListener('click',e=>{
+    const r=canvas.getBoundingClientRect();
+    const x=e.clientX-r.left, y=e.clientY-r.top;
+    const c=Math.floor(x*(canvas.width/r.width)/cell), rr=Math.floor(y*(canvas.height/r.height)/cell);
+    if(rr>=0&&rr<rows&&c>=0&&c<cols){
+      if(selectedShape==='single'){ grid[rr][c]=grid[rr][c]?0:1; }
+      else { placePattern(SHAPES[selectedShape]||[], rr, c); }
+      draw();
+    }
+  });
+
+  playBtn.onclick=()=>{
+    running=!running;
+    playBtn.textContent=running?'Pause':'Play';
+    playBtn.classList.toggle('primary',!running?false:true);
+    if(running) loop(); else clearTimeout(t);
+    draw();
+  };
+  stepBtn.onclick=()=>{ if(running) return; tick(); };
+  clearBtn.onclick=()=>{ running=false; clearTimeout(t); playBtn.textContent='Play'; gen=0; grid=Array.from({length:rows},()=>Array(cols).fill(0)); draw(); };
+  randBtn.onclick=()=>{ running=false; clearTimeout(t); playBtn.textContent='Play'; gen=0; grid=Array.from({length:rows},()=>Array(cols).fill(0).map(()=>Math.random()<0.26?1:0)); draw(); };
+  shapesBtn.onclick=()=>shapePanel.classList.toggle('open');
+  shapePanel.querySelectorAll('.shape-btn').forEach(b=>b.onclick=()=>{ selectedShape=b.dataset.shape; shapePanel.querySelectorAll('.shape-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); });
+  speed.oninput=()=>{ if(running){ clearTimeout(t); loop(); } };
+  cellRange.oninput=()=>{ cell=Number(cellRange.value); resizeGrid(); };
+
+  seedClassicPatterns();
+  draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>By Elie | Creator Portfolio</title>
+  <script>
+    (() => {
+      try {
+        const saved = localStorage.getItem('byelie-theme');
+        if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+      } catch {}
+    })();
+  </script>
+  <link rel="stylesheet" href="./shared.css?v=8.8"/>
+  <link rel="stylesheet" href="./styles.css?v=8.8"/>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar shell">
+    <nav class="version-switch" aria-label="Site navigation">
+      <a class="is-active" href="./">Home</a> <span>|</span>
+      <a href="./plans.html">3D Plans</a> <span>|</span>
+      <a href="./prints.html">Physical Prints</a> <span>|</span>
+      <a href="./web-design.html">Web Design</a> <span>|</span>
+      <a href="./cad-design.html">CAD on demand</a> <span>|</span>
+      <a href="./gallery.html">Gallery</a>
+    </nav>
+    <div class="brand">BY ELIE — v8.8</div>
+    <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
+  </header>
+  <main id="main-content" class="shell">
+    <section class="panel hero">
+      <p class="version-pill" aria-label="Current version">Version 8.8</p>
+      <p class="eyebrow">Creator Portfolio</p>
+      <h1>A lifetime of creation and engineering skills at your service</h1>
+      <p class="lead">I blend hands-on building, CAD thinking, and AI-assisted systems (including ClawdBot workflows) to ship visual assets people can buy, print, and trust.</p>
+      <div class="cta">
+        <a class="btn primary" href="#offers">See offers</a>
+        <a class="btn secondary" href="#contact">Request quote</a>
+      </div>
+    </section>
+    <section id="offers" class="panel carousel" aria-label="Offerings carousel">
+      <div class="carousel-head">
+        <h2>Offerings</h2>
+      </div>
+      <div class="carousel-wrap" data-offers-wrap tabindex="0">
+        <div class="carousel-track" data-offers-track>
+          <article class="card carousel-item" data-offer-item data-href="./plans.html"><div class="service-logo" aria-hidden="true">01</div><h3>3D Print Plans</h3><p>Clean, tested STL/3MF releases built for real-world printers with practical tolerances and licensing ready for your shop.</p></article>
+          <article class="card carousel-item" data-offer-item data-href="./prints.html"><div class="service-logo" aria-hidden="true">02</div><h3>Printed Physical Items</h3><p>From one-off prototypes to small production runs, I print, finish, and quality-check every part before delivery.</p></article>
+          <article class="card carousel-item" data-offer-item data-href="./gallery.html"><div class="service-logo" aria-hidden="true">03</div><h3>Photo Services</h3><p>Marketplace-ready product photos with lighting, composition, and edits tuned for conversion instead of just aesthetics.</p></article>
+          <article class="card carousel-item" data-offer-item data-href="./cad-design.html"><div class="service-logo" aria-hidden="true">04</div><h3>CAD on demand</h3><p>Idea-to-file modeling with revision loops, printability checks, and exports your manufacturer or printer can use immediately.</p></article>
+          <article class="card carousel-item" data-offer-item data-href="./web-design.html"><div class="service-logo" aria-hidden="true">05</div><h3>Website Design & Maintenance</h3><p>Business websites that stay up-to-date with AI-assisted content operations and fast iteration as your offer evolves.</p></article>
+        </div>
+      </div>
+      <div class="carousel-dots" data-offers-dots aria-label="Offerings pagination"></div>
+    </section>
+    <section class="panel signature-strip" aria-label="By Elie signature statement">
+      <p>DESIGN • CAD • PRINT • AUTOMATION • BUILT TO SHIP</p>
+    </section>
+    <section class="panel metrics" id="proof">
+      <h2>Proof of execution</h2>
+      <div class="metrics-grid">
+        <article class="metric"><span class="metric-value" data-count="120" data-suffix="+">0</span><span class="metric-label">Prototype iterations shipped</span></article>
+        <article class="metric"><span class="metric-value" data-count="48" data-suffix="h">0</span><span class="metric-label">Fastest concept-to-delivery cycle</span></article>
+        <article class="metric"><span class="metric-value" data-count="5" data-suffix="">0</span><span class="metric-label">Service tracks unified in one workflow</span></article>
+      </div>
+    </section>
+    <section class="panel" id="about">
+      <h2>About Elie</h2>
+      <div class="about-grid">
+        <img class="about-photo" src="./assets/elie-profile-nobg.png" alt="Portrait of Elie" loading="lazy" />
+        <div class="about-text">
+          <p>I am Elie: builder, maker, and systems-minded operator focused on products that solve practical everyday problems.</p>
+          <p>My workflow combines physical prototyping, CAD design, visual storytelling, and ClawdBot-powered process automation so projects move from concept to delivery without friction.</p>
+          <div class="cta"><a class="btn secondary" href="#contact">Start a project with Elie</a></div>
+        </div>
+      </div>
+    </section>
+    <section class="panel" id="contact">
+      <h2>Start your next build</h2>
+      <p class="lead">Tell me your goal, timeline, and budget range. I will map the fastest path from idea to delivered files, prints, visuals, or live website updates.</p>
+      <div class="cta"><a class="btn primary" href="#">Book a discovery call</a><a class="btn secondary" href="#">Request pricing tiers</a></div>
+    </section>
+  </main>
+  <script>
+    const root=document.documentElement;
+    const key='byelie-theme';
+    const btn=document.querySelector('[data-theme-toggle]');
+    btn?.addEventListener('click',()=>{
+      root.dataset.theme=root.dataset.theme==='light'?'dark':'light';
+      localStorage.setItem(key,root.dataset.theme);
+    });
+
+    const offersWrap=document.querySelector('[data-offers-wrap]');
+    const offersTrack=document.querySelector('[data-offers-track]');
+    const offerItems=Array.from(document.querySelectorAll('[data-offer-item]'));
+    const offersDots=document.querySelector('[data-offers-dots]');
+    const prevBtn=document.querySelector('[data-offers-prev]');
+    const nextBtn=document.querySelector('[data-offers-next]');
+
+    if(offersWrap && offersTrack && offerItems.length){
+      offersWrap.classList.add('is-enhanced');
+      let activeIndex=0;
+      const total=offerItems.length;
+      const wrapIndex=(n)=>((n%total)+total)%total;
+      const relOffset=(index)=>{
+        let d=index-activeIndex;
+        if(d>total/2) d-=total;
+        if(d<-total/2) d+=total;
+        return d;
+      };
+
+      const updateDots=()=> {
+        offersDots?.querySelectorAll('.carousel-dot').forEach((dot,i)=>{
+          const on=i===activeIndex;
+          dot.classList.toggle('is-active',on);
+          dot.setAttribute('aria-current',on?'true':'false');
+        });
+      };
+
+      const profile=()=>{
+        const w=window.innerWidth||1280;
+        if(w<560) return {tx:36,tz:88,ry:13,scStep:0.11,minScale:0.7,minOpacity:0.22,maxDepth:1};
+        if(w<900) return {tx:52,tz:125,ry:16,scStep:0.13,minScale:0.66,minOpacity:0.2,maxDepth:2};
+        return {tx:68,tz:165,ry:20,scStep:0.16,minScale:0.62,minOpacity:0.18,maxDepth:2};
+      };
+
+      const render=()=>{
+        const p=profile();
+        offersTrack.style.transform='none';
+        offerItems.forEach((item,index)=>{
+          const off=relOffset(index);
+          const abs=Math.abs(off);
+          const tx=off*p.tx;
+          const tz=-abs*p.tz;
+          const ry=off*-p.ry;
+          const sc=Math.max(p.minScale,1-abs*p.scStep);
+          item.style.transform=`translateX(-50%) translateX(${tx}%) translateZ(${tz}px) rotateY(${ry}deg) scale(${sc})`;
+          item.style.opacity=abs>p.maxDepth?'0':String(Math.max(p.minOpacity,1-abs*.34));
+          item.style.zIndex=String(40-abs*10);
+          item.classList.toggle('is-active',off===0);
+        });
+        updateDots();
+      };
+
+      const setActive=(i)=>{
+        activeIndex=wrapIndex(i);
+        render();
+      };
+
+      /* Build dots */
+      if(offersDots){
+        offersDots.innerHTML='';
+        offerItems.forEach((item,index)=>{
+          const dot=document.createElement('button');
+          dot.type='button';
+          dot.className='carousel-dot';
+          const label=item.querySelector('h3')?.textContent||`offer ${index+1}`;
+          dot.setAttribute('aria-label',`Show ${label}`);
+          dot.addEventListener('click',()=>setActive(index));
+          offersDots.append(dot);
+        });
+      }
+
+      prevBtn?.addEventListener('click',()=>setActive(activeIndex-1));
+      nextBtn?.addEventListener('click',()=>setActive(activeIndex+1));
+
+      /* Keyboard navigation */
+      offersWrap.addEventListener('keydown',(e)=>{
+        if(e.key==='ArrowLeft'){e.preventDefault();setActive(activeIndex-1);}
+        if(e.key==='ArrowRight'){e.preventDefault();setActive(activeIndex+1);}
+      });
+
+      let wheelDeltaX=0;
+      let wheelResetTimer=null;
+      const carouselInView=()=>{
+        const r=offersWrap.getBoundingClientRect();
+        const vh=window.innerHeight||document.documentElement.clientHeight;
+        return r.top < vh*0.8 && r.bottom > vh*0.2;
+      };
+      offersWrap.addEventListener('wheel',(e)=>{
+        if(!carouselInView()) return;
+        const mostlyHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.35;
+        const horizontalIntent = mostlyHorizontal || (e.shiftKey && Math.abs(e.deltaY)>0);
+        if(!horizontalIntent) return;
+        e.preventDefault();
+        wheelDeltaX += mostlyHorizontal ? e.deltaX : e.deltaY;
+        if(Math.abs(wheelDeltaX) > 34){
+          setActive(activeIndex + (wheelDeltaX > 0 ? 1 : -1));
+          wheelDeltaX = 0;
+        }
+        clearTimeout(wheelResetTimer);
+        wheelResetTimer=setTimeout(()=>{wheelDeltaX=0;},120);
+      },{passive:false});
+
+      let touchStartX=null;
+      offersWrap.addEventListener('touchstart',(e)=>{touchStartX=e.touches[0]?.clientX??null;},{passive:true});
+      offersWrap.addEventListener('touchend',(e)=>{
+        if(touchStartX===null) return;
+        const endX=e.changedTouches[0]?.clientX??touchStartX;
+        const dx=endX-touchStartX;
+        if(Math.abs(dx)>32) setActive(activeIndex+(dx<0?1:-1));
+        touchStartX=null;
+      },{passive:true});
+
+      /* Mouse / pointer drag (desktop) */
+      let pointerStartX=null;
+      let pointerDragging=false;
+      let dragMoved=false;
+      offersWrap.addEventListener('pointerdown',(e)=>{
+        if(e.pointerType==='mouse' && e.button!==0) return;
+        pointerStartX=e.clientX;
+        pointerDragging=true;
+        dragMoved=false;
+        offersWrap.classList.add('is-dragging');
+      });
+      offersWrap.addEventListener('pointermove',(e)=>{
+        if(!pointerDragging || pointerStartX===null) return;
+        const dx=e.clientX-pointerStartX;
+        if(Math.abs(dx)>8) dragMoved=true;
+      });
+      offersWrap.addEventListener('pointerup',(e)=>{
+        if(!pointerDragging || pointerStartX===null) return;
+        const dx=e.clientX-pointerStartX;
+        if(Math.abs(dx)>28) setActive(activeIndex+(dx<0?1:-1));
+        pointerStartX=null;
+        pointerDragging=false;
+        offersWrap.classList.remove('is-dragging');
+      });
+      offersWrap.addEventListener('pointerleave',()=>{
+        pointerStartX=null;
+        pointerDragging=false;
+        offersWrap.classList.remove('is-dragging');
+      });
+      offersWrap.addEventListener('pointercancel',()=>{
+        pointerStartX=null;
+        pointerDragging=false;
+        offersWrap.classList.remove('is-dragging');
+      });
+
+      offerItems.forEach((item, index)=>{
+        item.addEventListener('click',(e)=>{
+          if(dragMoved) return;
+          const off=relOffset(index);
+          if(off !== 0) {
+            e.preventDefault();
+            setActive(index);
+            return;
+          }
+          const interactive=e.target.closest('a,button,input,textarea,select,label');
+          if(interactive) return;
+          const href=item.dataset.href || item.querySelector('a[href]')?.getAttribute('href');
+          if(href) window.location.href=href;
+        });
+      });
+
+      window.addEventListener('resize',render);
+      render();
+    }
+
+    const metricEls=[...document.querySelectorAll('.metric-value')];
+    if(metricEls.length){
+      const runCounter=(el)=>{
+        const target=parseInt(el.dataset.count||'0',10);
+        const suffix=el.dataset.suffix||'';
+        const duration=900;
+        const start=performance.now();
+        const tick=(now)=>{
+          const p=Math.min(1,(now-start)/duration);
+          const eased=1-Math.pow(1-p,3);
+          el.textContent=`${Math.round(target*eased)}${suffix}`;
+          if(p<1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      };
+      const io=new IntersectionObserver((entries)=>{
+        entries.forEach((entry)=>{
+          if(!entry.isIntersecting) return;
+          runCounter(entry.target);
+          io.unobserve(entry.target);
+        });
+      },{threshold:.45});
+      metricEls.forEach((el)=>io.observe(el));
+    }
+  </script>
+</body></html>
