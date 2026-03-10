@@ -30,7 +30,7 @@
 <body>
 <div class="app">
   <div class="shell">
-    <div class="top"><div class="title">Conway — Game of Life</div><div>Version v9.2</div></div>
+    <div class="top"><div class="title">Conway — Game of Life</div><div>Version v9.3</div></div>
     <div class="board-wrap"><canvas id="c" width="860" height="860"></canvas></div>
     <div class="toolbar">
       <div class="group">
@@ -69,6 +69,7 @@
   let grid=Array.from({length:rows},()=>Array(cols).fill(0));
   let running=false, gen=0, t=null;
   let selectedShape='single';
+  let injectCycle=0;
 
   function placePattern(cells, r0, c0){
     for(const [dr,dc] of cells){
@@ -88,6 +89,28 @@
             [-2,-8],[-2,-7],[-2,-6],[-2,6],[-2,7],[-2,8],[-8,-2],[-7,-2],[-6,-2],[6,-2],[7,-2],[8,-2],
             [-8,2],[-7,2],[-6,2],[6,2],[7,2],[8,2],[2,-8],[2,-7],[2,-6],[2,6],[2,7],[2,8]]
   };
+
+  function cellColor(v){
+    if(v===1) return '#11c06a';
+    const hue=(v*47)%360;
+    return `hsl(${hue} 85% 58%)`;
+  }
+
+  function injectRandomCells(){
+    injectCycle += 1;
+    const colorId = 1000 + injectCycle;
+    const attempts = Math.max(8, Math.floor(rows * cols * 0.012));
+    let added = 0;
+    for(let i=0;i<attempts;i++){
+      const r = (Math.random()*rows)|0;
+      const c = (Math.random()*cols)|0;
+      if(grid[r][c]===0){
+        grid[r][c]=colorId;
+        added++;
+      }
+    }
+    return added;
+  }
 
   function seedClassicPatterns(){
     // Glider
@@ -116,7 +139,7 @@
     let alive=0;
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(grid[r][c]){
       alive++;
-      ctx.fillStyle='#11c06a';
+      ctx.fillStyle=cellColor(grid[r][c]);
       ctx.fillRect(c*cell+1,r*cell+1,cell-1,cell-1);
     }
     status.textContent=`${running?'Running':'Paused'} · Gen ${gen} · Alive ${alive}`;
@@ -127,7 +150,7 @@
     for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
       if(!dr&&!dc) continue;
       const rr=(r+dr+rows)%rows, cc=(c+dc+cols)%cols;
-      n+=grid[rr][cc];
+      n += grid[rr][cc] ? 1 : 0;
     }
     return n;
   }
@@ -137,11 +160,17 @@
     let changed=false;
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
       const a=grid[r][c], n=neigh(r,c);
-      const nv=((a && (n===2||n===3)) || (!a && n===3)) ? 1:0;
+      const nv = (a && (n===2||n===3)) ? a : ((!a && n===3) ? 1 : 0);
       next[r][c]=nv;
-      if(nv!==a) changed=true;
+      if(Boolean(nv)!==Boolean(a)) changed=true;
     }
     grid=next; gen++;
+
+    if(gen % 50 === 0){
+      const added = injectRandomCells();
+      if(added>0) changed = true;
+    }
+
     if(!changed){
       running=false; clearTimeout(t);
       draw();
