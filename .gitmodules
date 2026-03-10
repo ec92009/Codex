@@ -1,0 +1,3 @@
+[submodule "AIPhotoKey"]
+	path = AIPhotoKey
+	url = git@github.com:ec92009/AIPhotoKey.git
