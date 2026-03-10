@@ -30,7 +30,7 @@
 <body>
 <div class="app">
   <div class="shell">
-    <div class="top"><div class="title">Conway — Game of Life</div><div>Version v9.3</div></div>
+    <div class="top"><div class="title">Conway — Game of Life</div><div>Version v9.4</div></div>
     <div class="board-wrap"><canvas id="c" width="860" height="860"></canvas></div>
     <div class="toolbar">
       <div class="group">
@@ -99,7 +99,7 @@
   function injectRandomCells(){
     injectCycle += 1;
     const colorId = 1000 + injectCycle;
-    const attempts = Math.max(8, Math.floor(rows * cols * 0.012));
+    const attempts = Math.max(40, Math.floor(rows * cols * 0.06));
     let added = 0;
     for(let i=0;i<attempts;i++){
       const r = (Math.random()*rows)|0;
