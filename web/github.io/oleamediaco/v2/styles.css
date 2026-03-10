@@ -70,7 +70,7 @@ main { width: min(1200px, calc(100% - 40px)); margin: 40px auto; display: flex; 
 .compare-slider img { width: 100%; height: 100%; object-fit: cover; display:none; }
 .compare-after { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--split, 50%)) 0 0); background:#10151f url('../assets/after.png') center/cover no-repeat; }
 .compare-after img{display:none;}
-.compare-divider { position: absolute; top:0; bottom:0; left: var(--split, 50%); width:2px; background:#fff; transform: translateX(-50%); z-index: 10; pointer-events: none;}
+.compare-divider { position: absolute; top:0; bottom:0; left: var(--split, 50%); width:2px; background: rgba(0,0,0,.86); box-shadow: 0 0 0 1px rgba(255,255,255,.75); transform: translateX(-50%); z-index: 14; pointer-events: none;}
 .compare-range { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 20; opacity: 0; cursor: ew-resize; margin:0;}
 .panel-badge { position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%); z-index: 30; padding: 10px 20px; white-space: nowrap; font-weight: 700; }
 
