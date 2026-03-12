@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reversi</title>
+  <link rel="icon" type="image/png" sizes="512x512" href="../assets/logos/reversi-logo.png" />
   <style>
     :root{
       --bg:#0b0b0b; --board:#0aa564; --board-dark:#07814f; --grid:rgba(0,0,0,.20);
@@ -14,6 +15,9 @@
     html,body{height:100%;margin:0;background:var(--bg);font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;color:var(--text)}
     .app{min-height:100%;display:grid;place-items:center;padding:10px}
     .shell{width:min(760px,100vw - 10px);background:#000;overflow:hidden;box-shadow:0 16px 36px rgba(0,0,0,.45)}
+    .top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#0d0f14;border-bottom:1px solid #1e2330}
+    .title{font-weight:800;letter-spacing:.02em;display:flex;align-items:center;gap:10px}
+    .site-logo{width:36px;height:36px;border-radius:10px;border:1px solid #2f3542;object-fit:cover;background:#111620}
 
     .board-wrap{position:relative;aspect-ratio:1/1;background:var(--board);
       background-image:radial-gradient(circle at center, color-mix(in srgb, var(--board-dark) 20%, transparent), transparent 55%),
@@ -67,6 +71,7 @@
 <body>
   <div class="app">
     <div class="shell">
+      <div class="top"><div class="title"><img class="site-logo" src="../assets/logos/reversi-logo.png" alt="Reversi logo" />Reversi</div><div>Version v11.0</div></div>
       <div class="board-wrap"><div id="board" class="board" aria-label="Reversi board"></div></div>
 
       <div class="scorebar">
@@ -83,7 +88,6 @@
       </div>
       <div id="status" class="status">Black to move.</div>
       <div id="tally" class="status">Tally — Wins: 0 · Losses: 0</div>
-      <div class="status" style="text-align:center">Version v9.5</div>
     </div>
   </div>
 

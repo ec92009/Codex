@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Conway — Game of Life</title>
+  <link rel="icon" type="image/png" sizes="512x512" href="../assets/logos/conway-logo.png" />
   <style>
     :root{--bg:#0b0b0b;--panel:#171a22;--line:#2f3542;--text:#f4f7ff;--muted:#aeb7c7;--accent:#14b95f;--accent2:#0aa564;}
     *{box-sizing:border-box}
@@ -11,7 +12,8 @@
     .app{min-height:100%;display:grid;place-items:center;padding:10px}
     .shell{width:min(900px,100vw - 10px);background:#000;box-shadow:0 16px 36px rgba(0,0,0,.45);overflow:hidden}
     .top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#0d0f14;border-bottom:1px solid #1e2330}
-    .title{font-weight:800;letter-spacing:.02em}
+    .title{font-weight:800;letter-spacing:.02em;display:flex;align-items:center;gap:10px}
+    .site-logo{width:36px;height:36px;border-radius:10px;border:1px solid #2f3542;object-fit:cover;background:#111620}
     .board-wrap{background:#0f131b;padding:12px;display:grid;place-items:center}
     canvas{width:min(860px,96vw);height:min(860px,96vw);max-height:70vh;background:#0b1020;border:1px solid #283043;image-rendering:pixelated}
     .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px;background:#060708;border-top:1px solid #1d2026}
@@ -30,7 +32,7 @@
 <body>
 <div class="app">
   <div class="shell">
-    <div class="top"><div class="title">Conway — Game of Life</div><div>Version v9.5</div></div>
+    <div class="top"><div class="title"><img class="site-logo" src="../assets/logos/conway-logo.png" alt="Conway logo" />Conway — Game of Life</div><div>Version v11.0</div></div>
     <div class="board-wrap"><canvas id="c" width="860" height="860"></canvas></div>
     <div class="toolbar">
       <div class="group">

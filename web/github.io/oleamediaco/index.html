@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Olea Media Co Mock Site Variants</title>
   <meta name="description" content="Choose between three visual mockups for the Olea Media Co website." />
+  <link rel="icon" type="image/png" sizes="512x512" href="../assets/logos/oleamedia-logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet" />
@@ -49,6 +50,18 @@
       font-size: clamp(2.4rem, 6vw, 4.4rem);
       line-height: .95;
       color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .site-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      background: var(--surface);
     }
     .subtitle {
       margin: 0;
@@ -213,9 +226,9 @@
 <body>
   <div class="shell">
     <header>
-      <h1 class="title">Olea Media Co Website Style Variants</h1>
+      <h1 class="title"><img class="site-logo" src="../assets/logos/oleamedia-logo.png" alt="Olea Media logo" />Olea Media Co Website Style Variants</h1>
       <p class="subtitle">Three mock website directions for the same 4-stage offering. Each version keeps the multilingual switch (EN/ES/FR) so the team can evaluate both design and readability.</p>
-      <p class="subtitle"><strong>Version 10.16</strong></p>
+      <p class="subtitle"><strong>Version 11.0</strong></p>
       <div class="toolbar">
         <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
         <a class="pill" href="./OleaMediaCo-Offer-EN.pdf" target="_blank" rel="noopener">PDF EN</a>

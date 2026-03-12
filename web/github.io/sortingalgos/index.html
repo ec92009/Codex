@@ -4,11 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sorting Algorithms Visualizer</title>
+  <link rel="icon" type="image/png" sizes="512x512" href="../assets/logos/sorting-logo.png" />
   <style>
     :root{--bg:#0b0d12;--card:#151923;--line:#2a3140;--text:#eef3ff;--muted:#9aa6bf;--accent:#25c06d;}
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
     .wrap{max-width:1200px;margin:0 auto;padding:14px}
     .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .title-row{display:flex;align-items:center;gap:10px}
+    .site-logo{width:42px;height:42px;border-radius:12px;border:1px solid #2a3140;object-fit:cover;background:#101521}
     h1{margin:0;font-size:1.25rem}
     .meta{color:var(--muted);font-size:.92rem}
     .controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
@@ -26,8 +29,8 @@
 <body>
 <div class="wrap">
   <div class="top">
-    <h1>Sorting Algorithms Visualizer</h1>
-    <div class="meta">100 random integers · Bubble → Insertion → Selection → Merge → Quick · Version v11.0</div>
+    <div class="title-row"><img class="site-logo" src="../assets/logos/sorting-logo.png" alt="Sorting logo" /><h1>Sorting Algorithms Visualizer</h1></div>
+    <div class="meta">100 random integers · Bubble → Insertion → Selection → Merge → Quick · Version v11.1</div>
   </div>
 
   <div class="controls">

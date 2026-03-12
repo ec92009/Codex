@@ -4,6 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>By Elie | Creator Portfolio</title>
+  <link rel="icon" type="image/png" sizes="512x512" href="../assets/logos/byelie-logo.png" />
   <script>
     (() => {
       try {
@@ -17,6 +18,10 @@
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
+  <style>
+    .brand { display:flex; align-items:center; gap:10px; }
+    .site-logo { width:42px; height:42px; border-radius:12px; border:1px solid rgba(255,255,255,.22); object-fit:cover; }
+  </style>
   <header class="topbar shell">
     <nav class="version-switch" aria-label="Site navigation">
       <a class="is-active" href="./">Home</a> <span>|</span>
@@ -26,12 +31,12 @@
       <a href="./cad-design.html">CAD on demand</a> <span>|</span>
       <a href="./gallery.html">Gallery</a>
     </nav>
-    <div class="brand">BY ELIE — v8.8</div>
+    <div class="brand"><img class="site-logo" src="../assets/logos/byelie-logo.png" alt="By Elie logo" />BY ELIE — v11.0</div>
     <button class="theme-toggle" type="button" data-theme-toggle><span class="mode-light">Night</span><span class="mode-dark">Day</span></button>
   </header>
   <main id="main-content" class="shell">
     <section class="panel hero">
-      <p class="version-pill" aria-label="Current version">Version 8.8</p>
+      <p class="version-pill" aria-label="Current version">Version 11.0</p>
       <p class="eyebrow">Creator Portfolio</p>
       <h1>A lifetime of creation and engineering skills at your service</h1>
       <p class="lead">I blend hands-on building, CAD thinking, and AI-assisted systems (including ClawdBot workflows) to ship visual assets people can buy, print, and trust.</p>
