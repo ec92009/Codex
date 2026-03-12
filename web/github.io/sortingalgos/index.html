@@ -27,7 +27,7 @@
 <div class="wrap">
   <div class="top">
     <h1>Sorting Algorithms Visualizer</h1>
-    <div class="meta">100 random integers · Bubble → Insertion → Selection → Merge → Quick · Version v9.0</div>
+    <div class="meta">100 random integers · Bubble → Insertion → Selection → Merge → Quick · Version v11.0</div>
   </div>
 
   <div class="controls">
@@ -153,18 +153,40 @@ function stepOnce(){
     if(n.done){ s.done=true; s.a=s.b=-1; draw(s); continue; }
     s.ops++; s.a=n.value?.a??-1; s.b=n.value?.b??-1; draw(s); active++;
   }
-  if(!active){ running=false; clearInterval(timer); timer=null; }
+  if(!active){ running=false; clearInterval(timer); timer=null; setPauseLabel(); }
 }
 
-function run(){ if(running) return; running=true; timer=setInterval(stepOnce,speedMs); }
-function pause(){ running=false; clearInterval(timer); timer=null; }
+const pauseBtn=document.getElementById('pause');
+
+function setPauseLabel(){
+  pauseBtn.textContent = running ? 'Pause' : 'Resume';
+}
+
+function run(){
+  if(running) return;
+  running=true;
+  timer=setInterval(stepOnce,speedMs);
+  setPauseLabel();
+}
+
+function pause(){
+  running=false;
+  clearInterval(timer);
+  timer=null;
+  setPauseLabel();
+}
+
+function togglePauseResume(){
+  if(running) pause();
+  else run();
+}
 
 document.getElementById('newSet').onclick=()=>{ pause(); base=randData(); build(); };
 document.getElementById('run').onclick=run;
-document.getElementById('pause').onclick=pause;
+pauseBtn.onclick=togglePauseResume;
 document.getElementById('step').onclick=()=>{ pause(); stepOnce(); };
 
-base=randData(); build();
+base=randData(); build(); setPauseLabel();
 </script>
 </body>
 </html>
