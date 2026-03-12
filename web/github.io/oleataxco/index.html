@@ -10,11 +10,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css" />
   <style>
+    .bg-brand{position:fixed;inset:0;pointer-events:none;z-index:0;background:url('../assets/logos/oleatax-logo.png') center 18vh / min(58vmin,520px) no-repeat;opacity:.16;filter:drop-shadow(0 18px 40px rgba(0,0,0,.22));}
+    body > *{position:relative;z-index:1;}
+
     .brand { display:flex; align-items:center; gap:10px; }
     .site-logo { width:46px; height:46px; border-radius:14px; border:1px solid rgba(255,255,255,.16); object-fit:cover; }
   </style>
 </head>
 <body class="concept-neighborhood">
+  <div class="bg-brand" aria-hidden="true"></div>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <section class="draft-banner" aria-label="Draft disclaimer">
     <strong>MOCK DRAFT</strong>
@@ -25,7 +29,7 @@
     <header class="topbar panel">
       <div class="brand-wrap">
         <div class="brand"><img class="site-logo" src="../assets/logos/oleatax-logo.png" alt="Olea Tax logo" />Olea Tax Co.</div>
-        <p class="brand-meta">Strategic CPA advisory for business owners, real estate investors, and high-income families · Version 11.0</p>
+        <p class="brand-meta">Strategic CPA advisory for business owners, real estate investors, and high-income families · Version 11.1</p>
       </div>
       <nav aria-label="Primary">
         <a href="#services">Packages</a>
