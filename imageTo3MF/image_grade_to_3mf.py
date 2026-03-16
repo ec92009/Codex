@@ -37,6 +37,43 @@ SNAPMAKER_PROJECT_SETTINGS = "Metadata/project_settings.config"
 LEAD_OBJECT_NAME = "Lead"
 ASSEMBLY_OBJECT_NAME = "Assembly"
 DEFAULT_BASE_FILAMENT_HEX = ["#00FFFF", "#FF00FF", "#FFFF00", "#FFFFFF"]
+GENERIC_STEM_PATTERN = re.compile(
+    r"^(image\d*|img[_-]?\d*|photo[_-]?\d*|picture[_-]?\d*|screenshot.*|scan[_-]?\d*|pasted.*)$",
+    re.IGNORECASE,
+)
+GENERIC_VISION_LABELS = {
+    "animal",
+    "mammal",
+    "vertebrate",
+    "fauna",
+    "pet",
+    "art",
+    "illustration",
+}
+VISION_SUBJECT_ALIASES = {
+    "cat": "cat",
+    "kitten": "cat",
+    "feline": "cat",
+    "tabby": "cat",
+    "tiger": "cat",
+    "dog": "dog",
+    "puppy": "dog",
+    "canine": "dog",
+    "spaniel": "dog",
+    "bird": "bird",
+    "angel": "angel",
+    "woman": "portrait",
+    "girl": "portrait",
+    "person": "portrait",
+    "flower": "flower",
+    "lily": "flower",
+    "butterfly": "butterfly",
+    "leaf": "leaf",
+    "wallpaper": "abstract",
+    "texture": "abstract",
+    "pattern": "abstract",
+    "abstract": "abstract",
+}
 
 
 @dataclass
@@ -237,6 +274,124 @@ def sanitize_filename_bit(value: str) -> str:
     return sanitized[:48].rstrip("_")
 
 
+def is_generic_stem(stem: str) -> bool:
+    return bool(GENERIC_STEM_PATTERN.match(stem.strip()))
+
+
+def dominant_color_name(path: Path) -> Optional[str]:
+    named_colors = {
+        "red": (220, 50, 47),
+        "orange": (243, 119, 32),
+        "yellow": (250, 220, 40),
+        "green": (46, 204, 113),
+        "cyan": (0, 200, 220),
+        "blue": (52, 120, 246),
+        "purple": (155, 89, 182),
+        "pink": (241, 127, 180),
+        "brown": (150, 96, 52),
+        "gold": (212, 175, 55),
+        "black": (25, 25, 25),
+        "gray": (150, 150, 150),
+        "white": (245, 245, 245),
+    }
+    with Image.open(path) as image:
+        rgb = image.convert("RGB").resize((96, 96), Image.Resampling.LANCZOS)
+        quantized = rgb.quantize(colors=6, method=Image.Quantize.MEDIANCUT)
+        palette = quantized.getpalette()
+        colors = sorted(quantized.getcolors() or [], reverse=True)
+
+    best_rgb: Optional[Tuple[int, int, int]] = None
+    fallback_rgb: Optional[Tuple[int, int, int]] = None
+    for _count, palette_index in colors:
+        base = palette_index * 3
+        sample = tuple(palette[base:base + 3])
+        if len(sample) != 3:
+            continue
+        r, g, b = sample
+        if fallback_rgb is None:
+            fallback_rgb = (r, g, b)
+        if max(r, g, b) > 245 and min(r, g, b) > 230:
+            continue
+        if max(r, g, b) - min(r, g, b) < 18 and max(r, g, b) > 210:
+            continue
+        best_rgb = (r, g, b)
+        break
+
+    target = best_rgb or fallback_rgb
+    if target is None:
+        return None
+    return min(
+        named_colors.items(),
+        key=lambda item: sum((target[i] - item[1][i]) ** 2 for i in range(3)),
+    )[0]
+
+
+def classify_image_labels_mac(path: Path) -> List[str]:
+    if sys.platform != "darwin":
+        return []
+
+    swift_code = r"""
+import Foundation
+import Vision
+
+let imagePath = CommandLine.arguments[1]
+let url = URL(fileURLWithPath: imagePath)
+let request = VNClassifyImageRequest()
+let handler = VNImageRequestHandler(url: url)
+try handler.perform([request])
+let results = request.results ?? []
+for observation in results.prefix(12) {
+    print("\(observation.identifier)|\(observation.confidence)")
+}
+"""
+    try:
+        result = subprocess.run(
+            ["swift", "-e", swift_code, str(path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return []
+
+    labels: List[str] = []
+    for line in result.stdout.splitlines():
+        if "|" not in line:
+            continue
+        identifier, _confidence = line.split("|", 1)
+        label = sanitize_filename_bit(identifier)
+        if label:
+            labels.append(label)
+    return labels
+
+
+def infer_subject_name(path: Path) -> Optional[str]:
+    labels = classify_image_labels_mac(path)
+    for label in labels:
+        if label in VISION_SUBJECT_ALIASES:
+            subject = VISION_SUBJECT_ALIASES[label]
+            if subject not in GENERIC_VISION_LABELS:
+                return subject
+        if label not in GENERIC_VISION_LABELS:
+            return label
+    return None
+
+
+def infer_description_slug(path: Path) -> Optional[str]:
+    color = dominant_color_name(path)
+    subject = infer_subject_name(path)
+    tokens: List[str] = []
+    if color and color not in {"white", "gray", "black"}:
+        tokens.append(color)
+    if subject:
+        tokens.append(subject)
+    elif color:
+        tokens.append(color)
+    if not tokens:
+        return None
+    return sanitize_filename_bit("_".join(tokens))
+
+
 def default_output_paths(
     input_path: Path,
     output_arg: Optional[str],
@@ -250,16 +405,19 @@ def default_output_paths(
     if description_arg:
         sanitized = sanitize_filename_bit(description_arg)
         if sanitized:
-            description_bit = f"_{sanitized}"
+            description_bit = sanitized
+    base_name = stem
+    if description_bit:
+        base_name = description_bit if is_generic_stem(stem) else f"{stem}_{description_bit}"
     output_path = (
         Path(output_arg).expanduser().resolve()
         if output_arg
-        else out_dir / f"{stem}{description_bit}_graded.3mf"
+        else out_dir / f"{base_name}_graded.3mf"
     )
     preview_path = (
         Path(preview_arg).expanduser().resolve()
         if preview_arg
-        else out_dir / f"{stem}{description_bit}_preview.png"
+        else out_dir / f"{base_name}_preview.png"
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     preview_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1036,11 +1194,12 @@ def open_in_orca_slicer(path: Path) -> bool:
 def main() -> int:
     args = parse_args()
     input_path = resolve_input_path(args.input_image)
+    description_slug = sanitize_filename_bit(args.description) if args.description else infer_description_slug(input_path)
     output_path, preview_path = default_output_paths(
         input_path,
         args.output,
         args.preview,
-        args.description,
+        description_slug,
     )
 
     if args.num_nuances < 2:
@@ -1122,6 +1281,8 @@ def main() -> int:
     print(f"Input image: {input_path}")
     print(f"Preview PNG: {preview_path}")
     print(f"3MF output:  {output_path}")
+    if description_slug:
+        print(f"Name slug:   {description_slug}")
     print(f"Plate size:  {args.width:.2f} x {args.height:.2f} mm")
     print(f"Bed center:  {args.plate_width / 2.0:.2f} x {args.plate_height / 2.0:.2f} mm")
     print(f"Thickness:   {args.thickness:.2f} mm base")
