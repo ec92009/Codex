@@ -113,6 +113,14 @@ def parse_mm_value(raw: str) -> float:
     return parsed
 
 
+def parse_mm_pair(raw: str) -> Tuple[float, float]:
+    value = raw.strip().lower().replace(" ", "")
+    parts = re.split(r"[x,]", value)
+    if len(parts) != 2 or not all(parts):
+        raise argparse.ArgumentTypeError("value must look like WIDTHxHEIGHT, for example 270x270")
+    return tuple(parse_mm_value(part) for part in parts)  # type: ignore[return-value]
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -191,16 +199,9 @@ def parse_args() -> argparse.Namespace:
         help="Gaussian blur radius in mm before color quantization.",
     )
     common.add_argument(
-        "--plate-width",
-        type=parse_mm_value,
-        default=DEFAULT_PLATE_WIDTH_MM,
-        help="Printer plate width in mm used to center the exported objects.",
-    )
-    common.add_argument(
-        "--plate-height",
-        type=parse_mm_value,
-        default=DEFAULT_PLATE_HEIGHT_MM,
-        help="Printer plate height in mm used to center the exported objects.",
+        "--plate-size",
+        default=f"{format_number(DEFAULT_PLATE_WIDTH_MM)}x{format_number(DEFAULT_PLATE_HEIGHT_MM)}",
+        help="Printer plate size as WIDTHxHEIGHT in mm, used to center the exported objects.",
     )
     common.add_argument(
         "--lead-thickness",
@@ -208,6 +209,18 @@ def parse_args() -> argparse.Namespace:
         type=parse_mm_value,
         default=DEFAULT_LEAD_THICKNESS_MM,
         help="Black separator thickness in mm.",
+    )
+    advanced.add_argument(
+        "--plate-width",
+        dest="plate_width_legacy",
+        type=parse_mm_value,
+        help=argparse.SUPPRESS,
+    )
+    advanced.add_argument(
+        "--plate-height",
+        dest="plate_height_legacy",
+        type=parse_mm_value,
+        help=argparse.SUPPRESS,
     )
     advanced.add_argument(
         "--line-width-mm",
@@ -241,7 +254,13 @@ def parse_args() -> argparse.Namespace:
             "metadata should be reused."
         ),
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.plate_width, args.plate_height = parse_mm_pair(args.plate_size)
+    if args.plate_width_legacy is not None:
+        args.plate_width = args.plate_width_legacy
+    if args.plate_height_legacy is not None:
+        args.plate_height = args.plate_height_legacy
+    return args
 
 
 def pick_image_with_tk() -> Optional[Path]:

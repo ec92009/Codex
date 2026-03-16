@@ -1,6 +1,6 @@
 # Image grading to 3MF
 
-Use `uv run python image_grade_to_3mf.py /path/to/image.png --thickness 1mm --width 100mm --height 100mm --resolution 0.25mm --lead-thickness 0.25mm --lead-cap-height 0.3mm --plate-width 270mm --plate-height 270mm` to convert an image into segmented color zones plus black separator lines, export the result as a multi-object `.3mf`, and open it in Snapmaker Orca.
+Use `uv run python image_grade_to_3mf.py /path/to/image.png --thickness 1mm --width 100mm --height 100mm --resolution 0.25mm --lead-thickness 0.25mm --lead-cap-height 0.3mm --plate-size 270x270` to convert an image into segmented color zones plus black separator lines, export the result as a multi-object `.3mf`, and open it in Snapmaker Orca.
 
 If no image path is passed, the script opens a file picker on macOS.
 
