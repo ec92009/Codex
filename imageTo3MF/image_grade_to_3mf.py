@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import re
 import subprocess
@@ -32,8 +33,10 @@ DEFAULT_PLATE_WIDTH_MM = 270.0
 DEFAULT_PLATE_HEIGHT_MM = 270.0
 DEFAULT_SLICER_APP = "Snapmaker Orca"
 SNAPMAKER_PROJECT_MARKER = "Metadata/model_settings.config"
+SNAPMAKER_PROJECT_SETTINGS = "Metadata/project_settings.config"
 LEAD_OBJECT_NAME = "Lead"
 ASSEMBLY_OBJECT_NAME = "Assembly"
+DEFAULT_BASE_FILAMENT_HEX = ["#00FFFF", "#FF00FF", "#FFFF00", "#FFFFFF"]
 
 
 @dataclass
@@ -934,6 +937,15 @@ def build_model_settings(
     )
 
 
+def build_project_settings_with_base_colors(template_zip: zipfile.ZipFile) -> str:
+    raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
+    settings = json.loads(raw)
+    settings["filament_colour"] = list(DEFAULT_BASE_FILAMENT_HEX)
+    settings["extruder_colour"] = list(DEFAULT_BASE_FILAMENT_HEX)
+    settings["default_filament_colour"] = list(DEFAULT_BASE_FILAMENT_HEX)
+    return json.dumps(settings, indent=4, ensure_ascii=True) + "\n"
+
+
 def write_snapmaker_project_3mf(
     output_path: Path,
     mesh_objects: Sequence[MeshObjectData],
@@ -967,6 +979,7 @@ def write_snapmaker_project_3mf(
         "3D/3dmodel.model",
         "3D/_rels/3dmodel.model.rels",
         SNAPMAKER_PROJECT_MARKER,
+        SNAPMAKER_PROJECT_SETTINGS,
     }
 
     with zipfile.ZipFile(template_path) as template_zip, zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as output_zip:
@@ -995,6 +1008,10 @@ def write_snapmaker_project_3mf(
                 plate_height_mm=plate_height_mm,
                 thickness_mm=thickness_mm,
             ),
+        )
+        output_zip.writestr(
+            SNAPMAKER_PROJECT_SETTINGS,
+            build_project_settings_with_base_colors(template_zip),
         )
         output_zip.writestr(
             assembly_model_filename(centered_meshes),
