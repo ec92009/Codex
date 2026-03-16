@@ -109,6 +109,14 @@ class MeshObjectData:
     preferred_slot: Optional[str] = None
 
 
+@dataclass(frozen=True)
+class MaterialProfile:
+    slot: str
+    name: str
+    hex_color: str
+    rgb: Tuple[int, int, int]
+
+
 def parse_mm_value(raw: str) -> float:
     value = raw.strip().lower()
     if value.endswith("mm"):
@@ -139,6 +147,82 @@ def blur_label(blur_mm: float) -> str:
         if math.isclose(blur_mm, preset_mm, abs_tol=1e-9):
             return name
     return f"{format_number(blur_mm)}mm"
+
+
+def parse_hex_color(raw: str) -> Tuple[str, Tuple[int, int, int]]:
+    value = raw.strip()
+    if not re.fullmatch(r"#[0-9a-fA-F]{6}", value):
+        raise argparse.ArgumentTypeError("color must look like #RRGGBB")
+    rgb = tuple(int(value[index : index + 2], 16) for index in (1, 3, 5))
+    return value.upper(), rgb  # type: ignore[return-value]
+
+
+def canonical_slot_name(raw: str) -> str:
+    value = raw.strip().lower()
+    aliases = {
+        "1": "1",
+        "c": "1",
+        "cyan": "1",
+        "2": "2",
+        "m": "2",
+        "magenta": "2",
+        "3": "3",
+        "y": "3",
+        "yellow": "3",
+        "4": "4",
+        "w": "4",
+        "white": "4",
+        "clear": "4",
+        "5": "5",
+        "k": "5",
+        "black": "5",
+        "lead": "5",
+    }
+    slot = aliases.get(value)
+    if slot is None:
+        raise argparse.ArgumentTypeError("material slot must be one of 1-5 or cyan/magenta/yellow/white/black")
+    return slot
+
+
+def parse_material_spec(raw: str) -> MaterialProfile:
+    try:
+        slot_part, color_part = raw.split(":", 1)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("material must look like SLOT:#RRGGBB, for example cyan:#00FFFF") from exc
+    slot = canonical_slot_name(slot_part)
+    hex_color, rgb = parse_hex_color(color_part)
+    default_names = {
+        "1": "cyan",
+        "2": "magenta",
+        "3": "yellow",
+        "4": "white",
+        "5": "black",
+    }
+    return MaterialProfile(slot=slot, name=default_names[slot], hex_color=hex_color, rgb=rgb)
+
+
+def default_material_profiles() -> Dict[str, MaterialProfile]:
+    defaults = {
+        "1": ("cyan", "#00FFFF"),
+        "2": ("magenta", "#FF00FF"),
+        "3": ("yellow", "#FFFF00"),
+        "4": ("white", "#FFFFFF"),
+        "5": ("black", "#000000"),
+    }
+    profiles: Dict[str, MaterialProfile] = {}
+    for slot, (name, hex_color) in defaults.items():
+        parsed_hex, rgb = parse_hex_color(hex_color)
+        profiles[slot] = MaterialProfile(slot=slot, name=name, hex_color=parsed_hex, rgb=rgb)
+    return profiles
+
+
+def resolve_material_profiles(material_specs: Optional[Sequence[MaterialProfile]]) -> Dict[str, MaterialProfile]:
+    profiles = default_material_profiles()
+    if not material_specs:
+        return profiles
+    for material in material_specs:
+        profiles[material.slot] = material
+    return profiles
 
 
 def parse_args() -> argparse.Namespace:
@@ -179,6 +263,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=DEFAULT_NUM_NUANCES,
         help="Number of graded color zones to produce from the source image.",
+    )
+    advanced.add_argument(
+        "--material",
+        action="append",
+        type=parse_material_spec,
+        help="Override an available material with SLOT:#RRGGBB, for example cyan:#00FFFF or 5:#000000. If omitted, the script assumes CMYWK.",
     )
     common.add_argument(
         "--thickness",
@@ -667,15 +757,15 @@ def enumerate_layer_count_vectors(total_layers: int, buckets: int) -> List[Tuple
     return vectors
 
 
-def expand_layer_slots(counts: Tuple[int, int, int, int]) -> List[str]:
+def expand_layer_slots(counts: Tuple[int, int, int, int], base_slot_sequence: Sequence[str]) -> List[str]:
     slots: List[str] = []
-    for slot, count in zip(BASE_SLOT_SEQUENCE, counts):
+    for slot, count in zip(base_slot_sequence, counts):
         slots.extend([slot] * count)
     return slots
 
 
-def mixed_rgb_from_slots(slots: Sequence[str]) -> Tuple[int, int, int]:
-    colors = np.asarray([BASE_SLOT_RGB[slot] for slot in slots], dtype=np.float32)
+def mixed_rgb_from_slots(slots: Sequence[str], material_profiles: Dict[str, MaterialProfile]) -> Tuple[int, int, int]:
+    colors = np.asarray([material_profiles[slot].rgb for slot in slots], dtype=np.float32)
     mixed = np.round(colors.mean(axis=0)).astype(np.uint8)
     return int(mixed[0]), int(mixed[1]), int(mixed[2])
 
@@ -683,11 +773,13 @@ def mixed_rgb_from_slots(slots: Sequence[str]) -> Tuple[int, int, int]:
 def build_palette_recipes(
     region_colors: np.ndarray,
     layer_count: int,
+    material_profiles: Dict[str, MaterialProfile],
 ) -> List[Tuple[List[str], Tuple[int, int, int]]]:
     candidates: List[Tuple[List[str], Tuple[int, int, int], np.ndarray]] = []
+    base_slot_sequence = ["1", "2", "3", "4"]
     for counts in enumerate_layer_count_vectors(layer_count, 4):
-        slots = expand_layer_slots(counts)
-        mixed_rgb = mixed_rgb_from_slots(slots)
+        slots = expand_layer_slots(counts, base_slot_sequence)
+        mixed_rgb = mixed_rgb_from_slots(slots, material_profiles)
         mixed_lab = rgb_to_lab_color(mixed_rgb)
         candidates.append((slots, mixed_rgb, mixed_lab))
 
@@ -833,6 +925,7 @@ def add_colored_mesh_object(
 def build_mesh_objects(
     region_masks: List[np.ndarray],
     palette_recipes: List[Tuple[List[str], Tuple[int, int, int]]],
+    material_profiles: Dict[str, MaterialProfile],
     lines_mask: np.ndarray,
     width_mm: float,
     height_mm: float,
@@ -856,7 +949,7 @@ def build_mesh_objects(
         objects.append(
             MeshObjectData(
                 name=LEAD_OBJECT_NAME,
-                color=(0, 0, 0),
+                color=material_profiles[LEAD_FILAMENT_SLOT].rgb,
                 vertices=line_vertices,
                 triangles=line_triangles,
                 preferred_slot=LEAD_FILAMENT_SLOT,
@@ -880,8 +973,11 @@ def build_mesh_objects(
                 continue
             objects.append(
                 MeshObjectData(
-                    name=f"Color {nuance_index + 1} - Nuance {nuance_index:02d} - {BASE_SLOT_LABEL[slot]}{layer_index}",
-                    color=BASE_SLOT_RGB[slot],
+                    name=(
+                        f"Color {nuance_index + 1} - Nuance {nuance_index:02d} - "
+                        f"{material_profiles[slot].name[:1].upper()}{layer_index}"
+                    ),
+                    color=material_profiles[slot].rgb,
                     vertices=vertices,
                     triangles=triangles,
                     preferred_slot=slot,
@@ -1173,6 +1269,7 @@ def build_model_settings(
     plate_width_mm: float,
     plate_height_mm: float,
     thickness_mm: float,
+    material_profiles: Dict[str, MaterialProfile],
 ) -> str:
     assembly_object_id = len(mesh_objects) + 1
     build_transform = (
@@ -1210,7 +1307,7 @@ def build_model_settings(
         '    <metadata key="plater_name" value=""/>\n'
         '    <metadata key="locked" value="false"/>\n'
         '    <metadata key="filament_map_mode" value="Auto For Flush"/>\n'
-        f'    <metadata key="filament_maps" value={quoteattr(" ".join(["1"] * len(DEFAULT_BASE_FILAMENT_HEX)))}/>\n'
+        f'    <metadata key="filament_maps" value={quoteattr(" ".join(["1"] * len(material_profiles)))}/>\n'
         '    <metadata key="thumbnail_file" value="Metadata/plate_1.png"/>\n'
         '    <metadata key="thumbnail_no_light_file" value="Metadata/plate_no_light_1.png"/>\n'
         '    <metadata key="top_file" value="Metadata/top_1.png"/>\n'
@@ -1228,12 +1325,17 @@ def build_model_settings(
     )
 
 
-def build_project_settings_with_base_colors(template_zip: zipfile.ZipFile, thickness_mm: float) -> str:
+def build_project_settings_with_base_colors(
+    template_zip: zipfile.ZipFile,
+    thickness_mm: float,
+    material_profiles: Dict[str, MaterialProfile],
+) -> str:
     raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
     settings = json.loads(raw)
-    settings["filament_colour"] = list(DEFAULT_BASE_FILAMENT_HEX)
-    settings["extruder_colour"] = list(DEFAULT_BASE_FILAMENT_HEX[:4])
-    settings["default_filament_colour"] = [""] * len(DEFAULT_BASE_FILAMENT_HEX)
+    ordered_hex = [material_profiles[str(index)].hex_color for index in range(1, 6)]
+    settings["filament_colour"] = list(ordered_hex)
+    settings["extruder_colour"] = list(ordered_hex[:4])
+    settings["default_filament_colour"] = [""] * len(ordered_hex)
     layer_height = thickness_mm / DEFAULT_BASE_THICKNESS_LAYERS
     settings["first_layer_print_height"] = format_number(layer_height)
     settings["layer_height"] = format_number(layer_height)
@@ -1286,6 +1388,7 @@ def write_snapmaker_project_3mf(
     thickness_mm: float,
     plate_width_mm: float,
     plate_height_mm: float,
+    material_profiles: Dict[str, MaterialProfile],
 ) -> List[str]:
     extruder_assignments = build_color_slot_assignments(
         mesh_objects,
@@ -1339,11 +1442,16 @@ def write_snapmaker_project_3mf(
                 plate_width_mm=plate_width_mm,
                 plate_height_mm=plate_height_mm,
                 thickness_mm=thickness_mm,
+                material_profiles=material_profiles,
             ),
         )
         output_zip.writestr(
             SNAPMAKER_PROJECT_SETTINGS,
-            build_project_settings_with_base_colors(template_zip, thickness_mm=thickness_mm),
+            build_project_settings_with_base_colors(
+                template_zip,
+                thickness_mm=thickness_mm,
+                material_profiles=material_profiles,
+            ),
         )
         output_zip.writestr(
             SNAPMAKER_CUSTOM_GCODE_PER_LAYER,
@@ -1374,6 +1482,7 @@ def open_in_orca_slicer(path: Path) -> bool:
 
 def main() -> int:
     args = parse_args()
+    material_profiles = resolve_material_profiles(args.material)
     input_path = resolve_input_path(args.input_image)
     description_slug = sanitize_filename_bit(args.description) if args.description else infer_description_slug(input_path)
     output_path, preview_path = default_output_paths(
@@ -1430,6 +1539,7 @@ def main() -> int:
     palette_recipes = build_palette_recipes(
         region_colors=region_colors,
         layer_count=DEFAULT_BASE_THICKNESS_LAYERS,
+        material_profiles=material_profiles,
     )
     preview_colors = np.asarray([recipe_color for _slots, recipe_color in palette_recipes], dtype=np.uint8)
     preview = build_preview(labels, preview_colors, lines)
@@ -1438,6 +1548,7 @@ def main() -> int:
     mesh_objects = build_mesh_objects(
         region_masks=region_masks,
         palette_recipes=palette_recipes,
+        material_profiles=material_profiles,
         lines_mask=lines,
         width_mm=args.width,
         height_mm=args.height,
@@ -1456,6 +1567,7 @@ def main() -> int:
             thickness_mm=args.thickness,
             plate_width_mm=args.plate_width,
             plate_height_mm=args.plate_height,
+            material_profiles=material_profiles,
         )
     else:
         built_object_names = write_plain_3mf(output_path=output_path, mesh_objects=mesh_objects)
@@ -1484,10 +1596,14 @@ def main() -> int:
     print(f"Objects:     {len(built_object_names)}")
     if template_path is not None:
         print(f"Template:    {template_path}")
+    print(
+        "Materials:   "
+        + ", ".join(f'{slot}:{material_profiles[slot].hex_color}' for slot in ("1", "2", "3", "4", "5"))
+    )
     for name in built_object_names:
         print(f"  - {name}")
     for nuance_index, (slots, mixed_color) in enumerate(palette_recipes, start=1):
-        slot_label = "".join(BASE_SLOT_LABEL[slot] for slot in slots)
+        slot_label = "".join(material_profiles[slot].name[:1].upper() for slot in slots)
         print(
             f"  Palette {nuance_index:02d}: {slot_label} -> "
             f"rgb({mixed_color[0]},{mixed_color[1]},{mixed_color[2]})"
@@ -1495,7 +1611,7 @@ def main() -> int:
 
     if args.num_nuances == 10:
         print(
-            "Note: each nuance is now built from 4 stacked CMYW slices, "
+            "Note: each nuance is now built from 4 stacked material slices, "
             "plus the black lead cap on slot 5."
         )
     if not args.no_open and not opened:
