@@ -701,6 +701,10 @@ def child_model_filename(index: int, name: str) -> str:
     return f"3D/Objects/{name}_{index}.model"
 
 
+def assembly_model_filename(mesh_objects: Sequence[MeshObjectData]) -> str:
+    return f"3D/Objects/{ASSEMBLY_OBJECT_NAME}_{len(mesh_objects) + 1}.model"
+
+
 def build_snapmaker_child_model(mesh_object: MeshObjectData, object_id: int = 1) -> str:
     vertices_xml = "\n".join(
         f'     <vertex x="{format_number(x)}" y="{format_number(y)}" z="{format_number(z)}"/>'
@@ -738,6 +742,48 @@ def build_snapmaker_child_model(mesh_object: MeshObjectData, object_id: int = 1)
     )
 
 
+def build_snapmaker_assembly_model(mesh_objects: Sequence[MeshObjectData]) -> str:
+    object_chunks: List[str] = []
+    for index, mesh_object in enumerate(mesh_objects, start=1):
+        vertices_xml = "\n".join(
+            f'     <vertex x="{format_number(x)}" y="{format_number(y)}" z="{format_number(z)}"/>'
+            for x, y, z in mesh_object.vertices
+        )
+        triangles_xml = "\n".join(
+            f'     <triangle v1="{a}" v2="{b}" v3="{c}"/>'
+            for a, b, c in mesh_object.triangles
+        )
+        object_chunks.append(
+            f'  <object id="{index}" p:UUID="{uuid.uuid4()}" type="model">\n'
+            '   <mesh>\n'
+            '    <vertices>\n'
+            f'{vertices_xml}\n'
+            '    </vertices>\n'
+            '    <triangles>\n'
+            f'{triangles_xml}\n'
+            '    </triangles>\n'
+            '   </mesh>\n'
+            '  </object>'
+        )
+
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<model unit="millimeter" xml:lang="en-US" '
+        'xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" '
+        'xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" '
+        'xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" '
+        'requiredextensions="p">\n'
+        ' <metadata name="BambuStudio:3mfVersion">1</metadata>\n'
+        ' <resources>\n'
+        f'{"\n".join(object_chunks)}\n'
+        ' </resources>\n'
+        f' <build p:UUID="{uuid.uuid4()}">\n'
+        f'  <item objectid="1" printable="1" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>\n'
+        ' </build>\n'
+        '</model>\n'
+    )
+
+
 def build_snapmaker_root_model(
     mesh_objects: Sequence[MeshObjectData],
     plate_width_mm: float,
@@ -745,15 +791,15 @@ def build_snapmaker_root_model(
     thickness_mm: float,
 ) -> str:
     assembly_object_id = len(mesh_objects) + 1
+    assembly_path = "/" + assembly_model_filename(mesh_objects)
     build_transform = (
         f'1 0 0 0 1 0 0 0 1 '
         f'{format_number(plate_width_mm / 2.0)} {format_number(plate_height_mm / 2.0)} {format_number(thickness_mm / 2.0)}'
     )
     component_lines = []
-    for index, mesh_object in enumerate(mesh_objects, start=1):
-        child_path = "/" + child_model_filename(index, mesh_object.name)
+    for index, _mesh_object in enumerate(mesh_objects, start=1):
         component_lines.append(
-            f'    <component p:path={quoteattr(child_path)} objectid="1" '
+            f'    <component p:path={quoteattr(assembly_path)} objectid="{index}" '
             f'p:UUID="{uuid.uuid4()}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>'
         )
 
@@ -782,10 +828,9 @@ def build_snapmaker_root_model(
 
 
 def build_snapmaker_relationships(mesh_objects: Sequence[MeshObjectData]) -> str:
-    relationships = "\n".join(
-        f' <Relationship Target={quoteattr("/" + child_model_filename(index, mesh_object.name))} '
-        f'Id="rel-{index}" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>'
-        for index, mesh_object in enumerate(mesh_objects, start=1)
+    relationships = (
+        f' <Relationship Target={quoteattr("/" + assembly_model_filename(mesh_objects))} '
+        'Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>'
     )
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -891,11 +936,10 @@ def write_snapmaker_project_3mf(
         "3D/_rels/3dmodel.model.rels",
         SNAPMAKER_PROJECT_MARKER,
     }
-    overridden_files.update(child_model_filename(index, mesh.name) for index, mesh in enumerate(mesh_objects, start=1))
 
     with zipfile.ZipFile(template_path) as template_zip, zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as output_zip:
         for info in template_zip.infolist():
-            if info.filename in overridden_files:
+            if info.filename in overridden_files or info.filename.startswith("3D/Objects/"):
                 continue
             output_zip.writestr(info, template_zip.read(info.filename))
 
@@ -920,11 +964,10 @@ def write_snapmaker_project_3mf(
                 thickness_mm=thickness_mm,
             ),
         )
-        for index, mesh_object in enumerate(centered_meshes, start=1):
-            output_zip.writestr(
-                child_model_filename(index, mesh_object.name),
-                build_snapmaker_child_model(mesh_object),
-            )
+        output_zip.writestr(
+            assembly_model_filename(centered_meshes),
+            build_snapmaker_assembly_model(centered_meshes),
+        )
 
     return [mesh_object.name for mesh_object in mesh_objects]
 
