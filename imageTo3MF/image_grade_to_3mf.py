@@ -1476,6 +1476,7 @@ def main() -> int:
     print(f"Lead cap:    {args.lead_cap_height:.2f} mm")
     print(f"Total z:     {args.thickness + args.lead_cap_height:.2f} mm")
     print(f"Base layers: {DEFAULT_BASE_THICKNESS_LAYERS} x {args.thickness / DEFAULT_BASE_THICKNESS_LAYERS:.3f} mm")
+    print(f"Seed:        {args.seed}")
     print(f"Blur:        {args.blur:.2f} mm")
     print(f"Resolution:  {args.resolution:.3f} mm target")
     print(f"Grid size:   {grid_width} x {grid_height}")
