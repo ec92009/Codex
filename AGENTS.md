@@ -6,6 +6,7 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 
 - If a request may take more than ~5 seconds, send a quick acknowledgment first (e.g., "got it"), then follow with results.
 - If results are immediate, respond directly with results.
+- When working anywhere under `/Users/ecohen/Codex`, read and follow the nearest applicable `AGENTS.md` at the start of the task unless the user explicitly says otherwise.
 - For website changes meant to be viewed externally, always push to GitHub immediately after each change.
 
 ## Defaults
@@ -20,6 +21,7 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 
 - Run commands from repo root: `/Users/ecohen/Codex` unless a project requires otherwise.
 - Make small, clear commits; use `WIP:` commits if stopping mid-task.
+- Default to committing each completed change and pushing it to GitHub unless the user asks not to.
 - Keep `main` pushable; use branches for larger changes (branch prefix: `codex/`).
 - After modifying a project, update relevant `README.md` files and other necessary docs/config, then push to GitHub.
 - For each modification cycle in Codex, increment the version number, push updates, and report: local URL, GitHub Pages URL, and the new version to expect on refresh.
