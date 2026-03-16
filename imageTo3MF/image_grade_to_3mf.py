@@ -1,0 +1,1013 @@
+#!/usr/bin/env python3
+
+from __future__ import annotations
+
+import argparse
+import math
+import subprocess
+import sys
+import uuid
+import zipfile
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Sequence, Tuple
+from xml.etree import ElementTree as ET
+from xml.sax.saxutils import quoteattr
+
+import lib3mf
+import numpy as np
+from PIL import Image, ImageFilter, ImageOps
+
+
+DEFAULT_NUM_NUANCES = 10
+DEFAULT_RESOLUTION_MM = 0.5
+DEFAULT_LEAD_THICKNESS_MM = 0.25
+DEFAULT_WIDTH_MM = 100.0
+DEFAULT_HEIGHT_MM = 100.0
+DEFAULT_THICKNESS_MM = 1.0
+DEFAULT_LEAD_CAP_HEIGHT_MM = 0.3
+DEFAULT_BLUR_MM = 0.0
+DEFAULT_PLATE_WIDTH_MM = 270.0
+DEFAULT_PLATE_HEIGHT_MM = 270.0
+DEFAULT_SLICER_APP = "Snapmaker Orca"
+SNAPMAKER_PROJECT_MARKER = "Metadata/model_settings.config"
+LEAD_OBJECT_NAME = "Lead"
+
+
+@dataclass
+class MeshObjectData:
+    name: str
+    color: Tuple[int, int, int]
+    vertices: List[Tuple[float, float, float]]
+    triangles: List[Tuple[int, int, int]]
+
+
+def parse_mm_value(raw: str) -> float:
+    value = raw.strip().lower()
+    if value.endswith("mm"):
+        value = value[:-2].strip()
+    parsed = float(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("value must be positive")
+    return parsed
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Quantize an image into 10 color nuances, add black separator lines, "
+            "export a multi-object 3MF, and open it in OrcaSlicer."
+        )
+    )
+    parser.add_argument(
+        "input_image",
+        nargs="?",
+        help="Path to the source image. If omitted, a macOS file picker is used.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Output .3mf path. Defaults to out/<input-stem>_graded.3mf",
+    )
+    parser.add_argument(
+        "--preview",
+        help="Optional preview PNG path. Defaults to out/<input-stem>_preview.png",
+    )
+    parser.add_argument(
+        "--num-nuances",
+        type=int,
+        default=DEFAULT_NUM_NUANCES,
+        help=f"Number of color nuance zones to produce. Default: {DEFAULT_NUM_NUANCES}",
+    )
+    parser.add_argument(
+        "--thickness",
+        type=parse_mm_value,
+        default=DEFAULT_THICKNESS_MM,
+        help=f"Final model thickness in mm. Accepts values like 3 or 3mm. Default: {DEFAULT_THICKNESS_MM}mm",
+    )
+    parser.add_argument(
+        "--width",
+        type=parse_mm_value,
+        default=DEFAULT_WIDTH_MM,
+        help=f"Final model width in mm. Accepts values like 100 or 100mm. Default: {DEFAULT_WIDTH_MM}mm",
+    )
+    parser.add_argument(
+        "--height",
+        type=parse_mm_value,
+        default=DEFAULT_HEIGHT_MM,
+        help=f"Final model height in mm. Accepts values like 100 or 100mm. Default: {DEFAULT_HEIGHT_MM}mm",
+    )
+    parser.add_argument(
+        "--resolution",
+        type=parse_mm_value,
+        default=DEFAULT_RESOLUTION_MM,
+        help=(
+            "Target XY cell size in mm. Accepts values like 0.25 or 0.25mm. "
+            f"Default: {DEFAULT_RESOLUTION_MM}mm"
+        ),
+    )
+    parser.add_argument(
+        "--lead-cap-height",
+        type=parse_mm_value,
+        default=DEFAULT_LEAD_CAP_HEIGHT_MM,
+        help=(
+            "Lead overlay height in mm printed on top of the image body. "
+            f"Default: {DEFAULT_LEAD_CAP_HEIGHT_MM}mm"
+        ),
+    )
+    parser.add_argument(
+        "--blur",
+        type=parse_mm_value,
+        default=DEFAULT_BLUR_MM,
+        help=(
+            "Gaussian blur radius in mm before color quantization. "
+            f"Default: {DEFAULT_BLUR_MM}mm"
+        ),
+    )
+    parser.add_argument(
+        "--plate-width",
+        type=parse_mm_value,
+        default=DEFAULT_PLATE_WIDTH_MM,
+        help=(
+            "Printer plate width in mm used to center the exported objects. "
+            f"Default: {DEFAULT_PLATE_WIDTH_MM}mm"
+        ),
+    )
+    parser.add_argument(
+        "--plate-height",
+        type=parse_mm_value,
+        default=DEFAULT_PLATE_HEIGHT_MM,
+        help=(
+            "Printer plate height in mm used to center the exported objects. "
+            f"Default: {DEFAULT_PLATE_HEIGHT_MM}mm"
+        ),
+    )
+    parser.add_argument(
+        "--lead-thickness",
+        "--line-width-mm",
+        dest="lead_thickness",
+        type=parse_mm_value,
+        default=DEFAULT_LEAD_THICKNESS_MM,
+        help=(
+            "Black separator thickness in mm. Accepts values like 1 or 1mm. "
+            f"Default: {DEFAULT_LEAD_THICKNESS_MM}mm"
+        ),
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=7,
+        help="Random seed for color clustering. Default: 7",
+    )
+    parser.add_argument(
+        "--smooth-passes",
+        type=int,
+        default=2,
+        help="Label majority-filter passes before boundary extraction. Default: 2",
+    )
+    parser.add_argument(
+        "--no-open",
+        action="store_true",
+        help="Do not open the generated 3MF in OrcaSlicer.",
+    )
+    parser.add_argument(
+        "--snapmaker-template",
+        help=(
+            "Optional path to a hand-painted Snapmaker Orca/Bambu-style 3MF project. "
+            "If supplied, the exporter reuses its per-object color/extruder assignments."
+        ),
+    )
+    return parser.parse_args()
+
+
+def pick_image_with_tk() -> Optional[Path]:
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        root.update()
+        selected = filedialog.askopenfilename(
+            title="Choose the source image",
+            filetypes=[
+                ("Images", "*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp"),
+                ("All files", "*.*"),
+            ],
+        )
+        root.destroy()
+    except Exception:
+        return None
+
+    if not selected:
+        return None
+    return Path(selected).expanduser().resolve()
+
+
+def resolve_input_path(value: Optional[str]) -> Path:
+    if value:
+        path = Path(value).expanduser().resolve()
+        if not path.exists():
+            raise FileNotFoundError(f"Input image not found: {path}")
+        return path
+
+    picked = pick_image_with_tk()
+    if picked is None:
+        raise FileNotFoundError(
+            "No input image path was given and no file was selected."
+        )
+    return picked
+
+
+def default_output_paths(input_path: Path, output_arg: Optional[str], preview_arg: Optional[str]) -> Tuple[Path, Path]:
+    out_dir = Path("out").resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = input_path.stem
+    output_path = Path(output_arg).expanduser().resolve() if output_arg else out_dir / f"{stem}_graded.3mf"
+    preview_path = Path(preview_arg).expanduser().resolve() if preview_arg else out_dir / f"{stem}_preview.png"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    preview_path.parent.mkdir(parents=True, exist_ok=True)
+    return output_path, preview_path
+
+
+def load_image_to_grid(
+    path: Path,
+    grid_width: int,
+    grid_height: int,
+    blur_pixels: float = 0.0,
+) -> np.ndarray:
+    with Image.open(path) as image:
+        rgb = image.convert("RGB")
+        fitted = ImageOps.fit(
+            rgb,
+            (grid_width, grid_height),
+            method=Image.Resampling.LANCZOS,
+            centering=(0.5, 0.5),
+        )
+        if blur_pixels > 0:
+            fitted = fitted.filter(ImageFilter.GaussianBlur(radius=blur_pixels))
+    return np.asarray(fitted, dtype=np.uint8)
+
+
+def srgb_to_lab(rgb: np.ndarray) -> np.ndarray:
+    srgb = rgb.astype(np.float32) / 255.0
+    linear = np.where(
+        srgb <= 0.04045,
+        srgb / 12.92,
+        ((srgb + 0.055) / 1.055) ** 2.4,
+    )
+
+    xyz = np.empty_like(linear, dtype=np.float32)
+    xyz[..., 0] = (
+        0.4124564 * linear[..., 0]
+        + 0.3575761 * linear[..., 1]
+        + 0.1804375 * linear[..., 2]
+    )
+    xyz[..., 1] = (
+        0.2126729 * linear[..., 0]
+        + 0.7151522 * linear[..., 1]
+        + 0.0721750 * linear[..., 2]
+    )
+    xyz[..., 2] = (
+        0.0193339 * linear[..., 0]
+        + 0.1191920 * linear[..., 1]
+        + 0.9503041 * linear[..., 2]
+    )
+
+    white = np.array([0.95047, 1.0, 1.08883], dtype=np.float32)
+    scaled = xyz / white
+    epsilon = 216 / 24389
+    kappa = 24389 / 27
+
+    f = np.where(
+        scaled > epsilon,
+        np.cbrt(scaled),
+        (kappa * scaled + 16) / 116,
+    )
+
+    lab = np.empty_like(xyz, dtype=np.float32)
+    lab[..., 0] = 116 * f[..., 1] - 16
+    lab[..., 1] = 500 * (f[..., 0] - f[..., 1])
+    lab[..., 2] = 200 * (f[..., 1] - f[..., 2])
+    return lab
+
+
+def kmeans_pp(data: np.ndarray, clusters: int, rng: np.random.Generator) -> np.ndarray:
+    centers = np.empty((clusters, data.shape[1]), dtype=np.float32)
+    first_index = int(rng.integers(0, len(data)))
+    centers[0] = data[first_index]
+    closest_sq = np.sum((data - centers[0]) ** 2, axis=1)
+
+    for index in range(1, clusters):
+        total = float(closest_sq.sum())
+        if total <= 1e-12:
+            centers[index:] = data[int(rng.integers(0, len(data)))]
+            break
+        probabilities = closest_sq / total
+        chosen = int(rng.choice(len(data), p=probabilities))
+        centers[index] = data[chosen]
+        new_dist_sq = np.sum((data - centers[index]) ** 2, axis=1)
+        closest_sq = np.minimum(closest_sq, new_dist_sq)
+    return centers
+
+
+def kmeans(data: np.ndarray, clusters: int, seed: int, iterations: int = 25) -> Tuple[np.ndarray, np.ndarray]:
+    rng = np.random.default_rng(seed)
+    centers = kmeans_pp(data, clusters, rng)
+
+    for _ in range(iterations):
+        distances = np.sum((data[:, None, :] - centers[None, :, :]) ** 2, axis=2)
+        labels = np.argmin(distances, axis=1)
+
+        new_centers = centers.copy()
+        for cluster_index in range(clusters):
+            members = data[labels == cluster_index]
+            if len(members) == 0:
+                new_centers[cluster_index] = data[int(rng.integers(0, len(data)))]
+            else:
+                new_centers[cluster_index] = members.mean(axis=0)
+        if np.allclose(new_centers, centers, atol=1e-3):
+            centers = new_centers
+            break
+        centers = new_centers
+
+    distances = np.sum((data[:, None, :] - centers[None, :, :]) ** 2, axis=2)
+    labels = np.argmin(distances, axis=1)
+    return labels, centers
+
+
+def reorder_by_lightness(labels: np.ndarray, lab_centers: np.ndarray, rgb_pixels: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    order = np.argsort(lab_centers[:, 0])
+    remap = np.empty(len(order), dtype=np.int32)
+    remap[order] = np.arange(len(order))
+    sorted_labels = remap[labels]
+    sorted_rgb = np.zeros((len(order), 3), dtype=np.uint8)
+    sorted_lab = lab_centers[order]
+
+    for new_index, old_index in enumerate(order):
+        members = rgb_pixels[labels == old_index]
+        if len(members) == 0:
+            rgb = np.clip(sorted_lab[new_index, 0], 0, 255)
+            sorted_rgb[new_index] = [rgb, rgb, rgb]
+        else:
+            sorted_rgb[new_index] = np.round(members.mean(axis=0)).astype(np.uint8)
+    return sorted_labels, sorted_lab, sorted_rgb
+
+
+def majority_smooth(labels: np.ndarray, num_classes: int, passes: int) -> np.ndarray:
+    if passes <= 0:
+        return labels
+
+    result = labels.copy()
+    height, width = result.shape
+    for _ in range(passes):
+        counts = np.zeros((num_classes, height, width), dtype=np.uint16)
+        padded = np.pad(result, 1, mode="edge")
+        for dy in range(3):
+            for dx in range(3):
+                neighborhood = padded[dy : dy + height, dx : dx + width]
+                for class_index in range(num_classes):
+                    counts[class_index] += (neighborhood == class_index)
+        result = np.argmax(counts, axis=0).astype(np.int32)
+    return result
+
+
+def boundary_mask(labels: np.ndarray, radius_pixels: int) -> np.ndarray:
+    diff = np.zeros_like(labels, dtype=bool)
+    diff[:-1, :] |= labels[:-1, :] != labels[1:, :]
+    diff[1:, :] |= labels[:-1, :] != labels[1:, :]
+    diff[:, :-1] |= labels[:, :-1] != labels[:, 1:]
+    diff[:, 1:] |= labels[:, :-1] != labels[:, 1:]
+
+    if radius_pixels <= 0:
+        return diff
+
+    dilated = diff
+    height, width = diff.shape
+    for _ in range(radius_pixels):
+        padded = np.pad(dilated, 1, mode="constant")
+        grown = np.zeros_like(dilated)
+        for dy in range(3):
+            for dx in range(3):
+                grown |= padded[dy : dy + height, dx : dx + width]
+        dilated = grown
+    return dilated
+
+
+def build_preview(labels: np.ndarray, mean_colors: np.ndarray, lines: np.ndarray) -> Image.Image:
+    preview = mean_colors[labels].astype(np.uint8)
+    preview[lines] = np.array([0, 0, 0], dtype=np.uint8)
+    return Image.fromarray(preview)
+
+
+def make_position(x: float, y: float, z: float) -> lib3mf.Position:
+    position = lib3mf.Position()
+    position.Coordinates[:] = [x, y, z]
+    return position
+
+
+def make_triangle(a: int, b: int, c: int) -> lib3mf.Triangle:
+    triangle = lib3mf.Triangle()
+    triangle.Indices[:] = [a, b, c]
+    return triangle
+
+
+def identity_transform() -> lib3mf.Transform:
+    transform = lib3mf.Transform()
+    transform.Fields[0][:] = [1.0, 0.0, 0.0]
+    transform.Fields[1][:] = [0.0, 1.0, 0.0]
+    transform.Fields[2][:] = [0.0, 0.0, 1.0]
+    transform.Fields[3][:] = [0.0, 0.0, 0.0]
+    return transform
+
+
+def mesh_from_mask(
+    mask: np.ndarray,
+    width_mm: float,
+    height_mm: float,
+    z_bottom_mm: float,
+    z_top_mm: float,
+) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, int, int]]]:
+    height, width = mask.shape
+    pixel_w = width_mm / width
+    pixel_h = height_mm / height
+
+    vertices: List[Tuple[float, float, float]] = []
+    triangles: List[Tuple[int, int, int]] = []
+    vertex_index: Dict[Tuple[int, int, int], int] = {}
+
+    def get_vertex(gx: int, gy: int, gz: int) -> int:
+        key = (gx, gy, gz)
+        existing = vertex_index.get(key)
+        if existing is not None:
+            return existing
+
+        x = gx * pixel_w
+        y = height_mm - gy * pixel_h
+        z = z_top_mm if gz else z_bottom_mm
+        vertex_index[key] = len(vertices)
+        vertices.append((x, y, z))
+        return vertex_index[key]
+
+    for y in range(height):
+        for x in range(width):
+            if not mask[y, x]:
+                continue
+
+            v000 = get_vertex(x, y + 1, 0)
+            v100 = get_vertex(x + 1, y + 1, 0)
+            v110 = get_vertex(x + 1, y, 0)
+            v010 = get_vertex(x, y, 0)
+            v001 = get_vertex(x, y + 1, 1)
+            v101 = get_vertex(x + 1, y + 1, 1)
+            v111 = get_vertex(x + 1, y, 1)
+            v011 = get_vertex(x, y, 1)
+
+            triangles.append((v001, v101, v111))
+            triangles.append((v001, v111, v011))
+            triangles.append((v000, v110, v100))
+            triangles.append((v000, v010, v110))
+
+            if x == 0 or not mask[y, x - 1]:
+                triangles.append((v000, v001, v011))
+                triangles.append((v000, v011, v010))
+            if x == width - 1 or not mask[y, x + 1]:
+                triangles.append((v100, v110, v111))
+                triangles.append((v100, v111, v101))
+            if y == 0 or not mask[y - 1, x]:
+                triangles.append((v010, v011, v111))
+                triangles.append((v010, v111, v110))
+            if y == height - 1 or not mask[y + 1, x]:
+                triangles.append((v000, v100, v101))
+                triangles.append((v000, v101, v001))
+
+    return vertices, triangles
+
+
+def convert_mesh_to_lib3mf(
+    vertices: Sequence[Tuple[float, float, float]],
+    triangles: Sequence[Tuple[int, int, int]],
+) -> Tuple[List[lib3mf.Position], List[lib3mf.Triangle]]:
+    lib_vertices = [make_position(x, y, z) for x, y, z in vertices]
+    lib_triangles = [make_triangle(a, b, c) for a, b, c in triangles]
+    return lib_vertices, lib_triangles
+
+
+def add_colored_mesh_object(
+    model: lib3mf.Model,
+    color_group: lib3mf.ColorGroup,
+    mesh_object: MeshObjectData,
+) -> Optional[lib3mf.MeshObject]:
+    if not mesh_object.triangles:
+        return None
+
+    vertices, triangles = convert_mesh_to_lib3mf(mesh_object.vertices, mesh_object.triangles)
+    mesh = model.AddMeshObject()
+    mesh.SetName(mesh_object.name)
+    mesh.SetGeometry(vertices, triangles)
+    color_index = color_group.AddColor(
+        lib3mf.Color(int(mesh_object.color[0]), int(mesh_object.color[1]), int(mesh_object.color[2]), 255)
+    )
+    mesh.SetObjectLevelProperty(color_group.GetResourceID(), color_index)
+    return mesh
+
+
+def build_mesh_objects(
+    region_masks: List[np.ndarray],
+    region_colors: np.ndarray,
+    lines_mask: np.ndarray,
+    width_mm: float,
+    height_mm: float,
+    thickness_mm: float,
+    lead_cap_height_mm: float,
+) -> List[MeshObjectData]:
+    objects: List[MeshObjectData] = []
+
+    if lead_cap_height_mm > 0:
+        line_vertices, line_triangles = mesh_from_mask(
+            lines_mask,
+            width_mm=width_mm,
+            height_mm=height_mm,
+            z_bottom_mm=thickness_mm,
+            z_top_mm=thickness_mm + lead_cap_height_mm,
+        )
+    else:
+        line_vertices, line_triangles = [], []
+
+    if line_triangles:
+        objects.append(
+            MeshObjectData(
+                name=LEAD_OBJECT_NAME,
+                color=(0, 0, 0),
+                vertices=line_vertices,
+                triangles=line_triangles,
+            )
+        )
+
+    for nuance_index, (mask, color) in enumerate(zip(region_masks, region_colors), start=1):
+        vertices, triangles = mesh_from_mask(
+            mask,
+            width_mm=width_mm,
+            height_mm=height_mm,
+            z_bottom_mm=0.0,
+            z_top_mm=thickness_mm,
+        )
+        if not triangles:
+            continue
+        objects.append(
+            MeshObjectData(
+                name=f"Color {nuance_index + 1} - Nuance {nuance_index:02d}",
+                color=(int(color[0]), int(color[1]), int(color[2])),
+                vertices=vertices,
+                triangles=triangles,
+            )
+        )
+    return objects
+
+
+def write_plain_3mf(output_path: Path, mesh_objects: Sequence[MeshObjectData]) -> List[str]:
+    wrapper = lib3mf.get_wrapper()
+    model = wrapper.CreateModel()
+    model.SetUnit(lib3mf.ModelUnit.MilliMeter)
+    model.SetLanguage("en-US")
+    color_group = model.AddColorGroup()
+
+    object_names: List[str] = []
+
+    for mesh_object in mesh_objects:
+        mesh = add_colored_mesh_object(model=model, color_group=color_group, mesh_object=mesh_object)
+        if mesh is None:
+            continue
+        model.AddBuildItem(mesh, identity_transform())
+        object_names.append(mesh_object.name)
+
+    writer = model.QueryWriter("3mf")
+    writer.WriteToFile(str(output_path))
+    return object_names
+
+
+def find_snapmaker_template(explicit_value: Optional[str], output_path: Path) -> Optional[Path]:
+    candidates: List[Path] = []
+    if explicit_value:
+        candidates.append(Path(explicit_value).expanduser().resolve())
+    for base in [output_path.parent, Path.cwd()]:
+        if not base.exists():
+            continue
+        candidates.extend(sorted(base.glob("*.3mf"), key=lambda item: item.stat().st_mtime, reverse=True))
+
+    seen: set[Path] = set()
+    for candidate in candidates:
+        if candidate in seen or candidate == output_path or not candidate.exists():
+            continue
+        seen.add(candidate)
+        try:
+            with zipfile.ZipFile(candidate) as zf:
+                if SNAPMAKER_PROJECT_MARKER in zf.namelist():
+                    return candidate
+        except zipfile.BadZipFile:
+            continue
+    return None
+
+
+def format_number(value: float) -> str:
+    rounded = round(float(value), 6)
+    if abs(rounded - int(rounded)) < 1e-6:
+        return str(int(rounded))
+    return f"{rounded:.6f}".rstrip("0").rstrip(".")
+
+
+def shifted_vertices(
+    vertices: Sequence[Tuple[float, float, float]],
+    dx: float,
+    dy: float,
+    dz: float,
+) -> List[Tuple[float, float, float]]:
+    return [(x + dx, y + dy, z + dz) for x, y, z in vertices]
+
+
+def mesh_center_xy(vertices: Sequence[Tuple[float, float, float]]) -> Tuple[float, float]:
+    xs = [vertex[0] for vertex in vertices]
+    ys = [vertex[1] for vertex in vertices]
+    return ((min(xs) + max(xs)) / 2.0, (min(ys) + max(ys)) / 2.0)
+
+
+def mesh_center_xyz(vertices: Sequence[Tuple[float, float, float]]) -> Tuple[float, float, float]:
+    xs = [vertex[0] for vertex in vertices]
+    ys = [vertex[1] for vertex in vertices]
+    zs = [vertex[2] for vertex in vertices]
+    return (
+        (min(xs) + max(xs)) / 2.0,
+        (min(ys) + max(ys)) / 2.0,
+        (min(zs) + max(zs)) / 2.0,
+    )
+
+
+def parse_template_extruders(template_path: Path) -> Dict[str, str]:
+    with zipfile.ZipFile(template_path) as zf:
+        raw = zf.read(SNAPMAKER_PROJECT_MARKER).decode("utf-8", errors="ignore")
+
+    assignments: Dict[str, str] = {}
+    root = ET.fromstring(raw)
+    for object_node in root.findall("object"):
+        name = None
+        extruder = None
+        for metadata_node in object_node.findall("metadata"):
+            key = metadata_node.attrib.get("key")
+            value = metadata_node.attrib.get("value")
+            if key == "name":
+                name = value
+            elif key == "extruder":
+                extruder = value
+        if name and extruder:
+            assignments[name] = extruder
+    return assignments
+
+
+def build_color_slot_assignments(
+    mesh_objects: Sequence[MeshObjectData],
+    template_assignments: Dict[str, str],
+) -> Dict[str, str]:
+    assignments: Dict[str, str] = {}
+    next_slot = 2
+    for mesh_object in mesh_objects:
+        if mesh_object.name == LEAD_OBJECT_NAME:
+            assignments[mesh_object.name] = "1"
+            continue
+
+        template_value = template_assignments.get(mesh_object.name)
+        if template_value is not None and template_value != "1":
+            assignments[mesh_object.name] = template_value
+        else:
+            assignments[mesh_object.name] = str(next_slot)
+        next_slot += 1
+    return assignments
+
+
+def child_model_filename(index: int, name: str) -> str:
+    return f"3D/Objects/{name}_{index}.model"
+
+
+def build_snapmaker_child_model(mesh_object: MeshObjectData, object_id: int) -> str:
+    vertices_xml = "\n".join(
+        f'     <vertex x="{format_number(x)}" y="{format_number(y)}" z="{format_number(z)}"/>'
+        for x, y, z in mesh_object.vertices
+    )
+    triangles_xml = "\n".join(
+        f'     <triangle v1="{a}" v2="{b}" v3="{c}"/>'
+        for a, b, c in mesh_object.triangles
+    )
+
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<model unit="millimeter" xml:lang="en-US" '
+        'xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" '
+        'xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" '
+        'xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" '
+        'requiredextensions="p">\n'
+        ' <metadata name="BambuStudio:3mfVersion">1</metadata>\n'
+        ' <resources>\n'
+        f'  <object id="{object_id}" p:UUID="{uuid.uuid4()}" type="model">\n'
+        '   <mesh>\n'
+        '    <vertices>\n'
+        f'{vertices_xml}\n'
+        '    </vertices>\n'
+        '    <triangles>\n'
+        f'{triangles_xml}\n'
+        '    </triangles>\n'
+        '   </mesh>\n'
+        '  </object>\n'
+        ' </resources>\n'
+        f' <build p:UUID="{uuid.uuid4()}">\n'
+        f'  <item objectid="{object_id}" printable="1" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>\n'
+        ' </build>\n'
+        '</model>\n'
+    )
+
+
+def build_snapmaker_root_model(
+    mesh_objects: Sequence[MeshObjectData],
+    plate_width_mm: float,
+    plate_height_mm: float,
+    thickness_mm: float,
+) -> str:
+    resources_lines: List[str] = []
+    build_lines: List[str] = []
+    build_transform = (
+        f'1 0 0 0 1 0 0 0 1 '
+        f'{format_number(plate_width_mm / 2.0)} {format_number(plate_height_mm / 2.0)} {format_number(thickness_mm / 2.0)}'
+    )
+
+    for index, mesh_object in enumerate(mesh_objects, start=1):
+        child_object_id = 2 * index - 1
+        parent_object_id = 2 * index
+        child_path = "/" + child_model_filename(index, mesh_object.name)
+        resources_lines.append(
+            f'  <object id="{parent_object_id}" p:UUID="{uuid.uuid4()}" type="model">\n'
+            '   <components>\n'
+            f'    <component p:path={quoteattr(child_path)} objectid="{child_object_id}" p:UUID="{uuid.uuid4()}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>\n'
+            '   </components>\n'
+            '  </object>'
+        )
+        build_lines.append(
+            f'  <item objectid="{parent_object_id}" p:UUID="{uuid.uuid4()}" transform="{build_transform}" printable="1"/>'
+        )
+
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<model unit="millimeter" xml:lang="en-US" '
+        'xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" '
+        'xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" '
+        'xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" '
+        'requiredextensions="p">\n'
+        ' <metadata name="Application">BambuStudio-2.2.4</metadata>\n'
+        ' <metadata name="BambuStudio:3mfVersion">1</metadata>\n'
+        ' <metadata name="Title"></metadata>\n'
+        ' <resources>\n'
+        f'{"\n".join(resources_lines)}\n'
+        ' </resources>\n'
+        f' <build p:UUID="{uuid.uuid4()}">\n'
+        f'{"\n".join(build_lines)}\n'
+        ' </build>\n'
+        '</model>\n'
+    )
+
+
+def build_snapmaker_relationships(mesh_objects: Sequence[MeshObjectData]) -> str:
+    relationships = "\n".join(
+        f' <Relationship Target={quoteattr("/" + child_model_filename(index, mesh_object.name))} '
+        f'Id="rel-{index}" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>'
+        for index, mesh_object in enumerate(mesh_objects, start=1)
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n'
+        f'{relationships}\n'
+        '</Relationships>\n'
+    )
+
+
+def build_model_settings(
+    mesh_objects: Sequence[MeshObjectData],
+    extruder_assignments: Dict[str, str],
+    output_path: Path,
+) -> str:
+    object_chunks: List[str] = []
+    for index, mesh_object in enumerate(mesh_objects, start=1):
+        child_id = 2 * index - 1
+        parent_id = 2 * index
+        center_x, center_y, center_z = mesh_center_xyz(mesh_object.vertices)
+        extruder = extruder_assignments.get(mesh_object.name, str(index))
+        object_chunks.append(
+            f'  <object id="{parent_id}">\n'
+            f'    <metadata key="name" value={quoteattr(mesh_object.name)}/>\n'
+            f'    <metadata key="extruder" value={quoteattr(extruder)}/>\n'
+            f'    <part id="{child_id}" subtype="normal_part">\n'
+            f'      <metadata key="name" value={quoteattr(mesh_object.name)}/>\n'
+            '      <metadata key="matrix" value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>\n'
+            f'      <metadata key="source_file" value={quoteattr(str(output_path))}/>\n'
+            f'      <metadata key="source_object_id" value={quoteattr(str(index - 1))}/>\n'
+            '      <metadata key="source_volume_id" value="0"/>\n'
+            f'      <metadata key="source_offset_x" value={quoteattr(format_number(center_x))}/>\n'
+            f'      <metadata key="source_offset_y" value={quoteattr(format_number(center_y))}/>\n'
+            f'      <metadata key="source_offset_z" value={quoteattr(format_number(center_z))}/>\n'
+            '      <mesh_stat edges_fixed="0" degenerate_facets="0" facets_removed="0" facets_reversed="0" backwards_edges="0"/>\n'
+            '    </part>\n'
+            '  </object>'
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<config>\n'
+        f'{"\n".join(object_chunks)}\n'
+        '</config>\n'
+    )
+
+
+def write_snapmaker_project_3mf(
+    output_path: Path,
+    mesh_objects: Sequence[MeshObjectData],
+    template_path: Path,
+    width_mm: float,
+    height_mm: float,
+    thickness_mm: float,
+    plate_width_mm: float,
+    plate_height_mm: float,
+) -> List[str]:
+    extruder_assignments = build_color_slot_assignments(
+        mesh_objects,
+        parse_template_extruders(template_path),
+    )
+    centered_meshes = [
+        MeshObjectData(
+            name=mesh_object.name,
+            color=mesh_object.color,
+            vertices=shifted_vertices(
+                mesh_object.vertices,
+                dx=-(width_mm / 2.0),
+                dy=-(height_mm / 2.0),
+                dz=-(thickness_mm / 2.0),
+            ),
+            triangles=mesh_object.triangles,
+        )
+        for mesh_object in mesh_objects
+    ]
+
+    overridden_files = {
+        "3D/3dmodel.model",
+        "3D/_rels/3dmodel.model.rels",
+        SNAPMAKER_PROJECT_MARKER,
+    }
+    overridden_files.update(child_model_filename(index, mesh.name) for index, mesh in enumerate(mesh_objects, start=1))
+
+    with zipfile.ZipFile(template_path) as template_zip, zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as output_zip:
+        for info in template_zip.infolist():
+            if info.filename in overridden_files:
+                continue
+            output_zip.writestr(info, template_zip.read(info.filename))
+
+        output_zip.writestr(
+            "3D/3dmodel.model",
+            build_snapmaker_root_model(
+                centered_meshes,
+                plate_width_mm=plate_width_mm,
+                plate_height_mm=plate_height_mm,
+                thickness_mm=thickness_mm,
+            ),
+        )
+        output_zip.writestr("3D/_rels/3dmodel.model.rels", build_snapmaker_relationships(centered_meshes))
+        output_zip.writestr(
+            SNAPMAKER_PROJECT_MARKER,
+            build_model_settings(mesh_objects, extruder_assignments, output_path=output_path),
+        )
+        for index, mesh_object in enumerate(centered_meshes, start=1):
+            output_zip.writestr(
+                child_model_filename(index, mesh_object.name),
+                build_snapmaker_child_model(mesh_object, object_id=(2 * index - 1)),
+            )
+
+    return [mesh_object.name for mesh_object in mesh_objects]
+
+
+def open_in_orca_slicer(path: Path) -> bool:
+    if sys.platform != "darwin":
+        return False
+
+    result = subprocess.run(
+        ["open", "-a", DEFAULT_SLICER_APP, str(path)],
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def main() -> int:
+    args = parse_args()
+    input_path = resolve_input_path(args.input_image)
+    output_path, preview_path = default_output_paths(input_path, args.output, args.preview)
+
+    if args.num_nuances < 2:
+        raise ValueError("num-nuances must be at least 2")
+    if (
+        args.width <= 0
+        or args.height <= 0
+        or args.thickness <= 0
+        or args.lead_cap_height < 0
+        or args.resolution <= 0
+        or args.plate_width <= 0
+        or args.plate_height <= 0
+    ):
+        raise ValueError(
+            "width, height, thickness, resolution, plate-width, and plate-height must be positive; "
+            "lead-cap-height must be non-negative"
+        )
+
+    grid_width = max(1, math.ceil(args.width / args.resolution))
+    grid_height = max(1, math.ceil(args.height / args.resolution))
+    actual_resolution_x = args.width / grid_width
+    actual_resolution_y = args.height / grid_height
+    blur_pixels = args.blur / min(actual_resolution_x, actual_resolution_y)
+
+    rgb_image = load_image_to_grid(
+        input_path,
+        grid_width,
+        grid_height,
+        blur_pixels=blur_pixels,
+    )
+    flat_rgb = rgb_image.reshape(-1, 3)
+    flat_lab = srgb_to_lab(rgb_image).reshape(-1, 3)
+
+    raw_labels, lab_centers = kmeans(flat_lab, clusters=args.num_nuances, seed=args.seed)
+    labels, _, region_colors = reorder_by_lightness(raw_labels, lab_centers, flat_rgb)
+    labels = labels.reshape(grid_height, grid_width)
+    labels = majority_smooth(labels, num_classes=args.num_nuances, passes=args.smooth_passes)
+
+    cell_size_for_lines = min(actual_resolution_x, actual_resolution_y)
+    line_radius_pixels = max(0, math.ceil(args.lead_thickness / cell_size_for_lines) - 1)
+    lines = boundary_mask(labels, radius_pixels=line_radius_pixels)
+
+    region_masks = []
+    for nuance_index in range(args.num_nuances):
+        region_masks.append(labels == nuance_index)
+
+    preview = build_preview(labels, region_colors, lines)
+    preview.save(preview_path)
+
+    mesh_objects = build_mesh_objects(
+        region_masks=region_masks,
+        region_colors=region_colors,
+        lines_mask=lines,
+        width_mm=args.width,
+        height_mm=args.height,
+        thickness_mm=args.thickness,
+        lead_cap_height_mm=args.lead_cap_height,
+    )
+    template_path = find_snapmaker_template(args.snapmaker_template, output_path=output_path)
+
+    if template_path is not None:
+        built_object_names = write_snapmaker_project_3mf(
+            output_path=output_path,
+            mesh_objects=mesh_objects,
+            template_path=template_path,
+            width_mm=args.width,
+            height_mm=args.height,
+            thickness_mm=args.thickness,
+            plate_width_mm=args.plate_width,
+            plate_height_mm=args.plate_height,
+        )
+    else:
+        built_object_names = write_plain_3mf(output_path=output_path, mesh_objects=mesh_objects)
+
+    opened = False
+    if not args.no_open:
+        opened = open_in_orca_slicer(output_path)
+
+    print(f"Input image: {input_path}")
+    print(f"Preview PNG: {preview_path}")
+    print(f"3MF output:  {output_path}")
+    print(f"Plate size:  {args.width:.2f} x {args.height:.2f} mm")
+    print(f"Bed center:  {args.plate_width / 2.0:.2f} x {args.plate_height / 2.0:.2f} mm")
+    print(f"Thickness:   {args.thickness:.2f} mm base")
+    print(f"Lead width:  {args.lead_thickness:.2f} mm")
+    print(f"Lead cap:    {args.lead_cap_height:.2f} mm")
+    print(f"Total z:     {args.thickness + args.lead_cap_height:.2f} mm")
+    print(f"Blur:        {args.blur:.2f} mm")
+    print(f"Resolution:  {args.resolution:.3f} mm target")
+    print(f"Grid size:   {grid_width} x {grid_height}")
+    print(f"Cell size:   {actual_resolution_x:.3f} x {actual_resolution_y:.3f} mm")
+    print(f"Objects:     {len(built_object_names)}")
+    if template_path is not None:
+        print(f"Template:    {template_path}")
+    for name in built_object_names:
+        print(f"  - {name}")
+
+    if args.num_nuances == 10:
+        print("Note: 10 nuance zones plus black separators means 11 printable objects total.")
+    if not args.no_open and not opened:
+        print(
+            f"{DEFAULT_SLICER_APP} was not opened automatically. "
+            "Open the 3MF manually if the app is installed under a different name."
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

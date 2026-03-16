@@ -1,0 +1,14 @@
+[project]
+name = "image-grading-3mf"
+version = "0.1.0"
+description = "Convert an image into color-graded regions and export a multi-object 3MF for OrcaSlicer."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "lib3mf>=2.4.1",
+    "numpy>=2.0.0",
+    "pillow>=11.0.0",
+]
+
+[tool.uv]
+package = false
