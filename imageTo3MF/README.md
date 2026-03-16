@@ -8,6 +8,6 @@ If a hand-painted Snapmaker Orca project `.3mf` is present in the output folder,
 
 If `--description` is supplied, the default output names use a lowercase filename-safe version of that description. If no description is supplied, the script now tries to infer one locally from the image contents on macOS. For generic source names like `image2.png`, that inferred slug becomes the filename base directly.
 
-By default the generated model is `100 x 100 mm`, uses a `1 mm` full-color base body plus a `0.3 mm` lead cap on top, uses a `0.5 mm` XY working resolution, sets the black separator thickness to `0.25 mm`, and centers the result on a `270 x 270 mm` plate. The Snapmaker export is written as a single assembled project containing the `Lead` part plus 10 nuance parts, while preserving per-part color assignments.
+By default the generated model is `100 x 100 mm`, uses a `1 mm` full-color base body plus a `0.3 mm` lead cap on top, uses a `0.5 mm` XY working resolution, sets the black separator thickness to `0.25 mm`, and centers the result on a `270 x 270 mm` plate. The base image is now emitted as four stacked `0.25 mm` CMYW slices per nuance, and the Snapmaker export is written as a single assembled project.
 
 The Snapmaker project writer currently forces the filament palette in the exported `3mf` to cyan, magenta, yellow, white, and black (`CMYWK`), maps the `Lead` part to slot `5`, and writes a per-layer `M600` pause just before the final lead layer so that black can be loaded at that moment.

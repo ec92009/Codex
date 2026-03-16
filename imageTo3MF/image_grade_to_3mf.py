@@ -39,6 +39,22 @@ LEAD_OBJECT_NAME = "Lead"
 ASSEMBLY_OBJECT_NAME = "Assembly"
 LEAD_FILAMENT_SLOT = "5"
 DEFAULT_BASE_FILAMENT_HEX = ["#00FFFF", "#FF00FF", "#FFFF00", "#FFFFFF", "#000000"]
+DEFAULT_BASE_THICKNESS_LAYERS = 4
+BASE_SLOT_SEQUENCE = ["1", "2", "3", "4"]
+BASE_SLOT_RGB = {
+    "1": (0, 255, 255),
+    "2": (255, 0, 255),
+    "3": (255, 255, 0),
+    "4": (255, 255, 255),
+    LEAD_FILAMENT_SLOT: (0, 0, 0),
+}
+BASE_SLOT_LABEL = {
+    "1": "C",
+    "2": "M",
+    "3": "Y",
+    "4": "W",
+    LEAD_FILAMENT_SLOT: "K",
+}
 GENERIC_STEM_PATTERN = re.compile(
     r"^(image\d*|img[_-]?\d*|photo[_-]?\d*|picture[_-]?\d*|screenshot.*|scan[_-]?\d*|pasted.*)$",
     re.IGNORECASE,
@@ -84,6 +100,7 @@ class MeshObjectData:
     color: Tuple[int, int, int]
     vertices: List[Tuple[float, float, float]]
     triangles: List[Tuple[int, int, int]]
+    preferred_slot: Optional[str] = None
 
 
 def parse_mm_value(raw: str) -> float:
@@ -590,6 +607,66 @@ def boundary_mask(labels: np.ndarray, radius_pixels: int) -> np.ndarray:
     return dilated
 
 
+def rgb_to_lab_color(color: Tuple[int, int, int]) -> np.ndarray:
+    rgb = np.asarray([[list(color)]], dtype=np.uint8)
+    return srgb_to_lab(rgb)[0, 0]
+
+
+def enumerate_layer_count_vectors(total_layers: int, buckets: int) -> List[Tuple[int, ...]]:
+    if buckets == 1:
+        return [(total_layers,)]
+    vectors: List[Tuple[int, ...]] = []
+    for first in range(total_layers + 1):
+        for rest in enumerate_layer_count_vectors(total_layers - first, buckets - 1):
+            vectors.append((first,) + rest)
+    return vectors
+
+
+def expand_layer_slots(counts: Tuple[int, int, int, int]) -> List[str]:
+    slots: List[str] = []
+    for slot, count in zip(BASE_SLOT_SEQUENCE, counts):
+        slots.extend([slot] * count)
+    return slots
+
+
+def mixed_rgb_from_slots(slots: Sequence[str]) -> Tuple[int, int, int]:
+    colors = np.asarray([BASE_SLOT_RGB[slot] for slot in slots], dtype=np.float32)
+    mixed = np.round(colors.mean(axis=0)).astype(np.uint8)
+    return int(mixed[0]), int(mixed[1]), int(mixed[2])
+
+
+def build_palette_recipes(
+    region_colors: np.ndarray,
+    layer_count: int,
+) -> List[Tuple[List[str], Tuple[int, int, int]]]:
+    candidates: List[Tuple[List[str], Tuple[int, int, int], np.ndarray]] = []
+    for counts in enumerate_layer_count_vectors(layer_count, 4):
+        slots = expand_layer_slots(counts)
+        mixed_rgb = mixed_rgb_from_slots(slots)
+        mixed_lab = rgb_to_lab_color(mixed_rgb)
+        candidates.append((slots, mixed_rgb, mixed_lab))
+
+    used_indices: set[int] = set()
+    assignments: List[Tuple[List[str], Tuple[int, int, int]]] = []
+    for region_color in region_colors:
+        target_lab = rgb_to_lab_color((int(region_color[0]), int(region_color[1]), int(region_color[2])))
+        best_index = None
+        best_distance = None
+        for candidate_index, (_slots, _rgb, candidate_lab) in enumerate(candidates):
+            if candidate_index in used_indices:
+                continue
+            distance = float(np.sum((target_lab - candidate_lab) ** 2))
+            if best_distance is None or distance < best_distance:
+                best_distance = distance
+                best_index = candidate_index
+        if best_index is None:
+            raise RuntimeError("Failed to assign a unique CMYW palette recipe")
+        used_indices.add(best_index)
+        slots, mixed_rgb, _lab = candidates[best_index]
+        assignments.append((slots, mixed_rgb))
+    return assignments
+
+
 def build_preview(labels: np.ndarray, mean_colors: np.ndarray, lines: np.ndarray) -> Image.Image:
     preview = mean_colors[labels].astype(np.uint8)
     preview[lines] = np.array([0, 0, 0], dtype=np.uint8)
@@ -710,7 +787,7 @@ def add_colored_mesh_object(
 
 def build_mesh_objects(
     region_masks: List[np.ndarray],
-    region_colors: np.ndarray,
+    palette_recipes: List[Tuple[List[str], Tuple[int, int, int]]],
     lines_mask: np.ndarray,
     width_mm: float,
     height_mm: float,
@@ -737,27 +814,34 @@ def build_mesh_objects(
                 color=(0, 0, 0),
                 vertices=line_vertices,
                 triangles=line_triangles,
+                preferred_slot=LEAD_FILAMENT_SLOT,
             )
         )
 
-    for nuance_index, (mask, color) in enumerate(zip(region_masks, region_colors), start=1):
-        vertices, triangles = mesh_from_mask(
-            mask,
-            width_mm=width_mm,
-            height_mm=height_mm,
-            z_bottom_mm=0.0,
-            z_top_mm=thickness_mm,
-        )
-        if not triangles:
-            continue
-        objects.append(
-            MeshObjectData(
-                name=f"Color {nuance_index + 1} - Nuance {nuance_index:02d}",
-                color=(int(color[0]), int(color[1]), int(color[2])),
-                vertices=vertices,
-                triangles=triangles,
+    slice_height_mm = thickness_mm / DEFAULT_BASE_THICKNESS_LAYERS
+    for nuance_index, (mask, recipe) in enumerate(zip(region_masks, palette_recipes), start=1):
+        layer_slots, mixed_color = recipe
+        for layer_index, slot in enumerate(layer_slots, start=1):
+            z_bottom_mm = slice_height_mm * (layer_index - 1)
+            z_top_mm = slice_height_mm * layer_index
+            vertices, triangles = mesh_from_mask(
+                mask,
+                width_mm=width_mm,
+                height_mm=height_mm,
+                z_bottom_mm=z_bottom_mm,
+                z_top_mm=z_top_mm,
             )
-        )
+            if not triangles:
+                continue
+            objects.append(
+                MeshObjectData(
+                    name=f"Color {nuance_index + 1} - Nuance {nuance_index:02d} - {BASE_SLOT_LABEL[slot]}{layer_index}",
+                    color=BASE_SLOT_RGB[slot],
+                    vertices=vertices,
+                    triangles=triangles,
+                    preferred_slot=slot,
+                )
+            )
     return objects
 
 
@@ -879,6 +963,9 @@ def build_color_slot_assignments(
     assignments: Dict[str, str] = {}
     fallback_slots = iter(["1", "2", "3", "4", "6", "7", "8", "9", "10", "11", "12", "13"])
     for mesh_object in mesh_objects:
+        if mesh_object.preferred_slot is not None:
+            assignments[mesh_object.name] = mesh_object.preferred_slot
+            continue
         if mesh_object.name == LEAD_OBJECT_NAME:
             assignments[mesh_object.name] = LEAD_FILAMENT_SLOT
             continue
@@ -1096,12 +1183,15 @@ def build_model_settings(
     )
 
 
-def build_project_settings_with_base_colors(template_zip: zipfile.ZipFile) -> str:
+def build_project_settings_with_base_colors(template_zip: zipfile.ZipFile, thickness_mm: float) -> str:
     raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
     settings = json.loads(raw)
     settings["filament_colour"] = list(DEFAULT_BASE_FILAMENT_HEX)
     settings["extruder_colour"] = list(DEFAULT_BASE_FILAMENT_HEX[:4])
     settings["default_filament_colour"] = [""] * len(DEFAULT_BASE_FILAMENT_HEX)
+    layer_height = thickness_mm / DEFAULT_BASE_THICKNESS_LAYERS
+    settings["first_layer_print_height"] = format_number(layer_height)
+    settings["layer_height"] = format_number(layer_height)
     mixed_filament_entries = [
         "1,5,1,0,50,0,g,w,m2,d0,o1,u72",
         "2,5,1,0,50,0,g,w,m2,d0,o1,u73",
@@ -1119,19 +1209,9 @@ def build_project_settings_with_base_colors(template_zip: zipfile.ZipFile) -> st
 
 
 def build_custom_gcode_per_layer(
-    template_zip: zipfile.ZipFile,
-    total_height_mm: float,
+    base_thickness_mm: float,
     extruder_assignments: Dict[str, str],
 ) -> str:
-    raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
-    settings = json.loads(raw)
-    first_layer_height = float(settings.get("first_layer_print_height", "0.2"))
-    layer_height = float(settings.get("layer_height", "0.2"))
-
-    pause_top_z = first_layer_height
-    while pause_top_z + layer_height < total_height_mm - 1e-9:
-        pause_top_z += layer_height
-
     pause_extruder = next(
         (
             value
@@ -1145,7 +1225,7 @@ def build_custom_gcode_per_layer(
         '<custom_gcodes_per_layer>\n'
         '<plate>\n'
         '<plate_info id="1"/>\n'
-        f'<layer top_z="{format_number(pause_top_z)}" type="1" extruder="{pause_extruder}" color="" extra="" gcode="M600"/>\n'
+        f'<layer top_z="{format_number(base_thickness_mm)}" type="1" extruder="{pause_extruder}" color="" extra="" gcode="M600"/>\n'
         '<mode value="MultiAsSingle"/>\n'
         '</plate>\n'
         '</custom_gcodes_per_layer>\n'
@@ -1218,18 +1298,12 @@ def write_snapmaker_project_3mf(
         )
         output_zip.writestr(
             SNAPMAKER_PROJECT_SETTINGS,
-            build_project_settings_with_base_colors(template_zip),
-        )
-        total_height_mm = max(
-            vertex[2]
-            for mesh_object in mesh_objects
-            for vertex in mesh_object.vertices
+            build_project_settings_with_base_colors(template_zip, thickness_mm=thickness_mm),
         )
         output_zip.writestr(
             SNAPMAKER_CUSTOM_GCODE_PER_LAYER,
             build_custom_gcode_per_layer(
-                template_zip,
-                total_height_mm=total_height_mm,
+                base_thickness_mm=thickness_mm,
                 extruder_assignments=extruder_assignments,
             ),
         )
@@ -1308,12 +1382,17 @@ def main() -> int:
     for nuance_index in range(args.num_nuances):
         region_masks.append(labels == nuance_index)
 
-    preview = build_preview(labels, region_colors, lines)
+    palette_recipes = build_palette_recipes(
+        region_colors=region_colors,
+        layer_count=DEFAULT_BASE_THICKNESS_LAYERS,
+    )
+    preview_colors = np.asarray([recipe_color for _slots, recipe_color in palette_recipes], dtype=np.uint8)
+    preview = build_preview(labels, preview_colors, lines)
     preview.save(preview_path)
 
     mesh_objects = build_mesh_objects(
         region_masks=region_masks,
-        region_colors=region_colors,
+        palette_recipes=palette_recipes,
         lines_mask=lines,
         width_mm=args.width,
         height_mm=args.height,
@@ -1351,6 +1430,7 @@ def main() -> int:
     print(f"Lead width:  {args.lead_thickness:.2f} mm")
     print(f"Lead cap:    {args.lead_cap_height:.2f} mm")
     print(f"Total z:     {args.thickness + args.lead_cap_height:.2f} mm")
+    print(f"Base layers: {DEFAULT_BASE_THICKNESS_LAYERS} x {args.thickness / DEFAULT_BASE_THICKNESS_LAYERS:.3f} mm")
     print(f"Blur:        {args.blur:.2f} mm")
     print(f"Resolution:  {args.resolution:.3f} mm target")
     print(f"Grid size:   {grid_width} x {grid_height}")
@@ -1360,9 +1440,18 @@ def main() -> int:
         print(f"Template:    {template_path}")
     for name in built_object_names:
         print(f"  - {name}")
+    for nuance_index, (slots, mixed_color) in enumerate(palette_recipes, start=1):
+        slot_label = "".join(BASE_SLOT_LABEL[slot] for slot in slots)
+        print(
+            f"  Palette {nuance_index:02d}: {slot_label} -> "
+            f"rgb({mixed_color[0]},{mixed_color[1]},{mixed_color[2]})"
+        )
 
     if args.num_nuances == 10:
-        print("Note: 10 nuance zones plus black separators means 11 printable objects total.")
+        print(
+            "Note: each nuance is now built from 4 stacked CMYW slices, "
+            "plus the black lead cap on slot 5."
+        )
     if not args.no_open and not opened:
         print(
             f"{DEFAULT_SLICER_APP} was not opened automatically. "
