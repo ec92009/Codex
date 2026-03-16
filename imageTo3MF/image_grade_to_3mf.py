@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import re
 import subprocess
 import sys
 import uuid
@@ -73,6 +74,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--preview",
         help="Optional preview PNG path. Defaults to out/<input-stem>_preview.png",
+    )
+    parser.add_argument(
+        "--description",
+        help=(
+            "Optional short description added to the default output and preview "
+            "file names, for example 'cartoon spaniel'."
+        ),
     )
     parser.add_argument(
         "--num-nuances",
@@ -220,12 +228,36 @@ def resolve_input_path(value: Optional[str]) -> Path:
     return picked
 
 
-def default_output_paths(input_path: Path, output_arg: Optional[str], preview_arg: Optional[str]) -> Tuple[Path, Path]:
+def sanitize_filename_bit(value: str) -> str:
+    sanitized = re.sub(r"[^a-z0-9]+", "_", value.strip().lower())
+    sanitized = sanitized.strip("_")
+    return sanitized[:48].rstrip("_")
+
+
+def default_output_paths(
+    input_path: Path,
+    output_arg: Optional[str],
+    preview_arg: Optional[str],
+    description_arg: Optional[str],
+) -> Tuple[Path, Path]:
     out_dir = Path("out").resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = input_path.stem
-    output_path = Path(output_arg).expanduser().resolve() if output_arg else out_dir / f"{stem}_graded.3mf"
-    preview_path = Path(preview_arg).expanduser().resolve() if preview_arg else out_dir / f"{stem}_preview.png"
+    description_bit = ""
+    if description_arg:
+        sanitized = sanitize_filename_bit(description_arg)
+        if sanitized:
+            description_bit = f"_{sanitized}"
+    output_path = (
+        Path(output_arg).expanduser().resolve()
+        if output_arg
+        else out_dir / f"{stem}{description_bit}_graded.3mf"
+    )
+    preview_path = (
+        Path(preview_arg).expanduser().resolve()
+        if preview_arg
+        else out_dir / f"{stem}{description_bit}_preview.png"
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     preview_path.parent.mkdir(parents=True, exist_ok=True)
     return output_path, preview_path
@@ -987,7 +1019,12 @@ def open_in_orca_slicer(path: Path) -> bool:
 def main() -> int:
     args = parse_args()
     input_path = resolve_input_path(args.input_image)
-    output_path, preview_path = default_output_paths(input_path, args.output, args.preview)
+    output_path, preview_path = default_output_paths(
+        input_path,
+        args.output,
+        args.preview,
+        args.description,
+    )
 
     if args.num_nuances < 2:
         raise ValueError("num-nuances must be at least 2")
