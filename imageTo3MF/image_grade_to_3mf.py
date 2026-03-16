@@ -161,16 +161,16 @@ def parse_args() -> argparse.Namespace:
     common.add_argument(
         "-o",
         "--output",
-        help="Output .3mf path.",
+        help="Output 3MF file path. If omitted, the script writes into the out/ folder.",
     )
     advanced.add_argument(
         "--preview",
-        help="Optional preview PNG path.",
+        help="Optional preview image path. If omitted, a preview PNG is created next to the 3MF.",
     )
     common.add_argument(
         "--description",
         help=(
-            "Short name used in default output file names, for example "
+            "Short description used in default output file names, for example "
             "'cartoon spaniel'."
         ),
     )
@@ -178,25 +178,25 @@ def parse_args() -> argparse.Namespace:
         "--num-nuances",
         type=int,
         default=DEFAULT_NUM_NUANCES,
-        help="Number of color nuance zones to produce.",
+        help="Number of graded color zones to produce from the source image.",
     )
     common.add_argument(
         "--thickness",
         type=parse_mm_value,
         default=DEFAULT_THICKNESS_MM,
-        help="Base image thickness in mm before any lead is added on top.",
+        help="Base picture thickness in mm before any lead is added on top.",
     )
     common.add_argument(
         "--size",
         "--model-size",
         default=f"{format_number(DEFAULT_WIDTH_MM)}x{format_number(DEFAULT_HEIGHT_MM)}",
-        help="Model size as WIDTHxHEIGHT in mm.",
+        help="Final picture size as WIDTHxHEIGHT in mm.",
     )
     common.add_argument(
         "--resolution",
         type=parse_mm_value,
         default=DEFAULT_RESOLUTION_MM,
-        help="Target XY cell size in mm. Accepts values like 0.25 or 0.25mm.",
+        help="Target XY working resolution in mm. Smaller values create finer detail but heavier files.",
     )
     common.add_argument(
         "--lead-height",
@@ -204,25 +204,25 @@ def parse_args() -> argparse.Namespace:
         dest="lead_cap_height",
         type=parse_mm_value,
         default=DEFAULT_LEAD_CAP_HEIGHT_MM,
-        help="Lead overlay height in mm added on top of the base image thickness.",
+        help="Lead height in mm added on top of the base picture thickness.",
     )
     advanced.add_argument(
         "--blur",
         type=parse_blur_value,
         default="none",
-        help="Blur before color quantization: none, low, medium, strong, or a custom mm value.",
+        help="Pre-blur before color quantization: none, low, medium, strong, or a custom mm value.",
     )
     common.add_argument(
         "--plate-size",
         default=f"{format_number(DEFAULT_PLATE_WIDTH_MM)}x{format_number(DEFAULT_PLATE_HEIGHT_MM)}",
-        help="Printer plate size as WIDTHxHEIGHT in mm, used to center the exported objects.",
+        help="Printer plate size as WIDTHxHEIGHT in mm, used to center the exported model on the bed.",
     )
     common.add_argument(
         "--lead-thickness",
         dest="lead_thickness",
         type=parse_mm_value,
         default=DEFAULT_LEAD_THICKNESS_MM,
-        help="Black separator line width in mm.",
+        help="Lead line thickness in mm in the XY plane.",
     )
     advanced.add_argument(
         "--width",
@@ -258,18 +258,18 @@ def parse_args() -> argparse.Namespace:
         "--seed",
         type=int,
         default=7,
-        help="Random seed for color clustering.",
+        help="Random seed used for color clustering so runs stay repeatable.",
     )
     advanced.add_argument(
         "--smooth-passes",
         type=int,
         default=2,
-        help="Label majority-filter passes before boundary extraction.",
+        help="Number of smoothing passes applied to region labels before boundary extraction.",
     )
     common.add_argument(
         "--no-open",
         action="store_true",
-        help="Do not open the generated 3MF in Snapmaker Orca.",
+        help="Do not open the generated 3MF in Snapmaker Orca after export.",
     )
     advanced.add_argument(
         "--template",
