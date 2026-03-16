@@ -34,9 +34,11 @@ DEFAULT_PLATE_HEIGHT_MM = 270.0
 DEFAULT_SLICER_APP = "Snapmaker Orca"
 SNAPMAKER_PROJECT_MARKER = "Metadata/model_settings.config"
 SNAPMAKER_PROJECT_SETTINGS = "Metadata/project_settings.config"
+SNAPMAKER_CUSTOM_GCODE_PER_LAYER = "Metadata/custom_gcode_per_layer.xml"
 LEAD_OBJECT_NAME = "Lead"
 ASSEMBLY_OBJECT_NAME = "Assembly"
-DEFAULT_BASE_FILAMENT_HEX = ["#00FFFF", "#FF00FF", "#FFFF00", "#FFFFFF"]
+LEAD_FILAMENT_SLOT = "5"
+DEFAULT_BASE_FILAMENT_HEX = ["#00FFFF", "#FF00FF", "#FFFF00", "#FFFFFF", "#000000"]
 GENERIC_STEM_PATTERN = re.compile(
     r"^(image\d*|img[_-]?\d*|photo[_-]?\d*|picture[_-]?\d*|screenshot.*|scan[_-]?\d*|pasted.*)$",
     re.IGNORECASE,
@@ -875,18 +877,17 @@ def build_color_slot_assignments(
     template_assignments: Dict[str, str],
 ) -> Dict[str, str]:
     assignments: Dict[str, str] = {}
-    next_slot = 2
+    fallback_slots = iter(["1", "2", "3", "4", "6", "7", "8", "9", "10", "11", "12", "13"])
     for mesh_object in mesh_objects:
         if mesh_object.name == LEAD_OBJECT_NAME:
-            assignments[mesh_object.name] = "1"
+            assignments[mesh_object.name] = LEAD_FILAMENT_SLOT
             continue
 
         template_value = template_assignments.get(mesh_object.name)
-        if template_value is not None and template_value != "1":
+        if template_value is not None and template_value != LEAD_FILAMENT_SLOT:
             assignments[mesh_object.name] = template_value
         else:
-            assignments[mesh_object.name] = str(next_slot)
-        next_slot += 1
+            assignments[mesh_object.name] = next(fallback_slots)
     return assignments
 
 
@@ -1077,7 +1078,7 @@ def build_model_settings(
         '    <metadata key="plater_name" value=""/>\n'
         '    <metadata key="locked" value="false"/>\n'
         '    <metadata key="filament_map_mode" value="Auto For Flush"/>\n'
-        '    <metadata key="filament_maps" value="1 1 1 1"/>\n'
+        f'    <metadata key="filament_maps" value={quoteattr(" ".join(["1"] * len(DEFAULT_BASE_FILAMENT_HEX)))}/>\n'
         '    <metadata key="thumbnail_file" value="Metadata/plate_1.png"/>\n'
         '    <metadata key="thumbnail_no_light_file" value="Metadata/plate_no_light_1.png"/>\n'
         '    <metadata key="top_file" value="Metadata/top_1.png"/>\n'
@@ -1099,9 +1100,56 @@ def build_project_settings_with_base_colors(template_zip: zipfile.ZipFile) -> st
     raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
     settings = json.loads(raw)
     settings["filament_colour"] = list(DEFAULT_BASE_FILAMENT_HEX)
-    settings["extruder_colour"] = list(DEFAULT_BASE_FILAMENT_HEX)
-    settings["default_filament_colour"] = list(DEFAULT_BASE_FILAMENT_HEX)
+    settings["extruder_colour"] = list(DEFAULT_BASE_FILAMENT_HEX[:4])
+    settings["default_filament_colour"] = [""] * len(DEFAULT_BASE_FILAMENT_HEX)
+    mixed_filament_entries = [
+        "1,5,1,0,50,0,g,w,m2,d0,o1,u72",
+        "2,5,1,0,50,0,g,w,m2,d0,o1,u73",
+        "3,5,1,0,50,0,g,w,m2,d0,o1,u74",
+        "4,5,1,0,50,0,g,w,m2,d0,o1,u75",
+    ]
+    existing_mixed = settings.get("mixed_filament_definitions")
+    if isinstance(existing_mixed, str):
+        existing_entries = [entry for entry in existing_mixed.split(";") if entry]
+        for entry in mixed_filament_entries:
+            if entry not in existing_entries:
+                existing_entries.append(entry)
+        settings["mixed_filament_definitions"] = ";".join(existing_entries)
     return json.dumps(settings, indent=4, ensure_ascii=True) + "\n"
+
+
+def build_custom_gcode_per_layer(
+    template_zip: zipfile.ZipFile,
+    total_height_mm: float,
+    extruder_assignments: Dict[str, str],
+) -> str:
+    raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
+    settings = json.loads(raw)
+    first_layer_height = float(settings.get("first_layer_print_height", "0.2"))
+    layer_height = float(settings.get("layer_height", "0.2"))
+
+    pause_top_z = first_layer_height
+    while pause_top_z + layer_height < total_height_mm - 1e-9:
+        pause_top_z += layer_height
+
+    pause_extruder = next(
+        (
+            value
+            for name, value in extruder_assignments.items()
+            if name != LEAD_OBJECT_NAME and value != LEAD_FILAMENT_SLOT
+        ),
+        "1",
+    )
+    return (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<custom_gcodes_per_layer>\n'
+        '<plate>\n'
+        '<plate_info id="1"/>\n'
+        f'<layer top_z="{format_number(pause_top_z)}" type="1" extruder="{pause_extruder}" color="" extra="" gcode="M600"/>\n'
+        '<mode value="MultiAsSingle"/>\n'
+        '</plate>\n'
+        '</custom_gcodes_per_layer>\n'
+    )
 
 
 def write_snapmaker_project_3mf(
@@ -1138,6 +1186,7 @@ def write_snapmaker_project_3mf(
         "3D/_rels/3dmodel.model.rels",
         SNAPMAKER_PROJECT_MARKER,
         SNAPMAKER_PROJECT_SETTINGS,
+        SNAPMAKER_CUSTOM_GCODE_PER_LAYER,
     }
 
     with zipfile.ZipFile(template_path) as template_zip, zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as output_zip:
@@ -1170,6 +1219,19 @@ def write_snapmaker_project_3mf(
         output_zip.writestr(
             SNAPMAKER_PROJECT_SETTINGS,
             build_project_settings_with_base_colors(template_zip),
+        )
+        total_height_mm = max(
+            vertex[2]
+            for mesh_object in mesh_objects
+            for vertex in mesh_object.vertices
+        )
+        output_zip.writestr(
+            SNAPMAKER_CUSTOM_GCODE_PER_LAYER,
+            build_custom_gcode_per_layer(
+                template_zip,
+                total_height_mm=total_height_mm,
+                extruder_assignments=extruder_assignments,
+            ),
         )
         output_zip.writestr(
             assembly_model_filename(centered_meshes),
