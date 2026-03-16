@@ -116,133 +116,129 @@ def parse_mm_value(raw: str) -> float:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Quantize an image into 10 color nuances, add black separator lines, "
-            "export a multi-object 3MF, and open it in OrcaSlicer."
-        )
+            "Turn an image into a Snapmaker-Orca-ready 3MF with 10 graded CMYW "
+            "nuances, a black lead cap on slot 5, and an automatic pause before "
+            "the lead layer."
+        ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    common = parser.add_argument_group("Common options")
+    advanced = parser.add_argument_group("Advanced options")
+
     parser.add_argument(
         "input_image",
         nargs="?",
         help="Path to the source image. If omitted, a macOS file picker is used.",
     )
-    parser.add_argument(
+    common.add_argument(
         "-o",
         "--output",
-        help="Output .3mf path. Defaults to out/<input-stem>_graded.3mf",
+        help="Output .3mf path.",
     )
-    parser.add_argument(
+    advanced.add_argument(
         "--preview",
-        help="Optional preview PNG path. Defaults to out/<input-stem>_preview.png",
+        help="Optional preview PNG path.",
     )
-    parser.add_argument(
+    common.add_argument(
         "--description",
         help=(
-            "Optional short description added to the default output and preview "
-            "file names, for example 'cartoon spaniel'."
+            "Short name used in default output file names, for example "
+            "'cartoon spaniel'."
         ),
     )
-    parser.add_argument(
+    advanced.add_argument(
         "--num-nuances",
         type=int,
         default=DEFAULT_NUM_NUANCES,
-        help=f"Number of color nuance zones to produce. Default: {DEFAULT_NUM_NUANCES}",
+        help="Number of color nuance zones to produce.",
     )
-    parser.add_argument(
+    common.add_argument(
         "--thickness",
         type=parse_mm_value,
         default=DEFAULT_THICKNESS_MM,
-        help=f"Final model thickness in mm. Accepts values like 3 or 3mm. Default: {DEFAULT_THICKNESS_MM}mm",
+        help="Base image thickness in mm. Accepts values like 3 or 3mm.",
     )
-    parser.add_argument(
+    common.add_argument(
         "--width",
         type=parse_mm_value,
         default=DEFAULT_WIDTH_MM,
-        help=f"Final model width in mm. Accepts values like 100 or 100mm. Default: {DEFAULT_WIDTH_MM}mm",
+        help="Model width in mm. Accepts values like 100 or 100mm.",
     )
-    parser.add_argument(
+    common.add_argument(
         "--height",
         type=parse_mm_value,
         default=DEFAULT_HEIGHT_MM,
-        help=f"Final model height in mm. Accepts values like 100 or 100mm. Default: {DEFAULT_HEIGHT_MM}mm",
+        help="Model height in mm. Accepts values like 100 or 100mm.",
     )
-    parser.add_argument(
+    common.add_argument(
         "--resolution",
         type=parse_mm_value,
         default=DEFAULT_RESOLUTION_MM,
-        help=(
-            "Target XY cell size in mm. Accepts values like 0.25 or 0.25mm. "
-            f"Default: {DEFAULT_RESOLUTION_MM}mm"
-        ),
+        help="Target XY cell size in mm. Accepts values like 0.25 or 0.25mm.",
     )
-    parser.add_argument(
+    common.add_argument(
+        "--lead-height",
         "--lead-cap-height",
+        dest="lead_cap_height",
         type=parse_mm_value,
         default=DEFAULT_LEAD_CAP_HEIGHT_MM,
-        help=(
-            "Lead overlay height in mm printed on top of the image body. "
-            f"Default: {DEFAULT_LEAD_CAP_HEIGHT_MM}mm"
-        ),
+        help="Lead overlay height in mm printed on top of the image body.",
     )
-    parser.add_argument(
+    advanced.add_argument(
         "--blur",
         type=parse_mm_value,
         default=DEFAULT_BLUR_MM,
-        help=(
-            "Gaussian blur radius in mm before color quantization. "
-            f"Default: {DEFAULT_BLUR_MM}mm"
-        ),
+        help="Gaussian blur radius in mm before color quantization.",
     )
-    parser.add_argument(
+    common.add_argument(
         "--plate-width",
         type=parse_mm_value,
         default=DEFAULT_PLATE_WIDTH_MM,
-        help=(
-            "Printer plate width in mm used to center the exported objects. "
-            f"Default: {DEFAULT_PLATE_WIDTH_MM}mm"
-        ),
+        help="Printer plate width in mm used to center the exported objects.",
     )
-    parser.add_argument(
+    common.add_argument(
         "--plate-height",
         type=parse_mm_value,
         default=DEFAULT_PLATE_HEIGHT_MM,
-        help=(
-            "Printer plate height in mm used to center the exported objects. "
-            f"Default: {DEFAULT_PLATE_HEIGHT_MM}mm"
-        ),
+        help="Printer plate height in mm used to center the exported objects.",
     )
-    parser.add_argument(
+    common.add_argument(
         "--lead-thickness",
-        "--line-width-mm",
         dest="lead_thickness",
         type=parse_mm_value,
         default=DEFAULT_LEAD_THICKNESS_MM,
-        help=(
-            "Black separator thickness in mm. Accepts values like 1 or 1mm. "
-            f"Default: {DEFAULT_LEAD_THICKNESS_MM}mm"
-        ),
+        help="Black separator thickness in mm.",
     )
-    parser.add_argument(
+    advanced.add_argument(
+        "--line-width-mm",
+        dest="lead_thickness",
+        type=parse_mm_value,
+        help=argparse.SUPPRESS,
+    )
+    advanced.add_argument(
         "--seed",
         type=int,
         default=7,
-        help="Random seed for color clustering. Default: 7",
+        help="Random seed for color clustering.",
     )
-    parser.add_argument(
+    advanced.add_argument(
         "--smooth-passes",
         type=int,
         default=2,
-        help="Label majority-filter passes before boundary extraction. Default: 2",
+        help="Label majority-filter passes before boundary extraction.",
     )
-    parser.add_argument(
+    common.add_argument(
         "--no-open",
         action="store_true",
-        help="Do not open the generated 3MF in OrcaSlicer.",
+        help="Do not open the generated 3MF in Snapmaker Orca.",
     )
-    parser.add_argument(
+    advanced.add_argument(
+        "--template",
         "--snapmaker-template",
+        dest="snapmaker_template",
         help=(
-            "Optional path to a hand-painted Snapmaker Orca/Bambu-style 3MF project. "
-            "If supplied, the exporter reuses its per-object color/extruder assignments."
+            "Path to a Snapmaker-Orca-style 3MF project whose color and printer "
+            "metadata should be reused."
         ),
     )
     return parser.parse_args()
