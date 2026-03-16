@@ -6,4 +6,4 @@ If no image path is passed, the script opens a file picker on macOS.
 
 If a hand-painted Snapmaker Orca project `.3mf` is present in the output folder, the script reuses its saved object-to-color assignments automatically. You can also point to one explicitly with `--snapmaker-template /path/to/template.3mf`.
 
-By default the generated model is `100 x 100 mm`, uses a `1 mm` full-color base body plus a `0.3 mm` lead cap on top, uses a `0.5 mm` XY working resolution, sets the black separator thickness to `0.25 mm`, and centers the result on a `270 x 270 mm` plate. The export contains black separator lines plus 10 nuance objects.
+By default the generated model is `100 x 100 mm`, uses a `1 mm` full-color base body plus a `0.3 mm` lead cap on top, uses a `0.5 mm` XY working resolution, sets the black separator thickness to `0.25 mm`, and centers the result on a `270 x 270 mm` plate. The Snapmaker export is written as a single assembled project containing the `Lead` part plus 10 nuance parts, while preserving per-part color assignments.

@@ -32,6 +32,7 @@ DEFAULT_PLATE_HEIGHT_MM = 270.0
 DEFAULT_SLICER_APP = "Snapmaker Orca"
 SNAPMAKER_PROJECT_MARKER = "Metadata/model_settings.config"
 LEAD_OBJECT_NAME = "Lead"
+ASSEMBLY_OBJECT_NAME = "Assembly"
 
 
 @dataclass
@@ -660,6 +661,19 @@ def parse_template_extruders(template_path: Path) -> Dict[str, str]:
                 extruder = value
         if name and extruder:
             assignments[name] = extruder
+
+        for part_node in object_node.findall("part"):
+            part_name = None
+            part_extruder = None
+            for metadata_node in part_node.findall("metadata"):
+                key = metadata_node.attrib.get("key")
+                value = metadata_node.attrib.get("value")
+                if key == "name":
+                    part_name = value
+                elif key == "extruder":
+                    part_extruder = value
+            if part_name and part_extruder:
+                assignments[part_name] = part_extruder
     return assignments
 
 
@@ -687,7 +701,7 @@ def child_model_filename(index: int, name: str) -> str:
     return f"3D/Objects/{name}_{index}.model"
 
 
-def build_snapmaker_child_model(mesh_object: MeshObjectData, object_id: int) -> str:
+def build_snapmaker_child_model(mesh_object: MeshObjectData, object_id: int = 1) -> str:
     vertices_xml = "\n".join(
         f'     <vertex x="{format_number(x)}" y="{format_number(y)}" z="{format_number(z)}"/>'
         for x, y, z in mesh_object.vertices
@@ -730,26 +744,17 @@ def build_snapmaker_root_model(
     plate_height_mm: float,
     thickness_mm: float,
 ) -> str:
-    resources_lines: List[str] = []
-    build_lines: List[str] = []
+    assembly_object_id = len(mesh_objects) + 1
     build_transform = (
         f'1 0 0 0 1 0 0 0 1 '
         f'{format_number(plate_width_mm / 2.0)} {format_number(plate_height_mm / 2.0)} {format_number(thickness_mm / 2.0)}'
     )
-
+    component_lines = []
     for index, mesh_object in enumerate(mesh_objects, start=1):
-        child_object_id = 2 * index - 1
-        parent_object_id = 2 * index
         child_path = "/" + child_model_filename(index, mesh_object.name)
-        resources_lines.append(
-            f'  <object id="{parent_object_id}" p:UUID="{uuid.uuid4()}" type="model">\n'
-            '   <components>\n'
-            f'    <component p:path={quoteattr(child_path)} objectid="{child_object_id}" p:UUID="{uuid.uuid4()}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>\n'
-            '   </components>\n'
-            '  </object>'
-        )
-        build_lines.append(
-            f'  <item objectid="{parent_object_id}" p:UUID="{uuid.uuid4()}" transform="{build_transform}" printable="1"/>'
+        component_lines.append(
+            f'    <component p:path={quoteattr(child_path)} objectid="1" '
+            f'p:UUID="{uuid.uuid4()}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>'
         )
 
     return (
@@ -763,10 +768,14 @@ def build_snapmaker_root_model(
         ' <metadata name="BambuStudio:3mfVersion">1</metadata>\n'
         ' <metadata name="Title"></metadata>\n'
         ' <resources>\n'
-        f'{"\n".join(resources_lines)}\n'
+        f'  <object id="{assembly_object_id}" p:UUID="{uuid.uuid4()}" type="model">\n'
+        '   <components>\n'
+        f'{"\n".join(component_lines)}\n'
+        '   </components>\n'
+        '  </object>\n'
         ' </resources>\n'
         f' <build p:UUID="{uuid.uuid4()}">\n'
-        f'{"\n".join(build_lines)}\n'
+        f'  <item objectid="{assembly_object_id}" p:UUID="{uuid.uuid4()}" transform="{build_transform}" printable="1"/>\n'
         ' </build>\n'
         '</model>\n'
     )
@@ -790,18 +799,21 @@ def build_model_settings(
     mesh_objects: Sequence[MeshObjectData],
     extruder_assignments: Dict[str, str],
     output_path: Path,
+    plate_width_mm: float,
+    plate_height_mm: float,
+    thickness_mm: float,
 ) -> str:
-    object_chunks: List[str] = []
+    assembly_object_id = len(mesh_objects) + 1
+    build_transform = (
+        f'1 0 0 0 1 0 0 0 1 '
+        f'{format_number(plate_width_mm / 2.0)} {format_number(plate_height_mm / 2.0)} {format_number(thickness_mm / 2.0)}'
+    )
+    part_chunks: List[str] = []
     for index, mesh_object in enumerate(mesh_objects, start=1):
-        child_id = 2 * index - 1
-        parent_id = 2 * index
         center_x, center_y, center_z = mesh_center_xyz(mesh_object.vertices)
         extruder = extruder_assignments.get(mesh_object.name, str(index))
-        object_chunks.append(
-            f'  <object id="{parent_id}">\n'
-            f'    <metadata key="name" value={quoteattr(mesh_object.name)}/>\n'
-            f'    <metadata key="extruder" value={quoteattr(extruder)}/>\n'
-            f'    <part id="{child_id}" subtype="normal_part">\n'
+        part_chunks.append(
+            f'    <part id="{index}" subtype="normal_part">\n'
             f'      <metadata key="name" value={quoteattr(mesh_object.name)}/>\n'
             '      <metadata key="matrix" value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>\n'
             f'      <metadata key="source_file" value={quoteattr(str(output_path))}/>\n'
@@ -810,14 +822,37 @@ def build_model_settings(
             f'      <metadata key="source_offset_x" value={quoteattr(format_number(center_x))}/>\n'
             f'      <metadata key="source_offset_y" value={quoteattr(format_number(center_y))}/>\n'
             f'      <metadata key="source_offset_z" value={quoteattr(format_number(center_z))}/>\n'
+            f'      <metadata key="extruder" value={quoteattr(extruder)}/>\n'
             '      <mesh_stat edges_fixed="0" degenerate_facets="0" facets_removed="0" facets_reversed="0" backwards_edges="0"/>\n'
-            '    </part>\n'
-            '  </object>'
+            '    </part>'
         )
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<config>\n'
-        f'{"\n".join(object_chunks)}\n'
+        f'  <object id="{assembly_object_id}">\n'
+        f'    <metadata key="name" value={quoteattr(ASSEMBLY_OBJECT_NAME)}/>\n'
+        '    <metadata key="extruder" value="1"/>\n'
+        f'{"\n".join(part_chunks)}\n'
+        '  </object>\n'
+        '  <plate>\n'
+        '    <metadata key="plater_id" value="1"/>\n'
+        '    <metadata key="plater_name" value=""/>\n'
+        '    <metadata key="locked" value="false"/>\n'
+        '    <metadata key="filament_map_mode" value="Auto For Flush"/>\n'
+        '    <metadata key="filament_maps" value="1 1 1 1"/>\n'
+        '    <metadata key="thumbnail_file" value="Metadata/plate_1.png"/>\n'
+        '    <metadata key="thumbnail_no_light_file" value="Metadata/plate_no_light_1.png"/>\n'
+        '    <metadata key="top_file" value="Metadata/top_1.png"/>\n'
+        '    <metadata key="pick_file" value="Metadata/pick_1.png"/>\n'
+        '    <model_instance>\n'
+        f'      <metadata key="object_id" value="{assembly_object_id}"/>\n'
+        '      <metadata key="instance_id" value="0"/>\n'
+        f'      <metadata key="identify_id" value="{100 + assembly_object_id}"/>\n'
+        '    </model_instance>\n'
+        '  </plate>\n'
+        '  <assemble>\n'
+        f'   <assemble_item object_id="{assembly_object_id}" instance_id="0" transform="{build_transform}" offset="0 0 0" />\n'
+        '  </assemble>\n'
         '</config>\n'
     )
 
@@ -876,12 +911,19 @@ def write_snapmaker_project_3mf(
         output_zip.writestr("3D/_rels/3dmodel.model.rels", build_snapmaker_relationships(centered_meshes))
         output_zip.writestr(
             SNAPMAKER_PROJECT_MARKER,
-            build_model_settings(mesh_objects, extruder_assignments, output_path=output_path),
+            build_model_settings(
+                mesh_objects,
+                extruder_assignments,
+                output_path=output_path,
+                plate_width_mm=plate_width_mm,
+                plate_height_mm=plate_height_mm,
+                thickness_mm=thickness_mm,
+            ),
         )
         for index, mesh_object in enumerate(centered_meshes, start=1):
             output_zip.writestr(
                 child_model_filename(index, mesh_object.name),
-                build_snapmaker_child_model(mesh_object, object_id=(2 * index - 1)),
+                build_snapmaker_child_model(mesh_object),
             )
 
     return [mesh_object.name for mesh_object in mesh_objects]
