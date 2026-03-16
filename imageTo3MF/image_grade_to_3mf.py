@@ -29,6 +29,12 @@ DEFAULT_HEIGHT_MM = 100.0
 DEFAULT_THICKNESS_MM = 1.0
 DEFAULT_LEAD_CAP_HEIGHT_MM = 0.3
 DEFAULT_BLUR_MM = 0.0
+BLUR_PRESETS_MM = {
+    "none": 0.0,
+    "low": 0.5,
+    "medium": 1.0,
+    "strong": 2.0,
+}
 DEFAULT_PLATE_WIDTH_MM = 270.0
 DEFAULT_PLATE_HEIGHT_MM = 270.0
 DEFAULT_SLICER_APP = "Snapmaker Orca"
@@ -121,6 +127,20 @@ def parse_mm_pair(raw: str) -> Tuple[float, float]:
     return tuple(parse_mm_value(part) for part in parts)  # type: ignore[return-value]
 
 
+def parse_blur_value(raw: str) -> float:
+    value = raw.strip().lower()
+    if value in BLUR_PRESETS_MM:
+        return BLUR_PRESETS_MM[value]
+    return parse_mm_value(value)
+
+
+def blur_label(blur_mm: float) -> str:
+    for name, preset_mm in BLUR_PRESETS_MM.items():
+        if math.isclose(blur_mm, preset_mm, abs_tol=1e-9):
+            return name
+    return f"{format_number(blur_mm)}mm"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -164,19 +184,13 @@ def parse_args() -> argparse.Namespace:
         "--thickness",
         type=parse_mm_value,
         default=DEFAULT_THICKNESS_MM,
-        help="Base image thickness in mm. Accepts values like 3 or 3mm.",
+        help="Base image thickness in mm before any lead is added on top.",
     )
     common.add_argument(
-        "--width",
-        type=parse_mm_value,
-        default=DEFAULT_WIDTH_MM,
-        help="Model width in mm. Accepts values like 100 or 100mm.",
-    )
-    common.add_argument(
-        "--height",
-        type=parse_mm_value,
-        default=DEFAULT_HEIGHT_MM,
-        help="Model height in mm. Accepts values like 100 or 100mm.",
+        "--size",
+        "--model-size",
+        default=f"{format_number(DEFAULT_WIDTH_MM)}x{format_number(DEFAULT_HEIGHT_MM)}",
+        help="Model size as WIDTHxHEIGHT in mm.",
     )
     common.add_argument(
         "--resolution",
@@ -190,13 +204,13 @@ def parse_args() -> argparse.Namespace:
         dest="lead_cap_height",
         type=parse_mm_value,
         default=DEFAULT_LEAD_CAP_HEIGHT_MM,
-        help="Lead overlay height in mm printed on top of the image body.",
+        help="Lead overlay height in mm added on top of the base image thickness.",
     )
     advanced.add_argument(
         "--blur",
-        type=parse_mm_value,
-        default=DEFAULT_BLUR_MM,
-        help="Gaussian blur radius in mm before color quantization.",
+        type=parse_blur_value,
+        default="none",
+        help="Blur before color quantization: none, low, medium, strong, or a custom mm value.",
     )
     common.add_argument(
         "--plate-size",
@@ -208,7 +222,19 @@ def parse_args() -> argparse.Namespace:
         dest="lead_thickness",
         type=parse_mm_value,
         default=DEFAULT_LEAD_THICKNESS_MM,
-        help="Black separator thickness in mm.",
+        help="Black separator line width in mm.",
+    )
+    advanced.add_argument(
+        "--width",
+        dest="width_legacy",
+        type=parse_mm_value,
+        help=argparse.SUPPRESS,
+    )
+    advanced.add_argument(
+        "--height",
+        dest="height_legacy",
+        type=parse_mm_value,
+        help=argparse.SUPPRESS,
     )
     advanced.add_argument(
         "--plate-width",
@@ -249,12 +275,16 @@ def parse_args() -> argparse.Namespace:
         "--template",
         "--snapmaker-template",
         dest="snapmaker_template",
-        help=(
-            "Path to a Snapmaker-Orca-style 3MF project whose color and printer "
-            "metadata should be reused."
-        ),
+        help=argparse.SUPPRESS,
     )
     args = parser.parse_args()
+    args.width, args.height = parse_mm_pair(args.size)
+    if args.width_legacy is not None:
+        args.width = args.width_legacy
+    if args.height_legacy is not None:
+        args.height = args.height_legacy
+    args.blur = parse_blur_value(args.blur) if isinstance(args.blur, str) else args.blur
+    args.blur_label = blur_label(args.blur)
     args.plate_width, args.plate_height = parse_mm_pair(args.plate_size)
     if args.plate_width_legacy is not None:
         args.plate_width = args.plate_width_legacy

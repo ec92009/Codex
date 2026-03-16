@@ -1,10 +1,10 @@
 # Image grading to 3MF
 
-Use `uv run python image_grade_to_3mf.py /path/to/image.png --thickness 1mm --width 100mm --height 100mm --resolution 0.25mm --lead-thickness 0.25mm --lead-cap-height 0.3mm --plate-size 270x270` to convert an image into segmented color zones plus black separator lines, export the result as a multi-object `.3mf`, and open it in Snapmaker Orca.
+Use `uv run python image_grade_to_3mf.py /path/to/image.png --thickness 1mm --size 100x100 --resolution 0.25mm --lead-thickness 0.25mm --lead-height 0.3mm --plate-size 270x270` to convert an image into segmented color zones plus black separator lines, export the result as a multi-object `.3mf`, and open it in Snapmaker Orca.
 
 If no image path is passed, the script opens a file picker on macOS.
 
-If a hand-painted Snapmaker Orca project `.3mf` is present in the output folder, the script reuses its saved object-to-color assignments automatically. You can also point to one explicitly with `--snapmaker-template /path/to/template.3mf`.
+If a hand-painted Snapmaker Orca project `.3mf` is present in the output folder, the script reuses its saved object-to-color assignments automatically.
 
 If `--description` is supplied, the default output names use a lowercase filename-safe version of that description. If no description is supplied, the script now tries to infer one locally from the image contents on macOS. For generic source names like `image2.png`, that inferred slug becomes the filename base directly.
 
