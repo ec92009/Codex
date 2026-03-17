@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional
 
-from PySide6.QtCore import ProcessChannelMode, Qt, QProcess, QSize
+from PySide6.QtCore import Qt, QProcess, QSize
 from PySide6.QtGui import QColor, QPixmap, QTextCursor
 from PySide6.QtWidgets import (
     QApplication,
@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QProgressBar,
     QScrollArea,
     QSizePolicy,
     QSplitter,
@@ -320,6 +321,17 @@ class MainWindow(QMainWindow):
         run_buttons_layout.addWidget(self.generate_button, 1)
         run_buttons_layout.addWidget(reveal_button)
         layout.addWidget(run_buttons)
+
+        self.progress_label = QLabel("Idle")
+        self.progress_label.setStyleSheet("color: #715d49; font-weight: 600;")
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 1)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setFixedHeight(10)
+        self.progress_bar.setVisible(False)
+        layout.addWidget(self.progress_label)
+        layout.addWidget(self.progress_bar)
         layout.addStretch(1)
         return panel
 
@@ -391,6 +403,15 @@ class MainWindow(QMainWindow):
                 border: 1px solid #cfbfa7;
                 border-radius: 8px;
                 padding: 6px 8px;
+            }
+            QProgressBar {
+                background: #eadbc8;
+                border: 1px solid #cfbfa7;
+                border-radius: 5px;
+            }
+            QProgressBar::chunk {
+                background: #b56f38;
+                border-radius: 4px;
             }
             QPushButton {
                 background: #b56f38;
@@ -554,13 +575,16 @@ class MainWindow(QMainWindow):
 
         self.log_view.clear()
         self.summary_label.setText("Generating 3MF...")
+        self.progress_label.setText("Generating 3MF...")
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, 0)
         self.generate_button.setEnabled(False)
 
         process = QProcess(self)
         process.setProgram(sys.executable)
         process.setArguments(args)
         process.setWorkingDirectory(str(PROJECT_DIR))
-        process.setProcessChannelMode(ProcessChannelMode.MergedChannels)
+        process.setProcessChannelMode(QProcess.MergedChannels)
         process.readyReadStandardOutput.connect(self._append_process_output)
         process.finished.connect(self._process_finished)
         self.process = process
@@ -590,8 +614,14 @@ class MainWindow(QMainWindow):
             if self.preview_path is not None:
                 summary += f"\nPreview: {self.preview_path}"
             self.summary_label.setText(summary)
+            self.progress_label.setText("Done")
+            self.progress_bar.setRange(0, 1)
+            self.progress_bar.setValue(1)
         else:
             self.summary_label.setText("Generation failed. See the run log for details.")
+            self.progress_label.setText("Failed")
+            self.progress_bar.setRange(0, 1)
+            self.progress_bar.setValue(0)
             QMessageBox.warning(self, "Generation failed", "The export did not complete successfully. See the run log.")
         self.process = None
 
