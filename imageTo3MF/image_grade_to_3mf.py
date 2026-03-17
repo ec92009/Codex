@@ -797,6 +797,171 @@ def boundary_mask(labels: np.ndarray, radius_pixels: int) -> np.ndarray:
     return dilated
 
 
+def extract_boundary_segments(labels: np.ndarray) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
+    height, width = labels.shape
+    segments: List[Tuple[Tuple[float, float], Tuple[float, float]]] = []
+    for y in range(height):
+        for x in range(width - 1):
+            if labels[y, x] != labels[y, x + 1]:
+                segments.append(((x + 1.0, y * 1.0), (x + 1.0, y + 1.0)))
+    for y in range(height - 1):
+        for x in range(width):
+            if labels[y, x] != labels[y + 1, x]:
+                segments.append(((x * 1.0, y + 1.0), (x + 1.0, y + 1.0)))
+    return segments
+
+
+def chain_boundary_segments(
+    segments: Sequence[Tuple[Tuple[float, float], Tuple[float, float]]]
+) -> List[List[Tuple[float, float]]]:
+    adjacency: Dict[Tuple[float, float], List[int]] = {}
+    for index, (start, end) in enumerate(segments):
+        adjacency.setdefault(start, []).append(index)
+        adjacency.setdefault(end, []).append(index)
+
+    used: set[int] = set()
+    polylines: List[List[Tuple[float, float]]] = []
+
+    def walk(start_point: Tuple[float, float], edge_index: int) -> List[Tuple[float, float]]:
+        line = [start_point]
+        current_point = start_point
+        current_edge = edge_index
+        while True:
+            used.add(current_edge)
+            a, b = segments[current_edge]
+            next_point = b if current_point == a else a
+            line.append(next_point)
+            candidates = [idx for idx in adjacency[next_point] if idx not in used]
+            if not candidates:
+                break
+            if len(candidates) == 1:
+                current_edge = candidates[0]
+                current_point = next_point
+                continue
+            straight_edge = None
+            previous_point = line[-2]
+            in_vector = (next_point[0] - previous_point[0], next_point[1] - previous_point[1])
+            for candidate in candidates:
+                c0, c1 = segments[candidate]
+                candidate_point = c1 if next_point == c0 else c0
+                out_vector = (candidate_point[0] - next_point[0], candidate_point[1] - next_point[1])
+                if in_vector == out_vector:
+                    straight_edge = candidate
+                    break
+            current_edge = straight_edge if straight_edge is not None else candidates[0]
+            current_point = next_point
+        return line
+
+    for point, edge_indices in adjacency.items():
+        if len(edge_indices) != 2:
+            for edge_index in edge_indices:
+                if edge_index in used:
+                    continue
+                polylines.append(walk(point, edge_index))
+
+    for edge_index, (start, _end) in enumerate(segments):
+        if edge_index in used:
+            continue
+        polyline = walk(start, edge_index)
+        if len(polyline) > 2 and polyline[0] != polyline[-1]:
+            polyline.append(polyline[0])
+        polylines.append(polyline)
+    return polylines
+
+
+def chaikin_smooth_polyline(points: Sequence[Tuple[float, float]], passes: int = 2) -> List[Tuple[float, float]]:
+    if len(points) < 3:
+        return list(points)
+    closed = points[0] == points[-1]
+    current = list(points[:-1] if closed else points)
+    for _ in range(max(0, passes)):
+        if len(current) < 2:
+            break
+        refined: List[Tuple[float, float]] = []
+        pairs = zip(current, current[1:] + ([current[0]] if closed else []))
+        if not closed:
+            refined.append(current[0])
+        for first, second in pairs:
+            q = (0.75 * first[0] + 0.25 * second[0], 0.75 * first[1] + 0.25 * second[1])
+            r = (0.25 * first[0] + 0.75 * second[0], 0.25 * first[1] + 0.75 * second[1])
+            refined.extend([q, r])
+        if not closed:
+            refined.append(current[-1])
+        current = refined
+    if closed and current:
+        current.append(current[0])
+    return current
+
+
+def stroked_polyline_mesh(
+    points: Sequence[Tuple[float, float]],
+    stroke_width_mm: float,
+    width_mm: float,
+    height_mm: float,
+    z_bottom_mm: float,
+    z_top_mm: float,
+    grid_width: int,
+    grid_height: int,
+) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, int, int]]]:
+    if len(points) < 2:
+        return [], []
+    sx = width_mm / grid_width
+    sy = height_mm / grid_height
+    half_width = stroke_width_mm / 2.0
+
+    vertices: List[Tuple[float, float, float]] = []
+    triangles: List[Tuple[int, int, int]] = []
+
+    def append_box(a: Tuple[float, float], b: Tuple[float, float]) -> None:
+        dx = b[0] - a[0]
+        dy = b[1] - a[1]
+        length = math.hypot(dx, dy)
+        if length <= 1e-6:
+            return
+        nx = -(dy / length) * half_width
+        ny = (dx / length) * half_width
+
+        ax = a[0] * sx
+        ay = height_mm - a[1] * sy
+        bx = b[0] * sx
+        by = height_mm - b[1] * sy
+
+        corners = [
+            (ax + nx, ay - ny),
+            (ax - nx, ay + ny),
+            (bx - nx, by + ny),
+            (bx + nx, by - ny),
+        ]
+        base_index = len(vertices)
+        for x, y in corners:
+            vertices.append((x, y, z_bottom_mm))
+        for x, y in corners:
+            vertices.append((x, y, z_top_mm))
+
+        v0, v1, v2, v3 = base_index, base_index + 1, base_index + 2, base_index + 3
+        v4, v5, v6, v7 = base_index + 4, base_index + 5, base_index + 6, base_index + 7
+        triangles.extend(
+            [
+                (v4, v5, v6),
+                (v4, v6, v7),
+                (v0, v2, v1),
+                (v0, v3, v2),
+                (v0, v4, v7),
+                (v0, v7, v3),
+                (v1, v2, v6),
+                (v1, v6, v5),
+                (v3, v7, v6),
+                (v3, v6, v2),
+                (v0, v1, v5),
+                (v0, v5, v4),
+            ]
+        )
+
+    for first, second in zip(points, points[1:]):
+        append_box(first, second)
+    return vertices, triangles
+
+
 def rgb_to_lab_color(color: Tuple[int, int, int]) -> np.ndarray:
     rgb = np.asarray([[list(color)]], dtype=np.uint8)
     return srgb_to_lab(rgb)[0, 0]
@@ -1013,6 +1178,7 @@ def add_colored_mesh_object(
 
 
 def build_mesh_objects(
+    labels: np.ndarray,
     region_masks: List[np.ndarray],
     palette_recipes: List[Tuple[List[str], Tuple[int, int, int]]],
     material_profiles: Dict[str, MaterialProfile],
@@ -1021,18 +1187,35 @@ def build_mesh_objects(
     height_mm: float,
     thickness_mm: float,
     base_layer_height_mm: float,
+    lead_thickness_mm: float,
     lead_cap_height_mm: float,
 ) -> List[MeshObjectData]:
     objects: List[MeshObjectData] = []
+    grid_height, grid_width = labels.shape
 
     if lead_cap_height_mm > 0:
-        line_vertices, line_triangles = mesh_from_mask(
-            lines_mask,
-            width_mm=width_mm,
-            height_mm=height_mm,
-            z_bottom_mm=thickness_mm,
-            z_top_mm=thickness_mm + lead_cap_height_mm,
-        )
+        lead_polylines = chain_boundary_segments(extract_boundary_segments(labels))
+        line_vertices: List[Tuple[float, float, float]] = []
+        line_triangles: List[Tuple[int, int, int]] = []
+        for polyline in lead_polylines:
+            smoothed = chaikin_smooth_polyline(polyline, passes=2)
+            vertices, triangles = stroked_polyline_mesh(
+                smoothed,
+                stroke_width_mm=lead_thickness_mm,
+                width_mm=width_mm,
+                height_mm=height_mm,
+                z_bottom_mm=thickness_mm,
+                z_top_mm=thickness_mm + lead_cap_height_mm,
+                grid_width=grid_width,
+                grid_height=grid_height,
+            )
+            if not triangles:
+                continue
+            base_index = len(line_vertices)
+            line_vertices.extend(vertices)
+            line_triangles.extend(
+                (a + base_index, b + base_index, c + base_index) for a, b, c in triangles
+            )
     else:
         line_vertices, line_triangles = [], []
 
@@ -1067,7 +1250,7 @@ def build_mesh_objects(
                         f"Color {nuance_index + 1} - Nuance {nuance_index:02d} - "
                         f"{material_slot_label(slot)}{layer_index}"
                     ),
-                    color=material_profiles[slot].rgb,
+                    color=mixed_color,
                     vertices=vertices,
                     triangles=triangles,
                     preferred_slot=slot,
@@ -1638,6 +1821,7 @@ def main() -> int:
     preview.save(preview_path)
 
     mesh_objects = build_mesh_objects(
+        labels=labels,
         region_masks=region_masks,
         palette_recipes=palette_recipes,
         material_profiles=material_profiles,
@@ -1646,6 +1830,7 @@ def main() -> int:
         height_mm=args.height,
         thickness_mm=args.thickness,
         base_layer_height_mm=args.layer_height,
+        lead_thickness_mm=args.lead_thickness,
         lead_cap_height_mm=args.lead_cap_height,
     )
     template_path = find_snapmaker_template(args.snapmaker_template, output_path=output_path)
