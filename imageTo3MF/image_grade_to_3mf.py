@@ -956,6 +956,57 @@ def simplify_polyline(
     return simplified
 
 
+def filter_polyline_points(
+    points: Sequence[Tuple[float, float]],
+    min_distance: float,
+) -> List[Tuple[float, float]]:
+    if len(points) <= 2:
+        return list(points)
+
+    closed = points[0] == points[-1]
+    working = list(points[:-1] if closed else points)
+    if not working:
+        return []
+
+    filtered = [working[0]]
+    for point in working[1:]:
+        if math.hypot(point[0] - filtered[-1][0], point[1] - filtered[-1][1]) >= min_distance:
+            filtered.append(point)
+
+    if len(filtered) >= 3:
+        changed = True
+        while changed and len(filtered) >= 3:
+            changed = False
+            result = [filtered[0]]
+            for index in range(1, len(filtered) - 1):
+                prev_point = result[-1]
+                point = filtered[index]
+                next_point = filtered[index + 1]
+                ax = point[0] - prev_point[0]
+                ay = point[1] - prev_point[1]
+                bx = next_point[0] - point[0]
+                by = next_point[1] - point[1]
+                length_a = math.hypot(ax, ay)
+                length_b = math.hypot(bx, by)
+                if length_a < 1e-6 or length_b < 1e-6:
+                    changed = True
+                    continue
+                cross = abs(ax * by - ay * bx) / (length_a * length_b)
+                if cross < 0.08:
+                    changed = True
+                    continue
+                result.append(point)
+            result.append(filtered[-1])
+            filtered = result
+
+    if closed and filtered:
+        if len(filtered) >= 2 and math.hypot(filtered[0][0] - filtered[-1][0], filtered[0][1] - filtered[-1][1]) < min_distance:
+            filtered[-1] = filtered[0]
+        else:
+            filtered.append(filtered[0])
+    return filtered
+
+
 def stroked_polyline_mesh(
     points: Sequence[Tuple[float, float]],
     stroke_width_mm: float,
@@ -1420,9 +1471,13 @@ def build_mesh_objects(
         lead_polylines = chain_boundary_segments(extract_boundary_segments(labels))
         line_vertices: List[Tuple[float, float, float]] = []
         line_triangles: List[Tuple[int, int, int]] = []
+        cell_mm = min(width_mm / grid_width, height_mm / grid_height)
+        simplify_tolerance = max(1.0, lead_thickness_mm / max(cell_mm, 1e-6)) * 1.2
+        min_point_distance = max(0.75, lead_thickness_mm / max(cell_mm, 1e-6)) * 0.8
         for polyline in lead_polylines:
-            simplified = simplify_polyline(polyline, tolerance=0.6)
-            smoothed = chaikin_smooth_polyline(simplified, passes=3)
+            filtered = filter_polyline_points(polyline, min_distance=min_point_distance)
+            simplified = simplify_polyline(filtered, tolerance=simplify_tolerance)
+            smoothed = chaikin_smooth_polyline(simplified, passes=2)
             vertices, triangles = stroked_polyline_mesh(
                 smoothed,
                 stroke_width_mm=lead_thickness_mm,
