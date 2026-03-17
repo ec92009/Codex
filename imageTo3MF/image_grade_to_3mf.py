@@ -814,19 +814,43 @@ def simulate_stack_rgb(
     return int(mixed[0]), int(mixed[1]), int(mixed[2])
 
 
+def recipe_penalty(slots: Sequence[str]) -> float:
+    counts: Dict[str, int] = {}
+    for slot in slots:
+        counts[slot] = counts.get(slot, 0) + 1
+    unique_count = len(counts)
+    largest_share = max(counts.values()) / max(1, len(slots))
+
+    penalty = 0.0
+    if unique_count == 1:
+        penalty += 450.0
+    elif unique_count == 2:
+        penalty += 90.0
+    elif unique_count == 3:
+        penalty += 18.0
+
+    if largest_share >= 0.999:
+        penalty += 220.0
+    elif largest_share >= 0.75:
+        penalty += 35.0
+    elif largest_share >= 0.50:
+        penalty += 8.0
+    return penalty
+
+
 def build_palette_recipes(
     region_colors: np.ndarray,
     layer_count: int,
     material_profiles: Dict[str, MaterialProfile],
     layer_height_mm: float,
 ) -> List[Tuple[List[str], Tuple[int, int, int]]]:
-    candidates: List[Tuple[List[str], Tuple[int, int, int], np.ndarray]] = []
+    candidates: List[Tuple[List[str], Tuple[int, int, int], np.ndarray, float]] = []
     base_slot_sequence = ["1", "2", "3", "4"]
     for counts in enumerate_layer_count_vectors(layer_count, 4):
         slots = expand_layer_slots(counts, base_slot_sequence)
         mixed_rgb = simulate_stack_rgb(slots, material_profiles, layer_height_mm=layer_height_mm)
         mixed_lab = rgb_to_lab_color(mixed_rgb)
-        candidates.append((slots, mixed_rgb, mixed_lab))
+        candidates.append((slots, mixed_rgb, mixed_lab, recipe_penalty(slots)))
 
     used_indices: set[int] = set()
     assignments: List[Tuple[List[str], Tuple[int, int, int]]] = []
@@ -834,17 +858,17 @@ def build_palette_recipes(
         target_lab = rgb_to_lab_color((int(region_color[0]), int(region_color[1]), int(region_color[2])))
         best_index = None
         best_distance = None
-        for candidate_index, (_slots, _rgb, candidate_lab) in enumerate(candidates):
+        for candidate_index, (_slots, _rgb, candidate_lab, candidate_penalty) in enumerate(candidates):
             if candidate_index in used_indices:
                 continue
-            distance = float(np.sum((target_lab - candidate_lab) ** 2))
+            distance = float(np.sum((target_lab - candidate_lab) ** 2)) + candidate_penalty
             if best_distance is None or distance < best_distance:
                 best_distance = distance
                 best_index = candidate_index
         if best_index is None:
             raise RuntimeError("Failed to assign a unique CMYW palette recipe")
         used_indices.add(best_index)
-        slots, mixed_rgb, _lab = candidates[best_index]
+        slots, mixed_rgb, _lab, _penalty = candidates[best_index]
         assignments.append((slots, mixed_rgb))
     return assignments
 

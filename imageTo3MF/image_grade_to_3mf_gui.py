@@ -28,7 +28,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QProgressBar,
-    QScrollArea,
     QSizePolicy,
     QSplitter,
     QTextEdit,
@@ -171,7 +170,7 @@ class MainWindow(QMainWindow):
         self.material_rows: Dict[str, MaterialRow] = {}
 
         self.setWindowTitle("Image to 3MF Studio")
-        self.resize(1520, 920)
+        self.resize(1420, 860)
         self._build_ui()
         self._apply_style()
         self.reset_materials()
@@ -322,23 +321,13 @@ class MainWindow(QMainWindow):
         run_buttons_layout.addWidget(reveal_button)
         layout.addWidget(run_buttons)
 
-        self.progress_label = QLabel("Idle")
-        self.progress_label.setStyleSheet("color: #715d49; font-weight: 600;")
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 1)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setFixedHeight(10)
-        self.progress_bar.setVisible(False)
-        layout.addWidget(self.progress_label)
-        layout.addWidget(self.progress_bar)
         layout.addStretch(1)
         return panel
 
     def _build_preview_panel(self) -> QWidget:
         panel = QWidget()
         layout = QVBoxLayout(panel)
-        layout.setSpacing(12)
+        layout.setSpacing(10)
 
         self.original_preview = ImagePreview("Original image preview")
         self.generated_preview = ImagePreview("Generated preview will appear here")
@@ -351,7 +340,21 @@ class MainWindow(QMainWindow):
         generated_layout = QVBoxLayout(generated_group)
         generated_layout.addWidget(self.generated_preview)
 
+        progress_group = QGroupBox("Export Status")
+        progress_layout = QVBoxLayout(progress_group)
+        self.progress_label = QLabel("Idle")
+        self.progress_label.setStyleSheet("color: #715d49; font-weight: 600;")
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 1)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setFixedHeight(10)
+        self.progress_bar.setVisible(False)
+        progress_layout.addWidget(self.progress_label)
+        progress_layout.addWidget(self.progress_bar)
+
         layout.addWidget(original_group, 1)
+        layout.addWidget(progress_group, 0)
         layout.addWidget(generated_group, 1)
         return panel
 
