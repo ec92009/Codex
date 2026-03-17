@@ -975,53 +975,120 @@ def stroked_polyline_mesh(
     vertices: List[Tuple[float, float, float]] = []
     triangles: List[Tuple[int, int, int]] = []
 
-    def append_box(a: Tuple[float, float], b: Tuple[float, float]) -> None:
-        dx = b[0] - a[0]
-        dy = b[1] - a[1]
+    closed = len(points) > 2 and points[0] == points[-1]
+    control_points = list(points[:-1] if closed else points)
+    if len(control_points) < 2:
+        return [], []
+
+    xy_points: List[Tuple[float, float]] = [
+        (point[0] * sx, height_mm - point[1] * sy)
+        for point in control_points
+    ]
+
+    def segment_direction(first: Tuple[float, float], second: Tuple[float, float]) -> Tuple[float, float]:
+        dx = second[0] - first[0]
+        dy = second[1] - first[1]
         length = math.hypot(dx, dy)
         if length <= 1e-6:
-            return
-        nx = -(dy / length) * half_width
-        ny = (dx / length) * half_width
+            return (0.0, 0.0)
+        return (dx / length, dy / length)
 
-        ax = a[0] * sx
-        ay = height_mm - a[1] * sy
-        bx = b[0] * sx
-        by = height_mm - b[1] * sy
+    directions: List[Tuple[float, float]] = []
+    limit = len(xy_points) if closed else len(xy_points) - 1
+    for index in range(limit):
+        first = xy_points[index]
+        second = xy_points[(index + 1) % len(xy_points)]
+        directions.append(segment_direction(first, second))
 
-        corners = [
-            (ax + nx, ay - ny),
-            (ax - nx, ay + ny),
-            (bx - nx, by + ny),
-            (bx + nx, by - ny),
-        ]
-        base_index = len(vertices)
-        for x, y in corners:
-            vertices.append((x, y, z_bottom_mm))
-        for x, y in corners:
-            vertices.append((x, y, z_top_mm))
+    if not directions:
+        return [], []
 
-        v0, v1, v2, v3 = base_index, base_index + 1, base_index + 2, base_index + 3
-        v4, v5, v6, v7 = base_index + 4, base_index + 5, base_index + 6, base_index + 7
+    left_offsets: List[Tuple[float, float]] = []
+    right_offsets: List[Tuple[float, float]] = []
+    miter_limit = 2.5
+
+    for index, point in enumerate(xy_points):
+        if closed:
+            prev_dir = directions[(index - 1) % len(directions)]
+            next_dir = directions[index % len(directions)]
+        else:
+            prev_dir = directions[max(0, index - 1)]
+            next_dir = directions[min(index, len(directions) - 1)]
+
+        tangent = (prev_dir[0] + next_dir[0], prev_dir[1] + next_dir[1])
+        tangent_length = math.hypot(tangent[0], tangent[1])
+        if tangent_length <= 1e-6:
+            tangent = next_dir if math.hypot(*next_dir) > 1e-6 else prev_dir
+            tangent_length = math.hypot(tangent[0], tangent[1])
+        if tangent_length <= 1e-6:
+            tangent = (1.0, 0.0)
+            tangent_length = 1.0
+        tangent = (tangent[0] / tangent_length, tangent[1] / tangent_length)
+        normal = (-tangent[1], tangent[0])
+
+        prev_normal = (-prev_dir[1], prev_dir[0])
+        denom = normal[0] * prev_normal[0] + normal[1] * prev_normal[1]
+        if abs(denom) <= 1e-6:
+            scale = 1.0
+        else:
+            scale = min(miter_limit, 1.0 / abs(denom))
+        offset = (normal[0] * half_width * scale, normal[1] * half_width * scale)
+        left_offsets.append((point[0] + offset[0], point[1] + offset[1]))
+        right_offsets.append((point[0] - offset[0], point[1] - offset[1]))
+
+    base_index = 0
+    for x, y in left_offsets:
+        vertices.append((x, y, z_bottom_mm))
+    for x, y in right_offsets:
+        vertices.append((x, y, z_bottom_mm))
+    for x, y in left_offsets:
+        vertices.append((x, y, z_top_mm))
+    for x, y in right_offsets:
+        vertices.append((x, y, z_top_mm))
+
+    count = len(xy_points)
+    segment_count = count if closed else count - 1
+    for index in range(segment_count):
+        next_index = (index + 1) % count
+        lb0 = base_index + index
+        lb1 = base_index + next_index
+        rb0 = base_index + count + index
+        rb1 = base_index + count + next_index
+        lt0 = base_index + 2 * count + index
+        lt1 = base_index + 2 * count + next_index
+        rt0 = base_index + 3 * count + index
+        rt1 = base_index + 3 * count + next_index
+
         triangles.extend(
             [
-                (v4, v5, v6),
-                (v4, v6, v7),
-                (v0, v2, v1),
-                (v0, v3, v2),
-                (v0, v4, v7),
-                (v0, v7, v3),
-                (v1, v2, v6),
-                (v1, v6, v5),
-                (v3, v7, v6),
-                (v3, v6, v2),
-                (v0, v1, v5),
-                (v0, v5, v4),
+                (lt0, rt0, rt1),
+                (lt0, rt1, lt1),
+                (lb0, rb1, rb0),
+                (lb0, lb1, rb1),
+                (lb0, lt1, lb1),
+                (lb0, lt0, lt1),
+                (rb0, rb1, rt1),
+                (rb0, rt1, rt0),
             ]
         )
 
-    for first, second in zip(points, points[1:]):
-        append_box(first, second)
+    if not closed:
+        start_lb = base_index
+        start_rb = base_index + count
+        start_lt = base_index + 2 * count
+        start_rt = base_index + 3 * count
+        end_lb = base_index + count - 1
+        end_rb = base_index + 2 * count - 1
+        end_lt = base_index + 3 * count - 1
+        end_rt = base_index + 4 * count - 1
+        triangles.extend(
+            [
+                (start_lb, start_rb, start_rt),
+                (start_lb, start_rt, start_lt),
+                (end_lb, end_rt, end_rb),
+                (end_lb, end_lt, end_rt),
+            ]
+        )
     return vertices, triangles
 
 
@@ -1762,6 +1829,8 @@ def build_project_settings_with_base_colors(
     settings["default_filament_colour"] = [""] * len(ordered_hex)
     settings["first_layer_print_height"] = format_number(base_layer_height_mm)
     settings["layer_height"] = format_number(base_layer_height_mm)
+    settings["initial_layer_print_height"] = format_number(base_layer_height_mm)
+    settings["print_settings_id"] = f"{base_layer_height_mm:.2f} Custom @Snapmaker U1 (0.4 nozzle)"
     mixed_filament_entries: List[str] = []
     seen_entries: set[str] = set()
     for recipe in palette_recipes:
