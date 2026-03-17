@@ -112,6 +112,14 @@ class MeshObjectData:
 
 
 @dataclass(frozen=True)
+class PaletteRecipe:
+    layer_slots: List[str]
+    mixed_color: Tuple[int, int, int]
+    display_slot: str
+    definition: Optional[str]
+
+
+@dataclass(frozen=True)
 class MaterialProfile:
     slot: str
     name: str
@@ -1024,27 +1032,87 @@ def recipe_penalty(slots: Sequence[str]) -> float:
     return penalty
 
 
+def distribute_secondary_layers(
+    primary_slot: str,
+    secondary_slot: str,
+    secondary_count: int,
+    layer_count: int,
+) -> List[str]:
+    if secondary_count <= 0:
+        return [primary_slot] * layer_count
+    if secondary_count >= layer_count:
+        return [secondary_slot] * layer_count
+
+    slots: List[str] = []
+    used_secondary = 0
+    for layer_index in range(layer_count):
+        target_secondary = round((layer_index + 1) * secondary_count / layer_count)
+        if target_secondary > used_secondary:
+            slots.append(secondary_slot)
+            used_secondary += 1
+        else:
+            slots.append(primary_slot)
+    return slots
+
+
+def build_mixed_filament_definition(
+    primary_slot: str,
+    secondary_slot: str,
+    secondary_percent: int,
+    display_slot: str,
+) -> str:
+    if secondary_percent == 50:
+        return f"{primary_slot},{secondary_slot},1,0,50,0,g,w,m2,d0,o1,u{display_slot}"
+    return f"{primary_slot},{secondary_slot},1,1,{secondary_percent},0,g,w,m2,d0,o0,u{display_slot}"
+
+
 def build_palette_recipes(
     region_colors: np.ndarray,
     layer_count: int,
     material_profiles: Dict[str, MaterialProfile],
     layer_height_mm: float,
-) -> List[Tuple[List[str], Tuple[int, int, int]]]:
-    candidates: List[Tuple[List[str], Tuple[int, int, int], np.ndarray, float]] = []
-    base_slot_sequence = ["1", "2", "3", "4"]
-    for counts in enumerate_layer_count_vectors(layer_count, 4):
-        slots = expand_layer_slots(counts, base_slot_sequence)
+) -> List[PaletteRecipe]:
+    candidates: List[Tuple[List[str], Tuple[int, int, int], np.ndarray, float, Optional[str], Optional[str], Optional[int]]] = []
+
+    for slot in BASE_SLOT_SEQUENCE:
+        slots = [slot] * layer_count
         mixed_rgb = simulate_stack_rgb(slots, material_profiles, layer_height_mm=layer_height_mm)
         mixed_lab = rgb_to_lab_color(mixed_rgb)
-        candidates.append((slots, mixed_rgb, mixed_lab, recipe_penalty(slots)))
+        candidates.append((slots, mixed_rgb, mixed_lab, recipe_penalty(slots), None, None, None))
+
+    for first_index, primary_slot in enumerate(BASE_SLOT_SEQUENCE):
+        for secondary_slot in BASE_SLOT_SEQUENCE[first_index + 1 :]:
+            for secondary_count in range(1, layer_count):
+                slots = distribute_secondary_layers(
+                    primary_slot=primary_slot,
+                    secondary_slot=secondary_slot,
+                    secondary_count=secondary_count,
+                    layer_count=layer_count,
+                )
+                mixed_rgb = simulate_stack_rgb(slots, material_profiles, layer_height_mm=layer_height_mm)
+                mixed_lab = rgb_to_lab_color(mixed_rgb)
+                secondary_percent = int(round(100.0 * secondary_count / layer_count))
+                candidates.append(
+                    (
+                        slots,
+                        mixed_rgb,
+                        mixed_lab,
+                        recipe_penalty(slots),
+                        primary_slot,
+                        secondary_slot,
+                        secondary_percent,
+                    )
+                )
 
     used_indices: set[int] = set()
-    assignments: List[Tuple[List[str], Tuple[int, int, int]]] = []
+    chosen_candidates: List[
+        Tuple[List[str], Tuple[int, int, int], np.ndarray, float, Optional[str], Optional[str], Optional[int]]
+    ] = []
     for region_color in region_colors:
         target_lab = rgb_to_lab_color((int(region_color[0]), int(region_color[1]), int(region_color[2])))
-        best_index = None
-        best_distance = None
-        for candidate_index, (_slots, _rgb, candidate_lab, candidate_penalty) in enumerate(candidates):
+        best_index: Optional[int] = None
+        best_distance: Optional[float] = None
+        for candidate_index, (_slots, _rgb, candidate_lab, candidate_penalty, _primary, _secondary, _percent) in enumerate(candidates):
             if candidate_index in used_indices:
                 continue
             distance = float(np.sum((target_lab - candidate_lab) ** 2)) + candidate_penalty
@@ -1054,8 +1122,42 @@ def build_palette_recipes(
         if best_index is None:
             raise RuntimeError("Failed to assign a unique CMYW palette recipe")
         used_indices.add(best_index)
-        slots, mixed_rgb, _lab, _penalty = candidates[best_index]
-        assignments.append((slots, mixed_rgb))
+        chosen_candidates.append(candidates[best_index])
+
+    display_slot_map: Dict[Tuple[str, str, int], str] = {}
+    next_display_slot = len(material_profiles) + 1
+    assignments: List[PaletteRecipe] = []
+    for slots, mixed_rgb, _lab, _penalty, primary_slot, secondary_slot, secondary_percent in chosen_candidates:
+        if primary_slot is None or secondary_slot is None or secondary_percent is None:
+            assignments.append(
+                PaletteRecipe(
+                    layer_slots=slots,
+                    mixed_color=mixed_rgb,
+                    display_slot=slots[0],
+                    definition=None,
+                )
+            )
+            continue
+
+        key = (primary_slot, secondary_slot, secondary_percent)
+        display_slot = display_slot_map.get(key)
+        if display_slot is None:
+            display_slot = str(next_display_slot)
+            display_slot_map[key] = display_slot
+            next_display_slot += 1
+        assignments.append(
+            PaletteRecipe(
+                layer_slots=slots,
+                mixed_color=mixed_rgb,
+                display_slot=display_slot,
+                definition=build_mixed_filament_definition(
+                    primary_slot=primary_slot,
+                    secondary_slot=secondary_slot,
+                    secondary_percent=secondary_percent,
+                    display_slot=display_slot,
+                ),
+            )
+        )
     return assignments
 
 
@@ -1180,13 +1282,12 @@ def add_colored_mesh_object(
 def build_mesh_objects(
     labels: np.ndarray,
     region_masks: List[np.ndarray],
-    palette_recipes: List[Tuple[List[str], Tuple[int, int, int]]],
+    palette_recipes: List[PaletteRecipe],
     material_profiles: Dict[str, MaterialProfile],
     lines_mask: np.ndarray,
     width_mm: float,
     height_mm: float,
     thickness_mm: float,
-    base_layer_height_mm: float,
     lead_thickness_mm: float,
     lead_cap_height_mm: float,
 ) -> List[MeshObjectData]:
@@ -1231,31 +1332,24 @@ def build_mesh_objects(
         )
 
     for nuance_index, (mask, recipe) in enumerate(zip(region_masks, palette_recipes), start=1):
-        layer_slots, mixed_color = recipe
-        for layer_index, slot in enumerate(layer_slots, start=1):
-            z_bottom_mm = base_layer_height_mm * (layer_index - 1)
-            z_top_mm = base_layer_height_mm * layer_index
-            vertices, triangles = mesh_from_mask(
-                mask,
-                width_mm=width_mm,
-                height_mm=height_mm,
-                z_bottom_mm=z_bottom_mm,
-                z_top_mm=z_top_mm,
+        vertices, triangles = mesh_from_mask(
+            mask,
+            width_mm=width_mm,
+            height_mm=height_mm,
+            z_bottom_mm=0.0,
+            z_top_mm=thickness_mm,
+        )
+        if not triangles:
+            continue
+        objects.append(
+            MeshObjectData(
+                name=f"Color {nuance_index + 1} - Nuance {nuance_index:02d}",
+                color=recipe.mixed_color,
+                vertices=vertices,
+                triangles=triangles,
+                preferred_slot=recipe.display_slot,
             )
-            if not triangles:
-                continue
-            objects.append(
-                MeshObjectData(
-                    name=(
-                        f"Color {nuance_index + 1} - Nuance {nuance_index:02d} - "
-                        f"{material_slot_label(slot)}{layer_index}"
-                    ),
-                    color=mixed_color,
-                    vertices=vertices,
-                    triangles=triangles,
-                    preferred_slot=slot,
-                )
-            )
+        )
     return objects
 
 
@@ -1602,6 +1696,7 @@ def build_project_settings_with_base_colors(
     template_zip: zipfile.ZipFile,
     base_layer_height_mm: float,
     material_profiles: Dict[str, MaterialProfile],
+    palette_recipes: Sequence[PaletteRecipe],
 ) -> str:
     raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
     settings = json.loads(raw)
@@ -1611,19 +1706,18 @@ def build_project_settings_with_base_colors(
     settings["default_filament_colour"] = [""] * len(ordered_hex)
     settings["first_layer_print_height"] = format_number(base_layer_height_mm)
     settings["layer_height"] = format_number(base_layer_height_mm)
-    mixed_filament_entries = [
-        "1,5,1,0,50,0,g,w,m2,d0,o1,u72",
-        "2,5,1,0,50,0,g,w,m2,d0,o1,u73",
-        "3,5,1,0,50,0,g,w,m2,d0,o1,u74",
-        "4,5,1,0,50,0,g,w,m2,d0,o1,u75",
-    ]
-    existing_mixed = settings.get("mixed_filament_definitions")
-    if isinstance(existing_mixed, str):
-        existing_entries = [entry for entry in existing_mixed.split(";") if entry]
-        for entry in mixed_filament_entries:
-            if entry not in existing_entries:
-                existing_entries.append(entry)
-        settings["mixed_filament_definitions"] = ";".join(existing_entries)
+    mixed_filament_entries: List[str] = []
+    seen_entries: set[str] = set()
+    for recipe in palette_recipes:
+        if recipe.definition and recipe.definition not in seen_entries:
+            mixed_filament_entries.append(recipe.definition)
+            seen_entries.add(recipe.definition)
+    for base_slot in BASE_SLOT_SEQUENCE:
+        entry = build_mixed_filament_definition(base_slot, LEAD_FILAMENT_SLOT, 50, str(70 + int(base_slot)))
+        if entry not in seen_entries:
+            mixed_filament_entries.append(entry)
+            seen_entries.add(entry)
+    settings["mixed_filament_definitions"] = ";".join(mixed_filament_entries)
     return json.dumps(settings, indent=4, ensure_ascii=True) + "\n"
 
 
@@ -1662,6 +1756,7 @@ def write_snapmaker_project_3mf(
     plate_width_mm: float,
     plate_height_mm: float,
     material_profiles: Dict[str, MaterialProfile],
+    palette_recipes: Sequence[PaletteRecipe],
 ) -> List[str]:
     extruder_assignments = build_color_slot_assignments(
         mesh_objects,
@@ -1724,6 +1819,7 @@ def write_snapmaker_project_3mf(
                 template_zip,
                 base_layer_height_mm=base_layer_height_mm,
                 material_profiles=material_profiles,
+                palette_recipes=palette_recipes,
             ),
         )
         output_zip.writestr(
@@ -1816,7 +1912,7 @@ def main() -> int:
         material_profiles=material_profiles,
         layer_height_mm=args.layer_height,
     )
-    preview_colors = np.asarray([recipe_color for _slots, recipe_color in palette_recipes], dtype=np.uint8)
+    preview_colors = np.asarray([recipe.mixed_color for recipe in palette_recipes], dtype=np.uint8)
     preview = build_preview(labels, preview_colors, lines)
     preview.save(preview_path)
 
@@ -1829,7 +1925,6 @@ def main() -> int:
         width_mm=args.width,
         height_mm=args.height,
         thickness_mm=args.thickness,
-        base_layer_height_mm=args.layer_height,
         lead_thickness_mm=args.lead_thickness,
         lead_cap_height_mm=args.lead_cap_height,
     )
@@ -1847,6 +1942,7 @@ def main() -> int:
             plate_width_mm=args.plate_width,
             plate_height_mm=args.plate_height,
             material_profiles=material_profiles,
+            palette_recipes=palette_recipes,
         )
     else:
         built_object_names = write_plain_3mf(output_path=output_path, mesh_objects=mesh_objects)
@@ -1884,17 +1980,18 @@ def main() -> int:
     )
     for name in built_object_names:
         print(f"  - {name}")
-    for nuance_index, (slots, mixed_color) in enumerate(palette_recipes, start=1):
-        slot_label = "".join(material_profiles[slot].name[:1].upper() for slot in slots)
+    for nuance_index, recipe in enumerate(palette_recipes, start=1):
+        slot_label = "".join(material_profiles[slot].name[:1].upper() for slot in recipe.layer_slots)
         print(
             f"  Palette {nuance_index:02d}: {slot_label} -> "
-            f"rgb({mixed_color[0]},{mixed_color[1]},{mixed_color[2]})"
+            f"rgb({recipe.mixed_color[0]},{recipe.mixed_color[1]},{recipe.mixed_color[2]})"
+            f" via slot {recipe.display_slot}"
         )
 
     if args.num_nuances == 10:
         print(
-            f"Note: each nuance is now built from {args.base_layers} stacked material slices using "
-            "the active TD-aware material model, plus the black lead cap on slot 5."
+            "Note: each nuance now exports as one object assigned to its closest TD-aware palette recipe, "
+            "with the black lead cap remaining on slot 5."
         )
     if not args.no_open and not opened:
         print(
