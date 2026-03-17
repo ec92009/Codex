@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional
 
-from PySide6.QtCore import Qt, QProcess, QSize
+from PySide6.QtCore import Qt, QProcess, QSize, QTimer
 from PySide6.QtGui import QColor, QPixmap, QTextCursor
 from PySide6.QtWidgets import (
     QApplication,
@@ -49,7 +49,7 @@ class ImagePreview(QLabel):
         super().__init__()
         self._pixmap: Optional[QPixmap] = None
         self.setAlignment(Qt.AlignCenter)
-        self.setMinimumSize(QSize(280, 280))
+        self.setMinimumSize(QSize(220, 220))
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setFrameShape(QFrame.StyledPanel)
         self.setStyleSheet(
@@ -170,10 +170,38 @@ class MainWindow(QMainWindow):
         self.material_rows: Dict[str, MaterialRow] = {}
 
         self.setWindowTitle("Image to 3MF Studio")
-        self.resize(1420, 860)
         self._build_ui()
         self._apply_style()
         self.reset_materials()
+        self._apply_initial_geometry()
+
+    def _apply_initial_geometry(self) -> None:
+        screen = QApplication.primaryScreen()
+        if screen is None:
+            self.resize(1260, 640)
+            return
+        available = screen.availableGeometry()
+        width = min(1320, max(1080, int(available.width() * 0.88)))
+        height = min(660, max(560, int(available.height() * 0.72)))
+        self.resize(width, height)
+        frame = self.frameGeometry()
+        frame.moveCenter(available.center())
+        self.move(frame.topLeft())
+
+    def showEvent(self, event) -> None:  # type: ignore[override]
+        super().showEvent(event)
+        QTimer.singleShot(0, self._recenter_on_screen)
+
+    def _recenter_on_screen(self) -> None:
+        screen = self.screen() or QApplication.primaryScreen()
+        if screen is None:
+            return
+        available = screen.availableGeometry()
+        frame = self.frameGeometry()
+        frame.moveCenter(available.center())
+        top_left = frame.topLeft()
+        top_left.setY(max(available.top() + 20, top_left.y()))
+        self.move(top_left)
 
     def _build_ui(self) -> None:
         root = QWidget()
@@ -194,15 +222,15 @@ class MainWindow(QMainWindow):
         splitter = QSplitter(Qt.Horizontal)
         splitter.setChildrenCollapsible(False)
 
-        splitter.addWidget(self._build_controls_panel())
+        splitter.addWidget(self._build_left_panel())
         splitter.addWidget(self._build_preview_panel())
-        splitter.addWidget(self._build_log_panel())
+        splitter.addWidget(self._build_right_panel())
         splitter.setSizes([420, 560, 420])
 
         root_layout.addWidget(splitter, 1)
         self.setCentralWidget(root)
 
-    def _build_controls_panel(self) -> QWidget:
+    def _build_left_panel(self) -> QWidget:
         panel = QWidget()
         layout = QVBoxLayout(panel)
         layout.setSpacing(12)
@@ -245,7 +273,12 @@ class MainWindow(QMainWindow):
         self.size_edit = QLineEdit("100x100")
         self.plate_size_edit = QLineEdit("270x270")
         self.resolution_spin = self._make_mm_spin(0.01, 5.0, engine.DEFAULT_RESOLUTION_MM, 0.05)
-        self.thickness_spin = self._make_mm_spin(0.1, 20.0, engine.DEFAULT_THICKNESS_MM, 0.1)
+        self.layer_height_spin = self._make_mm_spin(0.01, 5.0, engine.DEFAULT_BASE_LAYER_HEIGHT_MM, 0.05)
+        self.base_layers_spin = QDoubleSpinBox()
+        self.base_layers_spin.setRange(1, 99)
+        self.base_layers_spin.setDecimals(0)
+        self.base_layers_spin.setValue(engine.DEFAULT_BASE_LAYER_COUNT)
+        self.base_layers_spin.setSingleStep(1)
         self.lead_height_spin = self._make_mm_spin(0.0, 10.0, engine.DEFAULT_LEAD_CAP_HEIGHT_MM, 0.05)
         self.lead_thickness_spin = self._make_mm_spin(0.01, 10.0, engine.DEFAULT_LEAD_THICKNESS_MM, 0.05)
         self.seed_spin = QDoubleSpinBox()
@@ -263,51 +296,24 @@ class MainWindow(QMainWindow):
         settings_grid.addWidget(self.plate_size_edit, 1, 1)
         settings_grid.addWidget(QLabel("Resolution"), 2, 0)
         settings_grid.addWidget(self.resolution_spin, 2, 1)
-        settings_grid.addWidget(QLabel("Base thickness"), 3, 0)
-        settings_grid.addWidget(self.thickness_spin, 3, 1)
-        settings_grid.addWidget(QLabel("Lead height"), 4, 0)
-        settings_grid.addWidget(self.lead_height_spin, 4, 1)
-        settings_grid.addWidget(QLabel("Lead thickness"), 5, 0)
-        settings_grid.addWidget(self.lead_thickness_spin, 5, 1)
-        settings_grid.addWidget(QLabel("Blur"), 6, 0)
-        settings_grid.addWidget(self.blur_combo, 6, 1)
-        settings_grid.addWidget(QLabel("Seed"), 7, 0)
-        settings_grid.addWidget(self.seed_spin, 7, 1)
+        settings_grid.addWidget(QLabel("Layer height"), 3, 0)
+        settings_grid.addWidget(self.layer_height_spin, 3, 1)
+        settings_grid.addWidget(QLabel("Base layers"), 4, 0)
+        settings_grid.addWidget(self.base_layers_spin, 4, 1)
+        settings_grid.addWidget(QLabel("Lead layer height"), 5, 0)
+        settings_grid.addWidget(self.lead_height_spin, 5, 1)
+        settings_grid.addWidget(QLabel("Lead thickness"), 6, 0)
+        settings_grid.addWidget(self.lead_thickness_spin, 6, 1)
+        settings_grid.addWidget(QLabel("Blur"), 7, 0)
+        settings_grid.addWidget(self.blur_combo, 7, 1)
+        settings_grid.addWidget(QLabel("Seed"), 8, 0)
+        settings_grid.addWidget(self.seed_spin, 8, 1)
 
         self.open_orca_checkbox = QCheckBox("Open result in Snapmaker Orca")
         self.open_orca_checkbox.setChecked(True)
-        settings_grid.addWidget(self.open_orca_checkbox, 8, 0, 1, 2)
+        settings_grid.addWidget(self.open_orca_checkbox, 9, 0, 1, 2)
 
         layout.addWidget(settings_group)
-
-        materials_group = QGroupBox("Materials")
-        materials_layout = QVBoxLayout(materials_group)
-        materials_layout.setSpacing(8)
-        materials_help = QLabel("Use measured TD values when you have them. Leave untouched to use the built-in CMYWK defaults.")
-        materials_help.setWordWrap(True)
-        materials_help.setStyleSheet("color: #715d49;")
-        materials_layout.addWidget(materials_help)
-
-        for slot in ("1", "2", "3", "4", "5"):
-            row = MaterialRow(slot, self.default_profiles[slot])
-            self.material_rows[slot] = row
-            materials_layout.addWidget(row)
-
-        materials_buttons = QWidget()
-        materials_buttons_layout = QHBoxLayout(materials_buttons)
-        materials_buttons_layout.setContentsMargins(0, 0, 0, 0)
-        reset_button = QPushButton("Reset CMYWK")
-        reset_button.clicked.connect(self.reset_materials)
-        save_button = QPushButton("Save Preset")
-        save_button.clicked.connect(self.save_preset)
-        load_button = QPushButton("Load Preset")
-        load_button.clicked.connect(self.load_preset)
-        materials_buttons_layout.addWidget(reset_button)
-        materials_buttons_layout.addWidget(save_button)
-        materials_buttons_layout.addWidget(load_button)
-        materials_buttons_layout.addStretch(1)
-        materials_layout.addWidget(materials_buttons)
-        layout.addWidget(materials_group)
 
         run_buttons = QWidget()
         run_buttons_layout = QHBoxLayout(run_buttons)
@@ -336,6 +342,13 @@ class MainWindow(QMainWindow):
         original_layout = QVBoxLayout(original_group)
         original_layout.addWidget(self.original_preview)
 
+        summary_group = QGroupBox("Status")
+        summary_layout = QVBoxLayout(summary_group)
+        self.summary_label = QLabel("Choose an image and generate a 3MF.")
+        self.summary_label.setWordWrap(True)
+        self.summary_label.setStyleSheet("color: #5e4b39;")
+        summary_layout.addWidget(self.summary_label)
+
         generated_group = QGroupBox("Generated Preview")
         generated_layout = QVBoxLayout(generated_group)
         generated_layout.addWidget(self.generated_preview)
@@ -354,21 +367,43 @@ class MainWindow(QMainWindow):
         progress_layout.addWidget(self.progress_bar)
 
         layout.addWidget(original_group, 1)
+        layout.addWidget(summary_group, 0)
         layout.addWidget(progress_group, 0)
         layout.addWidget(generated_group, 1)
         return panel
 
-    def _build_log_panel(self) -> QWidget:
+    def _build_right_panel(self) -> QWidget:
         panel = QWidget()
         layout = QVBoxLayout(panel)
         layout.setSpacing(12)
 
-        summary_group = QGroupBox("Summary")
-        summary_layout = QVBoxLayout(summary_group)
-        self.summary_label = QLabel("Choose an image and generate a 3MF.")
-        self.summary_label.setWordWrap(True)
-        self.summary_label.setStyleSheet("color: #5e4b39;")
-        summary_layout.addWidget(self.summary_label)
+        materials_group = QGroupBox("Materials")
+        materials_layout = QVBoxLayout(materials_group)
+        materials_layout.setSpacing(8)
+        materials_help = QLabel("Use measured TD values when you have them. Leave untouched to use the built-in CMYWK defaults.")
+        materials_help.setWordWrap(True)
+        materials_help.setStyleSheet("color: #715d49;")
+        materials_layout.addWidget(materials_help)
+
+        for slot in ("1", "2", "3", "4", "5"):
+            row = MaterialRow(slot, self.default_profiles[slot])
+            self.material_rows[slot] = row
+            materials_layout.addWidget(row)
+
+        materials_buttons = QWidget()
+        materials_buttons_layout = QHBoxLayout(materials_buttons)
+        materials_buttons_layout.setContentsMargins(0, 0, 0, 0)
+        reset_button = QPushButton("Reset CMYWK")
+        reset_button.clicked.connect(self.reset_materials)
+        save_button = QPushButton("Save Preset")
+        save_button.clicked.connect(self.save_preset)
+        load_button = QPushButton("Load Preset")
+        load_button.clicked.connect(self.load_preset)
+        materials_buttons_layout.addWidget(reset_button)
+        materials_buttons_layout.addWidget(save_button)
+        materials_buttons_layout.addWidget(load_button)
+        materials_buttons_layout.addStretch(1)
+        materials_layout.addWidget(materials_buttons)
 
         log_group = QGroupBox("Run Log")
         log_layout = QVBoxLayout(log_group)
@@ -376,7 +411,7 @@ class MainWindow(QMainWindow):
         self.log_view.setReadOnly(True)
         log_layout.addWidget(self.log_view)
 
-        layout.addWidget(summary_group)
+        layout.addWidget(materials_group, 0)
         layout.addWidget(log_group, 1)
         return panel
 
@@ -551,8 +586,10 @@ class MainWindow(QMainWindow):
             self.plate_size_edit.text().strip() or "270x270",
             "--resolution",
             f"{self.resolution_spin.value():.2f}mm",
-            "--thickness",
-            f"{self.thickness_spin.value():.2f}mm",
+            "--layer-height",
+            f"{self.layer_height_spin.value():.2f}mm",
+            "--base-layers",
+            str(int(self.base_layers_spin.value())),
             "--lead-height",
             f"{self.lead_height_spin.value():.2f}mm",
             "--lead-thickness",

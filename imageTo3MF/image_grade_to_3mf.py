@@ -22,12 +22,14 @@ from PIL import Image, ImageFilter, ImageOps
 
 
 DEFAULT_NUM_NUANCES = 10
-DEFAULT_RESOLUTION_MM = 0.5
-DEFAULT_LEAD_THICKNESS_MM = 0.25
+DEFAULT_RESOLUTION_MM = 0.4
+DEFAULT_LEAD_THICKNESS_MM = 0.4
 DEFAULT_WIDTH_MM = 100.0
 DEFAULT_HEIGHT_MM = 100.0
-DEFAULT_THICKNESS_MM = 1.0
-DEFAULT_LEAD_CAP_HEIGHT_MM = 0.3
+DEFAULT_BASE_LAYER_HEIGHT_MM = 0.2
+DEFAULT_BASE_LAYER_COUNT = 4
+DEFAULT_THICKNESS_MM = DEFAULT_BASE_LAYER_HEIGHT_MM * DEFAULT_BASE_LAYER_COUNT
+DEFAULT_LEAD_CAP_HEIGHT_MM = 0.2
 DEFAULT_BLUR_MM = 0.0
 BLUR_PRESETS_MM = {
     "none": 0.0,
@@ -45,7 +47,7 @@ LEAD_OBJECT_NAME = "Lead"
 ASSEMBLY_OBJECT_NAME = "Assembly"
 LEAD_FILAMENT_SLOT = "5"
 DEFAULT_BASE_FILAMENT_HEX = ["#00FFFF", "#FF00FF", "#FFFF00", "#FFFFFF", "#000000"]
-DEFAULT_BASE_THICKNESS_LAYERS = 4
+DEFAULT_BASE_THICKNESS_LAYERS = DEFAULT_BASE_LAYER_COUNT
 BASE_SLOT_SEQUENCE = ["1", "2", "3", "4"]
 BASE_SLOT_RGB = {
     "1": (0, 255, 255),
@@ -305,10 +307,16 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     common.add_argument(
-        "--thickness",
+        "--layer-height",
         type=parse_mm_value,
-        default=DEFAULT_THICKNESS_MM,
-        help="Base picture thickness in mm before any lead is added on top.",
+        default=DEFAULT_BASE_LAYER_HEIGHT_MM,
+        help="Base layer height in mm for each color slice.",
+    )
+    common.add_argument(
+        "--base-layers",
+        type=int,
+        default=DEFAULT_BASE_LAYER_COUNT,
+        help="Number of base layers used to build the picture body.",
     )
     common.add_argument(
         "--size",
@@ -328,7 +336,7 @@ def parse_args() -> argparse.Namespace:
         dest="lead_cap_height",
         type=parse_mm_value,
         default=DEFAULT_LEAD_CAP_HEIGHT_MM,
-        help="Lead height in mm added on top of the base picture thickness.",
+        help="Lead layer height in mm added on top of the base picture thickness.",
     )
     advanced.add_argument(
         "--blur",
@@ -347,6 +355,12 @@ def parse_args() -> argparse.Namespace:
         type=parse_mm_value,
         default=DEFAULT_LEAD_THICKNESS_MM,
         help="Lead line thickness in mm in the XY plane.",
+    )
+    advanced.add_argument(
+        "--thickness",
+        dest="thickness_legacy",
+        type=parse_mm_value,
+        help=argparse.SUPPRESS,
     )
     advanced.add_argument(
         "--width",
@@ -402,11 +416,18 @@ def parse_args() -> argparse.Namespace:
         help=argparse.SUPPRESS,
     )
     args = parser.parse_args()
+    if args.base_layers <= 0:
+        parser.error("--base-layers must be positive")
     args.width, args.height = parse_mm_pair(args.size)
     if args.width_legacy is not None:
         args.width = args.width_legacy
     if args.height_legacy is not None:
         args.height = args.height_legacy
+    args.thickness = args.layer_height * args.base_layers
+    if args.thickness_legacy is not None:
+        args.thickness = args.thickness_legacy
+        if args.base_layers > 0:
+            args.layer_height = args.thickness / args.base_layers
     args.blur = parse_blur_value(args.blur) if isinstance(args.blur, str) else args.blur
     args.blur_label = blur_label(args.blur)
     args.plate_width, args.plate_height = parse_mm_pair(args.plate_size)
@@ -999,6 +1020,7 @@ def build_mesh_objects(
     width_mm: float,
     height_mm: float,
     thickness_mm: float,
+    base_layer_height_mm: float,
     lead_cap_height_mm: float,
 ) -> List[MeshObjectData]:
     objects: List[MeshObjectData] = []
@@ -1025,12 +1047,11 @@ def build_mesh_objects(
             )
         )
 
-    slice_height_mm = thickness_mm / DEFAULT_BASE_THICKNESS_LAYERS
     for nuance_index, (mask, recipe) in enumerate(zip(region_masks, palette_recipes), start=1):
         layer_slots, mixed_color = recipe
         for layer_index, slot in enumerate(layer_slots, start=1):
-            z_bottom_mm = slice_height_mm * (layer_index - 1)
-            z_top_mm = slice_height_mm * layer_index
+            z_bottom_mm = base_layer_height_mm * (layer_index - 1)
+            z_top_mm = base_layer_height_mm * layer_index
             vertices, triangles = mesh_from_mask(
                 mask,
                 width_mm=width_mm,
@@ -1396,7 +1417,7 @@ def build_model_settings(
 
 def build_project_settings_with_base_colors(
     template_zip: zipfile.ZipFile,
-    thickness_mm: float,
+    base_layer_height_mm: float,
     material_profiles: Dict[str, MaterialProfile],
 ) -> str:
     raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
@@ -1405,9 +1426,8 @@ def build_project_settings_with_base_colors(
     settings["filament_colour"] = list(ordered_hex)
     settings["extruder_colour"] = list(ordered_hex[:4])
     settings["default_filament_colour"] = [""] * len(ordered_hex)
-    layer_height = thickness_mm / DEFAULT_BASE_THICKNESS_LAYERS
-    settings["first_layer_print_height"] = format_number(layer_height)
-    settings["layer_height"] = format_number(layer_height)
+    settings["first_layer_print_height"] = format_number(base_layer_height_mm)
+    settings["layer_height"] = format_number(base_layer_height_mm)
     mixed_filament_entries = [
         "1,5,1,0,50,0,g,w,m2,d0,o1,u72",
         "2,5,1,0,50,0,g,w,m2,d0,o1,u73",
@@ -1455,6 +1475,7 @@ def write_snapmaker_project_3mf(
     width_mm: float,
     height_mm: float,
     thickness_mm: float,
+    base_layer_height_mm: float,
     plate_width_mm: float,
     plate_height_mm: float,
     material_profiles: Dict[str, MaterialProfile],
@@ -1518,7 +1539,7 @@ def write_snapmaker_project_3mf(
             SNAPMAKER_PROJECT_SETTINGS,
             build_project_settings_with_base_colors(
                 template_zip,
-                thickness_mm=thickness_mm,
+                base_layer_height_mm=base_layer_height_mm,
                 material_profiles=material_profiles,
             ),
         )
@@ -1566,6 +1587,7 @@ def main() -> int:
     if (
         args.width <= 0
         or args.height <= 0
+        or args.layer_height <= 0
         or args.thickness <= 0
         or args.lead_cap_height < 0
         or args.resolution <= 0
@@ -1573,7 +1595,7 @@ def main() -> int:
         or args.plate_height <= 0
     ):
         raise ValueError(
-            "width, height, thickness, resolution, plate-width, and plate-height must be positive; "
+            "width, height, layer-height, thickness, resolution, plate-width, and plate-height must be positive; "
             "lead-cap-height must be non-negative"
         )
 
@@ -1607,9 +1629,9 @@ def main() -> int:
 
     palette_recipes = build_palette_recipes(
         region_colors=region_colors,
-        layer_count=DEFAULT_BASE_THICKNESS_LAYERS,
+        layer_count=args.base_layers,
         material_profiles=material_profiles,
-        layer_height_mm=args.thickness / DEFAULT_BASE_THICKNESS_LAYERS,
+        layer_height_mm=args.layer_height,
     )
     preview_colors = np.asarray([recipe_color for _slots, recipe_color in palette_recipes], dtype=np.uint8)
     preview = build_preview(labels, preview_colors, lines)
@@ -1623,6 +1645,7 @@ def main() -> int:
         width_mm=args.width,
         height_mm=args.height,
         thickness_mm=args.thickness,
+        base_layer_height_mm=args.layer_height,
         lead_cap_height_mm=args.lead_cap_height,
     )
     template_path = find_snapmaker_template(args.snapmaker_template, output_path=output_path)
@@ -1635,6 +1658,7 @@ def main() -> int:
             width_mm=args.width,
             height_mm=args.height,
             thickness_mm=args.thickness,
+            base_layer_height_mm=args.layer_height,
             plate_width_mm=args.plate_width,
             plate_height_mm=args.plate_height,
             material_profiles=material_profiles,
@@ -1655,9 +1679,9 @@ def main() -> int:
     print(f"Bed center:  {args.plate_width / 2.0:.2f} x {args.plate_height / 2.0:.2f} mm")
     print(f"Thickness:   {args.thickness:.2f} mm base")
     print(f"Lead width:  {args.lead_thickness:.2f} mm")
-    print(f"Lead cap:    {args.lead_cap_height:.2f} mm")
+    print(f"Lead layer:  {args.lead_cap_height:.2f} mm")
     print(f"Total z:     {args.thickness + args.lead_cap_height:.2f} mm")
-    print(f"Base layers: {DEFAULT_BASE_THICKNESS_LAYERS} x {args.thickness / DEFAULT_BASE_THICKNESS_LAYERS:.3f} mm")
+    print(f"Base layers: {args.base_layers} x {args.layer_height:.3f} mm")
     print(f"Seed:        {args.seed}")
     print(f"Blur:        {args.blur:.2f} mm")
     print(f"Resolution:  {args.resolution:.3f} mm target")
@@ -1684,7 +1708,7 @@ def main() -> int:
 
     if args.num_nuances == 10:
         print(
-            "Note: each nuance is now built from 4 stacked material slices using "
+            f"Note: each nuance is now built from {args.base_layers} stacked material slices using "
             "the active TD-aware material model, plus the black lead cap on slot 5."
         )
     if not args.no_open and not opened:
