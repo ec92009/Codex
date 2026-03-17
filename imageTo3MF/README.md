@@ -12,4 +12,4 @@ By default the generated model is `100 x 100 mm`, uses a `1 mm` full-color base 
 
 The Snapmaker project writer currently forces the filament palette in the exported `3mf` to cyan, magenta, yellow, white, and black (`CMYWK`), maps the `Lead` part to slot `5`, and writes a per-layer `M600` pause just before the final lead layer so that black can be loaded at that moment.
 
-You can override any of the five available material colors with repeatable `--material SLOT:#RRGGBB` flags such as `--material cyan:#88FFFF --material 4:#F8F8F8`. If no `--material` flags are passed, the script assumes the default `CMYWK` palette.
+You can override any of the five available materials with repeatable `--material SLOT:#RRGGBB@TD` flags such as `--material cyan:#88FFFF@6.2 --material 4:#F8F8F8@9.0`. If no `--material` flags are passed, the script assumes the default `CMYWK` palette and default TD values. The current palette fitting and preview path use a simple TD-aware stack simulation rather than plain RGB averaging.

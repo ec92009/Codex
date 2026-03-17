@@ -115,6 +115,7 @@ class MaterialProfile:
     name: str
     hex_color: str
     rgb: Tuple[int, int, int]
+    td: float
 
 
 def parse_mm_value(raw: str) -> float:
@@ -157,6 +158,16 @@ def parse_hex_color(raw: str) -> Tuple[str, Tuple[int, int, int]]:
     return value.upper(), rgb  # type: ignore[return-value]
 
 
+def parse_td_value(raw: str) -> float:
+    value = raw.strip().lower()
+    if value.startswith("td="):
+        value = value[3:]
+    parsed = float(value)
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("TD must be positive")
+    return parsed
+
+
 def canonical_slot_name(raw: str) -> str:
     value = raw.strip().lower()
     aliases = {
@@ -186,11 +197,20 @@ def canonical_slot_name(raw: str) -> str:
 
 def parse_material_spec(raw: str) -> MaterialProfile:
     try:
-        slot_part, color_part = raw.split(":", 1)
+        slot_part, rest = raw.split(":", 1)
     except ValueError as exc:
-        raise argparse.ArgumentTypeError("material must look like SLOT:#RRGGBB, for example cyan:#00FFFF") from exc
+        raise argparse.ArgumentTypeError(
+            "material must look like SLOT:#RRGGBB@TD, for example cyan:#00FFFF@6.0"
+        ) from exc
+    try:
+        color_part, td_part = rest.split("@", 1)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "material must include TD, for example cyan:#00FFFF@6.0"
+        ) from exc
     slot = canonical_slot_name(slot_part)
     hex_color, rgb = parse_hex_color(color_part)
+    td = parse_td_value(td_part)
     default_names = {
         "1": "cyan",
         "2": "magenta",
@@ -198,21 +218,21 @@ def parse_material_spec(raw: str) -> MaterialProfile:
         "4": "white",
         "5": "black",
     }
-    return MaterialProfile(slot=slot, name=default_names[slot], hex_color=hex_color, rgb=rgb)
+    return MaterialProfile(slot=slot, name=default_names[slot], hex_color=hex_color, rgb=rgb, td=td)
 
 
 def default_material_profiles() -> Dict[str, MaterialProfile]:
     defaults = {
-        "1": ("cyan", "#00FFFF"),
-        "2": ("magenta", "#FF00FF"),
-        "3": ("yellow", "#FFFF00"),
-        "4": ("white", "#FFFFFF"),
-        "5": ("black", "#000000"),
+        "1": ("cyan", "#00FFFF", 5.5),
+        "2": ("magenta", "#FF00FF", 5.5),
+        "3": ("yellow", "#FFFF00", 4.5),
+        "4": ("white", "#FFFFFF", 9.0),
+        "5": ("black", "#000000", 0.15),
     }
     profiles: Dict[str, MaterialProfile] = {}
-    for slot, (name, hex_color) in defaults.items():
+    for slot, (name, hex_color, td) in defaults.items():
         parsed_hex, rgb = parse_hex_color(hex_color)
-        profiles[slot] = MaterialProfile(slot=slot, name=name, hex_color=parsed_hex, rgb=rgb)
+        profiles[slot] = MaterialProfile(slot=slot, name=name, hex_color=parsed_hex, rgb=rgb, td=td)
     return profiles
 
 
@@ -223,6 +243,17 @@ def resolve_material_profiles(material_specs: Optional[Sequence[MaterialProfile]
     for material in material_specs:
         profiles[material.slot] = material
     return profiles
+
+
+def material_slot_label(slot: str) -> str:
+    labels = {
+        "1": "C",
+        "2": "M",
+        "3": "Y",
+        "4": "W",
+        "5": "K",
+    }
+    return labels.get(slot, f"S{slot}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -268,7 +299,10 @@ def parse_args() -> argparse.Namespace:
         "--material",
         action="append",
         type=parse_material_spec,
-        help="Override an available material with SLOT:#RRGGBB, for example cyan:#00FFFF or 5:#000000. If omitted, the script assumes CMYWK.",
+        help=(
+            "Override an available material with SLOT:#RRGGBB@TD, for example "
+            "cyan:#00FFFF@6.0 or 5:#000000@0.15. If omitted, the script assumes CMYWK."
+        ),
     )
     common.add_argument(
         "--thickness",
@@ -764,9 +798,19 @@ def expand_layer_slots(counts: Tuple[int, int, int, int], base_slot_sequence: Se
     return slots
 
 
-def mixed_rgb_from_slots(slots: Sequence[str], material_profiles: Dict[str, MaterialProfile]) -> Tuple[int, int, int]:
-    colors = np.asarray([material_profiles[slot].rgb for slot in slots], dtype=np.float32)
-    mixed = np.round(colors.mean(axis=0)).astype(np.uint8)
+def simulate_stack_rgb(
+    slots: Sequence[str],
+    material_profiles: Dict[str, MaterialProfile],
+    layer_height_mm: float,
+    background_rgb: Tuple[int, int, int] = (255, 255, 255),
+) -> Tuple[int, int, int]:
+    result = np.asarray(background_rgb, dtype=np.float32) / 255.0
+    for slot in slots:
+        material = material_profiles[slot]
+        material_rgb = np.asarray(material.rgb, dtype=np.float32) / 255.0
+        alpha = 1.0 - math.exp(-layer_height_mm / material.td)
+        result = material_rgb * alpha + result * (1.0 - alpha)
+    mixed = np.clip(np.round(result * 255.0), 0, 255).astype(np.uint8)
     return int(mixed[0]), int(mixed[1]), int(mixed[2])
 
 
@@ -774,12 +818,13 @@ def build_palette_recipes(
     region_colors: np.ndarray,
     layer_count: int,
     material_profiles: Dict[str, MaterialProfile],
+    layer_height_mm: float,
 ) -> List[Tuple[List[str], Tuple[int, int, int]]]:
     candidates: List[Tuple[List[str], Tuple[int, int, int], np.ndarray]] = []
     base_slot_sequence = ["1", "2", "3", "4"]
     for counts in enumerate_layer_count_vectors(layer_count, 4):
         slots = expand_layer_slots(counts, base_slot_sequence)
-        mixed_rgb = mixed_rgb_from_slots(slots, material_profiles)
+        mixed_rgb = simulate_stack_rgb(slots, material_profiles, layer_height_mm=layer_height_mm)
         mixed_lab = rgb_to_lab_color(mixed_rgb)
         candidates.append((slots, mixed_rgb, mixed_lab))
 
@@ -975,7 +1020,7 @@ def build_mesh_objects(
                 MeshObjectData(
                     name=(
                         f"Color {nuance_index + 1} - Nuance {nuance_index:02d} - "
-                        f"{material_profiles[slot].name[:1].upper()}{layer_index}"
+                        f"{material_slot_label(slot)}{layer_index}"
                     ),
                     color=material_profiles[slot].rgb,
                     vertices=vertices,
@@ -1540,6 +1585,7 @@ def main() -> int:
         region_colors=region_colors,
         layer_count=DEFAULT_BASE_THICKNESS_LAYERS,
         material_profiles=material_profiles,
+        layer_height_mm=args.thickness / DEFAULT_BASE_THICKNESS_LAYERS,
     )
     preview_colors = np.asarray([recipe_color for _slots, recipe_color in palette_recipes], dtype=np.uint8)
     preview = build_preview(labels, preview_colors, lines)
@@ -1598,7 +1644,10 @@ def main() -> int:
         print(f"Template:    {template_path}")
     print(
         "Materials:   "
-        + ", ".join(f'{slot}:{material_profiles[slot].hex_color}' for slot in ("1", "2", "3", "4", "5"))
+        + ", ".join(
+            f'{slot}:{material_profiles[slot].hex_color}@TD{format_number(material_profiles[slot].td)}'
+            for slot in ("1", "2", "3", "4", "5")
+        )
     )
     for name in built_object_names:
         print(f"  - {name}")
@@ -1611,8 +1660,8 @@ def main() -> int:
 
     if args.num_nuances == 10:
         print(
-            "Note: each nuance is now built from 4 stacked material slices, "
-            "plus the black lead cap on slot 5."
+            "Note: each nuance is now built from 4 stacked material slices using "
+            "the active TD-aware material model, plus the black lead cap on slot 5."
         )
     if not args.no_open and not opened:
         print(
