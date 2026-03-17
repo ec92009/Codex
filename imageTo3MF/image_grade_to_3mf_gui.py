@@ -133,7 +133,7 @@ class MaterialRow(QWidget):
 
     def _sync_button(self) -> None:
         text = self.hex_edit.text().strip()
-        color = QColor(text) if QColor.isValidColor(text) else QColor("#cccccc")
+        color = QColor(text) if re.fullmatch(r"#[0-9a-fA-F]{6}", text) else QColor("#cccccc")
         self.color_button.setStyleSheet(
             f"QPushButton {{ background: {color.name()}; color: {'#111111' if color.lightness() > 140 else '#fdf8ef'}; }}"
         )
