@@ -8,6 +8,7 @@ dependencies = [
     "lib3mf>=2.4.1",
     "numpy>=2.0.0",
     "pillow>=11.0.0",
+    "pyside6>=6.10.2",
 ]
 
 [tool.uv]
