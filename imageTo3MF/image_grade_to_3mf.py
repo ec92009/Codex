@@ -30,6 +30,7 @@ DEFAULT_BASE_LAYER_HEIGHT_MM = 0.2
 DEFAULT_BASE_LAYER_COUNT = 4
 DEFAULT_THICKNESS_MM = DEFAULT_BASE_LAYER_HEIGHT_MM * DEFAULT_BASE_LAYER_COUNT
 DEFAULT_LEAD_CAP_HEIGHT_MM = 0.2
+LEAD_TOP_Z_EPSILON_MM = 0.001
 DEFAULT_BLUR_MM = 0.0
 BLUR_PRESETS_MM = {
     "none": 0.0,
@@ -901,6 +902,60 @@ def chaikin_smooth_polyline(points: Sequence[Tuple[float, float]], passes: int =
     return current
 
 
+def perpendicular_distance(
+    point: Tuple[float, float],
+    start: Tuple[float, float],
+    end: Tuple[float, float],
+) -> float:
+    if start == end:
+        return math.hypot(point[0] - start[0], point[1] - start[1])
+    px, py = point
+    x1, y1 = start
+    x2, y2 = end
+    numerator = abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1)
+    denominator = math.hypot(y2 - y1, x2 - x1)
+    return numerator / denominator
+
+
+def simplify_polyline(
+    points: Sequence[Tuple[float, float]],
+    tolerance: float,
+) -> List[Tuple[float, float]]:
+    if len(points) <= 2:
+        return list(points)
+
+    closed = points[0] == points[-1]
+    working = list(points[:-1] if closed else points)
+    if len(working) <= 2:
+        result = list(working)
+        if closed and result:
+            result.append(result[0])
+        return result
+
+    def rdp(segment: Sequence[Tuple[float, float]]) -> List[Tuple[float, float]]:
+        if len(segment) <= 2:
+            return [segment[0], segment[-1]]
+        start = segment[0]
+        end = segment[-1]
+        max_distance = -1.0
+        split_index = 0
+        for index in range(1, len(segment) - 1):
+            distance = perpendicular_distance(segment[index], start, end)
+            if distance > max_distance:
+                max_distance = distance
+                split_index = index
+        if max_distance <= tolerance:
+            return [start, end]
+        left = rdp(segment[: split_index + 1])
+        right = rdp(segment[split_index:])
+        return left[:-1] + right
+
+    simplified = rdp(working)
+    if closed and simplified:
+        simplified.append(simplified[0])
+    return simplified
+
+
 def stroked_polyline_mesh(
     points: Sequence[Tuple[float, float]],
     stroke_width_mm: float,
@@ -1299,14 +1354,15 @@ def build_mesh_objects(
         line_vertices: List[Tuple[float, float, float]] = []
         line_triangles: List[Tuple[int, int, int]] = []
         for polyline in lead_polylines:
-            smoothed = chaikin_smooth_polyline(polyline, passes=2)
+            simplified = simplify_polyline(polyline, tolerance=0.6)
+            smoothed = chaikin_smooth_polyline(simplified, passes=3)
             vertices, triangles = stroked_polyline_mesh(
                 smoothed,
                 stroke_width_mm=lead_thickness_mm,
                 width_mm=width_mm,
                 height_mm=height_mm,
                 z_bottom_mm=thickness_mm,
-                z_top_mm=thickness_mm + lead_cap_height_mm,
+                z_top_mm=thickness_mm + lead_cap_height_mm + LEAD_TOP_Z_EPSILON_MM,
                 grid_width=grid_width,
                 grid_height=grid_height,
             )
