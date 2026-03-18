@@ -35,6 +35,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QDoubleSpinBox,
 )
+from PIL import Image
 
 import image_grade_to_3mf as engine
 
@@ -42,6 +43,7 @@ import image_grade_to_3mf as engine
 PROJECT_DIR = Path(__file__).resolve().parent
 SCRIPT_PATH = PROJECT_DIR / "image_grade_to_3mf.py"
 PRESET_PATH = PROJECT_DIR / "material_presets.json"
+DEFAULT_LONG_SIDE_MM = 100.0
 
 
 class ImagePreview(QLabel):
@@ -270,7 +272,8 @@ class MainWindow(QMainWindow):
         settings_grid.setHorizontalSpacing(10)
         settings_grid.setVerticalSpacing(8)
 
-        self.size_edit = QLineEdit("100x100")
+        self.size_edit = QLineEdit("")
+        self.size_edit.setPlaceholderText("Auto from image")
         self.plate_size_edit = QLineEdit("270x270")
         self.resolution_spin = self._make_mm_spin(0.01, 5.0, engine.DEFAULT_RESOLUTION_MM, 0.05)
         self.layer_height_spin = self._make_mm_spin(0.01, 5.0, engine.DEFAULT_BASE_LAYER_HEIGHT_MM, 0.05)
@@ -508,6 +511,7 @@ class MainWindow(QMainWindow):
         self.input_path = Path(path)
         self.image_path_edit.setText(path)
         self.original_preview.set_image(self.input_path, "Original image preview")
+        self._sync_size_from_image(self.input_path)
 
     def choose_output(self) -> None:
         self._prepare_dialog()
@@ -523,6 +527,23 @@ class MainWindow(QMainWindow):
     def reset_materials(self) -> None:
         for slot, row in self.material_rows.items():
             row.set_profile(self.default_profiles[slot])
+
+    def _suggest_model_size(self, image_path: Path) -> str:
+        with Image.open(image_path) as image:
+            width_px, height_px = image.size
+        if width_px <= 0 or height_px <= 0:
+            return "100x100"
+        long_side = max(width_px, height_px)
+        scale = DEFAULT_LONG_SIDE_MM / float(long_side)
+        width_mm = width_px * scale
+        height_mm = height_px * scale
+        return f"{engine.format_number(width_mm)}x{engine.format_number(height_mm)}"
+
+    def _sync_size_from_image(self, image_path: Path) -> None:
+        try:
+            self.size_edit.setText(self._suggest_model_size(image_path))
+        except Exception:
+            pass
 
     def set_rgbwk_materials(self) -> None:
         rgbwk_profiles = {
@@ -601,6 +622,8 @@ class MainWindow(QMainWindow):
             return
 
         self.input_path = image_path
+        if not self.size_edit.text().strip():
+            self._sync_size_from_image(image_path)
         self.original_preview.set_image(image_path, "Original image preview")
         self.generated_preview.set_image(None, "Generated preview will appear here")
         self.preview_path = None
@@ -610,7 +633,7 @@ class MainWindow(QMainWindow):
             str(SCRIPT_PATH),
             str(image_path),
             "--size",
-            self.size_edit.text().strip() or "100x100",
+            self.size_edit.text().strip() or self._suggest_model_size(image_path),
             "--plate-size",
             self.plate_size_edit.text().strip() or "270x270",
             "--resolution",

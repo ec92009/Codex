@@ -656,12 +656,7 @@ def load_image_to_grid(
 ) -> np.ndarray:
     with Image.open(path) as image:
         rgb = image.convert("RGB")
-        fitted = ImageOps.fit(
-            rgb,
-            (grid_width, grid_height),
-            method=Image.Resampling.LANCZOS,
-            centering=(0.5, 0.5),
-        )
+        fitted = rgb.resize((grid_width, grid_height), Image.Resampling.LANCZOS)
         if blur_pixels > 0:
             fitted = fitted.filter(ImageFilter.GaussianBlur(radius=blur_pixels))
     return np.asarray(fitted, dtype=np.uint8)
