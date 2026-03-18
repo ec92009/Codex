@@ -487,12 +487,6 @@ class MainWindow(QMainWindow):
         spin.setSuffix(" mm")
         return spin
 
-    def _dialog_options(self) -> QFileDialog.Option:
-        options = QFileDialog.Option(0)
-        if sys.platform == "darwin":
-            options |= QFileDialog.Option.DontUseNativeDialog
-        return options
-
     def _prepare_dialog(self) -> None:
         self.raise_()
         self.activateWindow()
@@ -504,7 +498,6 @@ class MainWindow(QMainWindow):
             "Choose image",
             str(Path.home() / "Desktop"),
             "Images (*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp)",
-            options=self._dialog_options(),
         )
         if not path:
             return
@@ -519,7 +512,6 @@ class MainWindow(QMainWindow):
             "Choose output 3MF path",
             str(PROJECT_DIR / "out" / "output.3mf"),
             "3MF Files (*.3mf)",
-            options=self._dialog_options(),
         )
         if path:
             self.output_edit.setText(path)
@@ -546,7 +538,6 @@ class MainWindow(QMainWindow):
             "Save material preset",
             str(PRESET_PATH),
             "JSON Files (*.json)",
-            options=self._dialog_options(),
         )
         if not path:
             return
@@ -561,7 +552,6 @@ class MainWindow(QMainWindow):
             "Load material preset",
             str(PRESET_PATH if PRESET_PATH.exists() else PROJECT_DIR),
             "JSON Files (*.json)",
-            options=self._dialog_options(),
         )
         if not path:
             return
