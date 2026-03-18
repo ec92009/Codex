@@ -282,6 +282,7 @@ class MainWindow(QMainWindow):
         self.size_edit = QLineEdit("")
         self.size_edit.setPlaceholderText("Auto from image")
         self.plate_size_edit = QLineEdit("270x270")
+        self.plate_size_edit.editingFinished.connect(self._update_size_slider_bounds)
         self.resolution_spin = self._make_mm_spin(0.01, 5.0, engine.DEFAULT_RESOLUTION_MM, 0.05)
         self.layer_height_spin = self._make_mm_spin(0.01, 5.0, engine.DEFAULT_BASE_LAYER_HEIGHT_MM, 0.05)
         self.base_layers_spin = QDoubleSpinBox()
@@ -303,7 +304,7 @@ class MainWindow(QMainWindow):
         self.blur_combo.addItems(["none", "low", "medium", "strong"])
 
         self.size_slider = QSlider(Qt.Horizontal)
-        self.size_slider.setRange(20, 300)
+        self.size_slider.setRange(27, 263)
         self.size_slider.setValue(int(DEFAULT_LONG_SIDE_MM))
         self.size_slider.setEnabled(False)
         self.size_slider.valueChanged.connect(self._sync_size_from_slider)
@@ -564,9 +565,11 @@ class MainWindow(QMainWindow):
 
     def _sync_size_from_image(self, image_path: Path) -> None:
         try:
+            self._update_size_slider_bounds()
             self.size_slider.blockSignals(True)
             self.size_slider.setEnabled(True)
-            self.size_slider.setValue(int(DEFAULT_LONG_SIDE_MM))
+            current_value = min(max(int(DEFAULT_LONG_SIDE_MM), self.size_slider.minimum()), self.size_slider.maximum())
+            self.size_slider.setValue(current_value)
             self.size_slider.blockSignals(False)
             self.size_edit.setText(self._suggest_model_size(image_path, long_side_mm=float(self.size_slider.value())))
             self.size_slider_label.setText(f"Long side: {self.size_slider.value()} mm")
@@ -581,6 +584,31 @@ class MainWindow(QMainWindow):
             return
         self.size_edit.setText(self._suggest_model_size(self.input_path, long_side_mm=float(value)))
         self.size_slider_label.setText(f"Long side: {value} mm")
+
+    def _update_size_slider_bounds(self) -> None:
+        try:
+            plate_width, plate_height = engine.parse_mm_pair(self.plate_size_edit.text().strip() or "270x270")
+        except Exception:
+            plate_width, plate_height = 270.0, 270.0
+
+        min_long_side = max(1, int(min(plate_width, plate_height) / 10.0))
+        max_long_side = int(max(1.0, min(plate_width, plate_height) - 7.0))
+
+        if self.source_image_size is not None:
+            width_px, height_px = self.source_image_size
+            long_px = max(width_px, height_px)
+            if long_px > 0:
+                scale_limit = min((plate_width - 7.0) / width_px, (plate_height - 7.0) / height_px)
+                max_long_side = int(max(1.0, long_px * scale_limit))
+
+        max_long_side = max(min_long_side, max_long_side)
+        current_value = self.size_slider.value()
+        self.size_slider.blockSignals(True)
+        self.size_slider.setRange(min_long_side, max_long_side)
+        self.size_slider.setValue(min(max(current_value, min_long_side), max_long_side))
+        self.size_slider.blockSignals(False)
+        if self.source_image_size is not None and self.input_path is not None:
+            self._sync_size_from_slider(self.size_slider.value())
 
     def set_rgbwk_materials(self) -> None:
         rgbwk_profiles = {

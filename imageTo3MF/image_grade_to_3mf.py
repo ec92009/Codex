@@ -785,6 +785,28 @@ def majority_smooth(labels: np.ndarray, num_classes: int, passes: int) -> np.nda
     return result
 
 
+def majority_smooth_masked(labels: np.ndarray, valid_mask: np.ndarray, num_classes: int, passes: int) -> np.ndarray:
+    if passes <= 0:
+        return labels
+
+    result = labels.copy()
+    height, width = result.shape
+    valid = valid_mask.astype(bool)
+    for _ in range(passes):
+        counts = np.zeros((num_classes, height, width), dtype=np.uint16)
+        padded_labels = np.pad(result, 1, mode="edge")
+        padded_valid = np.pad(valid, 1, mode="constant")
+        for dy in range(3):
+            for dx in range(3):
+                neighborhood = padded_labels[dy : dy + height, dx : dx + width]
+                neighborhood_valid = padded_valid[dy : dy + height, dx : dx + width]
+                for class_index in range(num_classes):
+                    counts[class_index] += ((neighborhood == class_index) & neighborhood_valid)
+        smoothed = np.argmax(counts, axis=0).astype(np.int32)
+        result[valid] = smoothed[valid]
+    return result
+
+
 def boundary_mask(labels: np.ndarray, radius_pixels: int) -> np.ndarray:
     diff = np.zeros_like(labels, dtype=bool)
     diff[:-1, :] |= labels[:-1, :] != labels[1:, :]
@@ -1412,7 +1434,10 @@ def build_palette_recipes(
 
 
 def build_preview(labels: np.ndarray, mean_colors: np.ndarray, lines: np.ndarray) -> Image.Image:
-    preview = mean_colors[labels].astype(np.uint8)
+    preview = np.zeros((labels.shape[0], labels.shape[1], 3), dtype=np.uint8)
+    valid = labels >= 0
+    if np.any(valid):
+        preview[valid] = mean_colors[labels[valid]].astype(np.uint8)
     preview[lines] = np.array([0, 0, 0], dtype=np.uint8)
     return Image.fromarray(preview)
 
@@ -2181,17 +2206,30 @@ def main() -> int:
     flat_rgb = rgb_image.reshape(-1, 3)
     flat_lab = srgb_to_lab(rgb_image).reshape(-1, 3)
 
-    raw_labels, lab_centers = kmeans(flat_lab, clusters=args.num_nuances, seed=args.seed)
-    labels, _, region_colors = reorder_by_lightness(raw_labels, lab_centers, flat_rgb)
-    labels = labels.reshape(grid_height, grid_width)
-    labels = majority_smooth(labels, num_classes=args.num_nuances, passes=args.smooth_passes)
-
     cell_size_for_lines = min(actual_resolution_x, actual_resolution_y)
     line_radius_pixels = max(0, math.ceil(args.lead_thickness / cell_size_for_lines) - 1)
     if args.lead_source == "detect":
         lines = smooth_detected_lead_mask(detect_image_lead_mask(rgb_image))
-        region_labels_for_masks = labels.copy()
+        non_lead_mask = ~lines.reshape(-1)
+        masked_lab = flat_lab[non_lead_mask]
+        masked_rgb = flat_rgb[non_lead_mask]
+        raw_labels, lab_centers = kmeans(masked_lab, clusters=args.num_nuances, seed=args.seed)
+        sorted_labels, _, region_colors = reorder_by_lightness(raw_labels, lab_centers, masked_rgb)
+        labels = np.full(grid_width * grid_height, -1, dtype=np.int32)
+        labels[non_lead_mask] = sorted_labels
+        labels = labels.reshape(grid_height, grid_width)
+        labels = majority_smooth_masked(
+            labels,
+            valid_mask=~lines,
+            num_classes=args.num_nuances,
+            passes=args.smooth_passes,
+        )
+        region_labels_for_masks = labels
     else:
+        raw_labels, lab_centers = kmeans(flat_lab, clusters=args.num_nuances, seed=args.seed)
+        labels, _, region_colors = reorder_by_lightness(raw_labels, lab_centers, flat_rgb)
+        labels = labels.reshape(grid_height, grid_width)
+        labels = majority_smooth(labels, num_classes=args.num_nuances, passes=args.smooth_passes)
         lines = boundary_mask(labels, radius_pixels=line_radius_pixels)
         region_labels_for_masks = labels
 
