@@ -6,6 +6,8 @@ To use the desktop GUI, run `uv run python image_grade_to_3mf_gui.py`. The GUI k
 
 There are also launcher scripts at `/Users/ecohen/Codex/imageTo3MF/launch_imageTo3MF_gui.sh` and `/Users/ecohen/Codex/imageTo3MF/launch_imageTo3MF_gui.command`. On macOS, the `.command` version is the one to keep on the Desktop or in the Dock for reliable double-click launching in Terminal.
 
+For a no-Terminal macOS launcher, compile `/Users/ecohen/Codex/imageTo3MF/launch_imageTo3MF_gui.applescript` into an app bundle and keep that `.app` on the Desktop or in the Dock.
+
 If no image path is passed, the script opens a file picker on macOS.
 
 If a hand-painted Snapmaker Orca project `.3mf` is present in the output folder, the script reuses its saved object-to-color assignments automatically.
