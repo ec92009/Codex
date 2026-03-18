@@ -1546,13 +1546,35 @@ def build_mesh_objects(
     grid_height, grid_width = labels.shape
 
     if lead_cap_height_mm > 0 and lead_source == "detect":
-        line_vertices, line_triangles = mesh_from_mask(
-            lines_mask,
-            width_mm=width_mm,
-            height_mm=height_mm,
-            z_bottom_mm=thickness_mm,
-            z_top_mm=thickness_mm + lead_cap_height_mm + LEAD_TOP_Z_EPSILON_MM,
-        )
+        lead_polylines = chain_boundary_segments(extract_mask_boundary_segments(lines_mask))
+        line_vertices = []
+        line_triangles = []
+        cell_mm = min(width_mm / grid_width, height_mm / grid_height)
+        simplify_tolerance = max(1.0, lead_thickness_mm / max(cell_mm, 1e-6)) * 1.2
+        min_point_distance = max(0.75, lead_thickness_mm / max(cell_mm, 1e-6)) * 0.8
+        for polyline in lead_polylines:
+            if len(polyline) < 3:
+                continue
+            filtered = filter_polyline_points(polyline, min_distance=min_point_distance)
+            simplified = simplify_polyline(filtered, tolerance=simplify_tolerance)
+            smoothed = chaikin_smooth_polyline(simplified, passes=2)
+            vertices, triangles = stroked_polyline_mesh(
+                smoothed,
+                stroke_width_mm=lead_thickness_mm,
+                width_mm=width_mm,
+                height_mm=height_mm,
+                z_bottom_mm=thickness_mm,
+                z_top_mm=thickness_mm + lead_cap_height_mm + LEAD_TOP_Z_EPSILON_MM,
+                grid_width=grid_width,
+                grid_height=grid_height,
+            )
+            if not triangles:
+                continue
+            base_index = len(line_vertices)
+            line_vertices.extend(vertices)
+            line_triangles.extend(
+                (a + base_index, b + base_index, c + base_index) for a, b, c in triangles
+            )
     elif lead_cap_height_mm > 0:
         lead_polylines = chain_boundary_segments(extract_boundary_segments(labels))
         line_vertices: List[Tuple[float, float, float]] = []
