@@ -481,12 +481,24 @@ class MainWindow(QMainWindow):
         spin.setSuffix(" mm")
         return spin
 
+    def _dialog_options(self) -> QFileDialog.Option:
+        options = QFileDialog.Option(0)
+        if sys.platform == "darwin":
+            options |= QFileDialog.Option.DontUseNativeDialog
+        return options
+
+    def _prepare_dialog(self) -> None:
+        self.raise_()
+        self.activateWindow()
+
     def choose_image(self) -> None:
+        self._prepare_dialog()
         path, _ = QFileDialog.getOpenFileName(
             self,
             "Choose image",
             str(Path.home() / "Desktop"),
             "Images (*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.webp)",
+            options=self._dialog_options(),
         )
         if not path:
             return
@@ -495,11 +507,13 @@ class MainWindow(QMainWindow):
         self.original_preview.set_image(self.input_path, "Original image preview")
 
     def choose_output(self) -> None:
+        self._prepare_dialog()
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Choose output 3MF path",
             str(PROJECT_DIR / "out" / "output.3mf"),
             "3MF Files (*.3mf)",
+            options=self._dialog_options(),
         )
         if path:
             self.output_edit.setText(path)
@@ -509,11 +523,13 @@ class MainWindow(QMainWindow):
             row.set_profile(self.default_profiles[slot])
 
     def save_preset(self) -> None:
+        self._prepare_dialog()
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Save material preset",
             str(PRESET_PATH),
             "JSON Files (*.json)",
+            options=self._dialog_options(),
         )
         if not path:
             return
@@ -522,11 +538,13 @@ class MainWindow(QMainWindow):
         self.summary_label.setText(f"Saved material preset to {path}")
 
     def load_preset(self) -> None:
+        self._prepare_dialog()
         path, _ = QFileDialog.getOpenFileName(
             self,
             "Load material preset",
             str(PRESET_PATH if PRESET_PATH.exists() else PROJECT_DIR),
             "JSON Files (*.json)",
+            options=self._dialog_options(),
         )
         if not path:
             return
