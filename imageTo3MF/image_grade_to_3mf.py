@@ -347,6 +347,12 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_LEAD_CAP_HEIGHT_MM,
         help="Lead layer height in mm added on top of the base picture thickness.",
     )
+    common.add_argument(
+        "--lead-source",
+        choices=["generate", "detect"],
+        default="generate",
+        help="Whether to generate lead from nuance boundaries or detect pre-existing lead from the image.",
+    )
     advanced.add_argument(
         "--blur",
         type=parse_blur_value,
@@ -804,6 +810,39 @@ def boundary_mask(labels: np.ndarray, radius_pixels: int) -> np.ndarray:
                 grown |= padded[dy : dy + height, dx : dx + width]
         dilated = grown
     return dilated
+
+
+def dilate_mask(mask: np.ndarray, radius_pixels: int) -> np.ndarray:
+    if radius_pixels <= 0:
+        return mask
+    dilated = mask.astype(bool)
+    height, width = dilated.shape
+    for _ in range(radius_pixels):
+        padded = np.pad(dilated, 1, mode="constant")
+        grown = np.zeros_like(dilated)
+        for dy in range(3):
+            for dx in range(3):
+                grown |= padded[dy : dy + height, dx : dx + width]
+        dilated = grown
+    return dilated
+
+
+def detect_image_lead_mask(rgb_image: np.ndarray) -> np.ndarray:
+    rgb = rgb_image.astype(np.float32)
+    luma = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
+    threshold = min(92.0, float(np.percentile(luma, 18)))
+
+    contrast = np.zeros_like(luma)
+    contrast[:-1, :] = np.maximum(contrast[:-1, :], np.abs(luma[:-1, :] - luma[1:, :]))
+    contrast[1:, :] = np.maximum(contrast[1:, :], np.abs(luma[1:, :] - luma[:-1, :]))
+    contrast[:, :-1] = np.maximum(contrast[:, :-1], np.abs(luma[:, :-1] - luma[:, 1:]))
+    contrast[:, 1:] = np.maximum(contrast[:, 1:], np.abs(luma[:, 1:] - luma[:, :-1]))
+
+    color_range = np.max(rgb, axis=2) - np.min(rgb, axis=2)
+    dark_mask = luma <= threshold
+    edge_mask = contrast >= 18.0
+    neutral_mask = color_range <= 80.0
+    return dark_mask & edge_mask & neutral_mask
 
 
 def extract_boundary_segments(labels: np.ndarray) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
@@ -1463,11 +1502,20 @@ def build_mesh_objects(
     thickness_mm: float,
     lead_thickness_mm: float,
     lead_cap_height_mm: float,
+    lead_source: str,
 ) -> List[MeshObjectData]:
     objects: List[MeshObjectData] = []
     grid_height, grid_width = labels.shape
 
-    if lead_cap_height_mm > 0:
+    if lead_cap_height_mm > 0 and lead_source == "detect":
+        line_vertices, line_triangles = mesh_from_mask(
+            lines_mask,
+            width_mm=width_mm,
+            height_mm=height_mm,
+            z_bottom_mm=thickness_mm,
+            z_top_mm=thickness_mm + lead_cap_height_mm + LEAD_TOP_Z_EPSILON_MM,
+        )
+    elif lead_cap_height_mm > 0:
         lead_polylines = chain_boundary_segments(extract_boundary_segments(labels))
         line_vertices: List[Tuple[float, float, float]] = []
         line_triangles: List[Tuple[int, int, int]] = []
@@ -2080,11 +2128,16 @@ def main() -> int:
 
     cell_size_for_lines = min(actual_resolution_x, actual_resolution_y)
     line_radius_pixels = max(0, math.ceil(args.lead_thickness / cell_size_for_lines) - 1)
-    lines = boundary_mask(labels, radius_pixels=line_radius_pixels)
+    if args.lead_source == "detect":
+        lines = detect_image_lead_mask(rgb_image)
+        region_labels_for_masks = labels.copy()
+    else:
+        lines = boundary_mask(labels, radius_pixels=line_radius_pixels)
+        region_labels_for_masks = labels
 
     region_masks = []
     for nuance_index in range(args.num_nuances):
-        region_masks.append(labels == nuance_index)
+        region_masks.append((region_labels_for_masks == nuance_index) & ~lines)
 
     palette_recipes = build_palette_recipes(
         region_colors=region_colors,
@@ -2107,6 +2160,7 @@ def main() -> int:
         thickness_mm=args.thickness,
         lead_thickness_mm=args.lead_thickness,
         lead_cap_height_mm=args.lead_cap_height,
+        lead_source=args.lead_source,
     )
     template_path = find_snapmaker_template(args.snapmaker_template, output_path=output_path)
 
@@ -2141,6 +2195,7 @@ def main() -> int:
     print(f"Thickness:   {args.thickness:.2f} mm base")
     print(f"Lead width:  {args.lead_thickness:.2f} mm")
     print(f"Lead layer:  {args.lead_cap_height:.2f} mm")
+    print(f"Lead mode:   {args.lead_source}")
     print(f"Total z:     {args.thickness + args.lead_cap_height:.2f} mm")
     print(f"Base layers: {args.base_layers} x {args.layer_height:.3f} mm")
     print(f"Seed:        {args.seed}")

@@ -281,6 +281,8 @@ class MainWindow(QMainWindow):
         self.base_layers_spin.setSingleStep(1)
         self.lead_height_spin = self._make_mm_spin(0.0, 10.0, engine.DEFAULT_LEAD_CAP_HEIGHT_MM, 0.05)
         self.lead_thickness_spin = self._make_mm_spin(0.01, 10.0, engine.DEFAULT_LEAD_THICKNESS_MM, 0.05)
+        self.lead_mode_combo = QComboBox()
+        self.lead_mode_combo.addItems(["generate", "detect"])
         self.seed_spin = QDoubleSpinBox()
         self.seed_spin.setRange(0, 999999)
         self.seed_spin.setDecimals(0)
@@ -302,16 +304,18 @@ class MainWindow(QMainWindow):
         settings_grid.addWidget(self.base_layers_spin, 4, 1)
         settings_grid.addWidget(QLabel("Lead layer height"), 5, 0)
         settings_grid.addWidget(self.lead_height_spin, 5, 1)
-        settings_grid.addWidget(QLabel("Lead thickness"), 6, 0)
-        settings_grid.addWidget(self.lead_thickness_spin, 6, 1)
-        settings_grid.addWidget(QLabel("Blur"), 7, 0)
-        settings_grid.addWidget(self.blur_combo, 7, 1)
-        settings_grid.addWidget(QLabel("Seed"), 8, 0)
-        settings_grid.addWidget(self.seed_spin, 8, 1)
+        settings_grid.addWidget(QLabel("Lead"), 6, 0)
+        settings_grid.addWidget(self.lead_mode_combo, 6, 1)
+        settings_grid.addWidget(QLabel("Lead thickness"), 7, 0)
+        settings_grid.addWidget(self.lead_thickness_spin, 7, 1)
+        settings_grid.addWidget(QLabel("Blur"), 8, 0)
+        settings_grid.addWidget(self.blur_combo, 8, 1)
+        settings_grid.addWidget(QLabel("Seed"), 9, 0)
+        settings_grid.addWidget(self.seed_spin, 9, 1)
 
         self.open_orca_checkbox = QCheckBox("Open result in Snapmaker Orca")
         self.open_orca_checkbox.setChecked(True)
-        settings_grid.addWidget(self.open_orca_checkbox, 9, 0, 1, 2)
+        settings_grid.addWidget(self.open_orca_checkbox, 10, 0, 1, 2)
 
         layout.addWidget(settings_group)
 
@@ -617,6 +621,8 @@ class MainWindow(QMainWindow):
             str(int(self.base_layers_spin.value())),
             "--lead-height",
             f"{self.lead_height_spin.value():.2f}mm",
+            "--lead-source",
+            self.lead_mode_combo.currentText(),
             "--lead-thickness",
             f"{self.lead_thickness_spin.value():.2f}mm",
             "--blur",
