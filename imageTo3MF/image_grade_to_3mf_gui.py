@@ -321,9 +321,12 @@ class MainWindow(QMainWindow):
         self.generate_button = QPushButton("Generate 3MF")
         self.generate_button.clicked.connect(self.run_export)
         self.generate_button.setMinimumHeight(40)
+        regen_button = QPushButton("Regen")
+        regen_button.clicked.connect(self.run_export)
         reveal_button = QPushButton("Reveal Output")
         reveal_button.clicked.connect(self.reveal_output)
         run_buttons_layout.addWidget(self.generate_button, 1)
+        run_buttons_layout.addWidget(regen_button)
         run_buttons_layout.addWidget(reveal_button)
         layout.addWidget(run_buttons)
 
@@ -393,13 +396,16 @@ class MainWindow(QMainWindow):
         materials_buttons = QWidget()
         materials_buttons_layout = QHBoxLayout(materials_buttons)
         materials_buttons_layout.setContentsMargins(0, 0, 0, 0)
-        reset_button = QPushButton("Reset CMYWK")
-        reset_button.clicked.connect(self.reset_materials)
+        cmywk_button = QPushButton("CMYWK")
+        cmywk_button.clicked.connect(self.reset_materials)
+        rgbwk_button = QPushButton("RGBWK")
+        rgbwk_button.clicked.connect(self.set_rgbwk_materials)
         save_button = QPushButton("Save Preset")
         save_button.clicked.connect(self.save_preset)
         load_button = QPushButton("Load Preset")
         load_button.clicked.connect(self.load_preset)
-        materials_buttons_layout.addWidget(reset_button)
+        materials_buttons_layout.addWidget(cmywk_button)
+        materials_buttons_layout.addWidget(rgbwk_button)
         materials_buttons_layout.addWidget(save_button)
         materials_buttons_layout.addWidget(load_button)
         materials_buttons_layout.addStretch(1)
@@ -521,6 +527,17 @@ class MainWindow(QMainWindow):
     def reset_materials(self) -> None:
         for slot, row in self.material_rows.items():
             row.set_profile(self.default_profiles[slot])
+
+    def set_rgbwk_materials(self) -> None:
+        rgbwk_profiles = {
+            "1": engine.MaterialProfile(slot="1", name="red", hex_color="#FF0000", rgb=(255, 0, 0), td=5.5),
+            "2": engine.MaterialProfile(slot="2", name="green", hex_color="#00FF00", rgb=(0, 255, 0), td=5.5),
+            "3": engine.MaterialProfile(slot="3", name="blue", hex_color="#0000FF", rgb=(0, 0, 255), td=5.5),
+            "4": engine.MaterialProfile(slot="4", name="white", hex_color="#FFFFFF", rgb=(255, 255, 255), td=9.0),
+            "5": engine.MaterialProfile(slot="5", name="black", hex_color="#000000", rgb=(0, 0, 0), td=0.15),
+        }
+        for slot, row in self.material_rows.items():
+            row.set_profile(rgbwk_profiles[slot])
 
     def save_preset(self) -> None:
         self._prepare_dialog()
