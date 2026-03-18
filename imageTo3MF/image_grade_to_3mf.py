@@ -2008,6 +2008,7 @@ def build_project_settings_with_base_colors(
     base_layer_height_mm: float,
     material_profiles: Dict[str, MaterialProfile],
     palette_recipes: Sequence[PaletteRecipe],
+    output_name: str,
 ) -> str:
     raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
     settings = json.loads(raw)
@@ -2018,7 +2019,50 @@ def build_project_settings_with_base_colors(
     settings["first_layer_print_height"] = format_number(base_layer_height_mm)
     settings["layer_height"] = format_number(base_layer_height_mm)
     settings["initial_layer_print_height"] = format_number(base_layer_height_mm)
-    settings["print_settings_id"] = f"{base_layer_height_mm:.2f} Custom @Snapmaker U1 (0.4 nozzle)"
+    standard_profile_name = f"{base_layer_height_mm:.2f} Standard @Snapmaker U1 (0.4 nozzle)"
+    settings["default_print_profile"] = standard_profile_name
+    settings["print_settings_id"] = "Default Setting"
+    settings["travel_speed"] = "120"
+    settings["inherits_group"] = [
+        "",
+        "Snapmaker U1 (0.4 nozzle)",
+        "Snapmaker U1 (0.4 nozzle)",
+        "Snapmaker U1 (0.4 nozzle)",
+        "Snapmaker U1 (0.4 nozzle)",
+        "Snapmaker U1 (0.4 nozzle)",
+        "",
+    ]
+    settings["different_settings_to_system"] = [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "auxiliary_fan;before_layer_change_gcode;change_filament_gcode;default_bed_type;"
+        "default_filament_profile;default_print_profile;deretraction_speed;enable_filament_ramming;"
+        "extruder_clearance_height_to_lid;extruder_clearance_height_to_rod;extruder_clearance_radius;"
+        "extruder_colour;extruder_offset;gcode_flavor;layer_change_gcode;long_retractions_when_cut;"
+        "machine_end_gcode;machine_max_acceleration_extruding;machine_max_acceleration_retracting;"
+        "machine_max_acceleration_travel;machine_max_acceleration_x;machine_max_acceleration_y;"
+        "machine_max_jerk_x;machine_max_jerk_y;machine_max_jerk_z;machine_max_speed_e;machine_max_speed_z;"
+        "machine_pause_gcode;machine_start_gcode;machine_tool_change_time;max_layer_height;"
+        "min_layer_height;nozzle_diameter;nozzle_type;nozzle_volume;printable_area;printable_height;"
+        "printer_model;printer_variant;purge_in_prime_tower;ramming_pressure_advance_value;"
+        "retract_before_wipe;retract_length_toolchange;retract_lift_above;retract_lift_below;"
+        "retract_lift_enforce;retract_restart_extra;retract_restart_extra_toolchange;"
+        "retract_when_changing_layer;retraction_distances_when_cut;retraction_length;"
+        "retraction_minimum_travel;retraction_speed;single_extruder_multi_material;"
+        "support_multi_bed_types;thumbnails;tool_change_temprature_wait;travel_slope;wipe;"
+        "wipe_distance;z_hop;z_hop_types;z_hop_when_prime",
+    ]
+    settings["filament_settings_id"] = [
+        f"Snapmaker U1 (0.4 nozzle)({output_name})",
+        f"Snapmaker U1 (0.4 nozzle)({output_name})",
+        f"Snapmaker U1 (0.4 nozzle)({output_name})",
+        f"Snapmaker U1 (0.4 nozzle)({output_name})",
+        f"Snapmaker U1 (0.4 nozzle)({output_name})",
+    ]
     mixed_filament_entries: List[str] = []
     seen_entries: set[str] = set()
     for recipe in palette_recipes:
@@ -2133,6 +2177,7 @@ def write_snapmaker_project_3mf(
                 base_layer_height_mm=base_layer_height_mm,
                 material_profiles=material_profiles,
                 palette_recipes=palette_recipes,
+                output_name=output_path.name,
             ),
         )
         output_zip.writestr(

@@ -22,4 +22,6 @@ By default the generated model is `100 x 100 mm`, uses a `0.8 mm` full-color bas
 
 The Snapmaker project writer currently forces the filament palette in the exported `3mf` to cyan, magenta, yellow, white, and black (`CMYWK`), maps the `Lead` part to slot `5`, and writes a per-layer `M600` pause just before the final lead layer so that black can be loaded at that moment.
 
+When writing the Snapmaker project settings, the exporter now normalizes the print profile block to match Snorca's saved `0.20 Standard @Snapmaker U1 (0.4 nozzle)` state, which avoids the Spiral Lifting / Z-hop warning path you saw on generated files.
+
 You can override any of the five available materials with repeatable `--material SLOT:#RRGGBB@TD` flags such as `--material cyan:#88FFFF@6.2 --material 4:#F8F8F8@9.0`. If no `--material` flags are passed, the script assumes the default `CMYWK` palette and default TD values. The current palette fitting and preview path use a simple TD-aware stack simulation rather than plain RGB averaging.
