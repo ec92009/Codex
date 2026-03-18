@@ -18,7 +18,7 @@ from xml.sax.saxutils import quoteattr
 
 import lib3mf
 import numpy as np
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 
 DEFAULT_NUM_NUANCES = 10
@@ -838,6 +838,49 @@ def detect_image_lead_mask(rgb_image: np.ndarray) -> np.ndarray:
     edge_mask = contrast >= 18.0
     neutral_mask = color_range <= 80.0
     return dark_mask & edge_mask & neutral_mask
+
+
+def extract_mask_boundary_segments(mask: np.ndarray) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
+    height, width = mask.shape
+    segments: List[Tuple[Tuple[float, float], Tuple[float, float]]] = []
+    for y in range(height):
+        for x in range(width):
+            if not mask[y, x]:
+                continue
+            if x == 0 or not mask[y, x - 1]:
+                segments.append(((x * 1.0, y * 1.0), (x * 1.0, y + 1.0)))
+            if x == width - 1 or not mask[y, x + 1]:
+                segments.append(((x + 1.0, y + 1.0), (x + 1.0, y * 1.0)))
+            if y == 0 or not mask[y - 1, x]:
+                segments.append(((x + 1.0, y * 1.0), (x * 1.0, y * 1.0)))
+            if y == height - 1 or not mask[y + 1, x]:
+                segments.append(((x * 1.0, y + 1.0), (x + 1.0, y + 1.0)))
+    return segments
+
+
+def smooth_detected_lead_mask(mask: np.ndarray) -> np.ndarray:
+    if not np.any(mask):
+        return mask
+    polylines = chain_boundary_segments(extract_mask_boundary_segments(mask))
+    scale = 4
+    canvas = Image.new("L", (mask.shape[1] * scale, mask.shape[0] * scale), 0)
+    draw = ImageDraw.Draw(canvas)
+    for polyline in polylines:
+        if len(polyline) < 3:
+            continue
+        closed = polyline[0] == polyline[-1]
+        if not closed:
+            continue
+        filtered = filter_polyline_points(polyline, min_distance=0.8)
+        simplified = simplify_polyline(filtered, tolerance=1.2)
+        smoothed = chaikin_smooth_polyline(simplified, passes=2)
+        if len(smoothed) < 4:
+            continue
+        points = [(point[0] * scale, point[1] * scale) for point in smoothed[:-1]]
+        if len(points) >= 3:
+            draw.polygon(points, fill=255)
+    downsampled = canvas.resize((mask.shape[1], mask.shape[0]), Image.Resampling.LANCZOS)
+    return np.asarray(downsampled, dtype=np.uint8) >= 128
 
 
 def extract_boundary_segments(labels: np.ndarray) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
@@ -2124,7 +2167,7 @@ def main() -> int:
     cell_size_for_lines = min(actual_resolution_x, actual_resolution_y)
     line_radius_pixels = max(0, math.ceil(args.lead_thickness / cell_size_for_lines) - 1)
     if args.lead_source == "detect":
-        lines = detect_image_lead_mask(rgb_image)
+        lines = smooth_detected_lead_mask(detect_image_lead_mask(rgb_image))
         region_labels_for_masks = labels.copy()
     else:
         lines = boundary_mask(labels, radius_pixels=line_radius_pixels)

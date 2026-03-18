@@ -4,7 +4,7 @@ Use `uv run python image_grade_to_3mf.py /path/to/image.png --layer-height 0.2mm
 
 Use `--lead-source generate` for the normal synthetic lead, or `--lead-source detect` when the source image already contains dark stained-glass lead that should be preserved as the top black layer.
 
-The GUI now leaves picture size blank until you choose an image, then auto-fills it so the source image's long side becomes `100 mm` and the short side follows the original aspect ratio.
+The GUI now leaves picture size blank until you choose an image, then auto-fills it so the source image's long side becomes `100 mm` and the short side follows the original aspect ratio. A slider under picture size lets you scale that long side up or down while preserving the same ratio.
 
 To use the desktop GUI, run `uv run python image_grade_to_3mf_gui.py`. The GUI keeps the CLI/exporter intact and wraps it with image selection, material TD editing, live run logs, and preview panes.
 

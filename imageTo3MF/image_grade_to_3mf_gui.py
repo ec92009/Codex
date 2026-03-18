@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QSizePolicy,
     QSplitter,
+    QSlider,
     QTextEdit,
     QVBoxLayout,
     QWidget,
@@ -43,6 +44,7 @@ import image_grade_to_3mf as engine
 PROJECT_DIR = Path(__file__).resolve().parent
 SCRIPT_PATH = PROJECT_DIR / "image_grade_to_3mf.py"
 PRESET_PATH = PROJECT_DIR / "material_presets.json"
+DEFAULT_LONG_SIDE_MM = 100.0
 DEFAULT_LONG_SIDE_MM = 100.0
 
 
@@ -168,6 +170,7 @@ class MainWindow(QMainWindow):
         self.input_path: Optional[Path] = None
         self.preview_path: Optional[Path] = None
         self.output_path: Optional[Path] = None
+        self.source_image_size: Optional[tuple[int, int]] = None
         self.default_profiles = engine.default_material_profiles()
         self.material_rows: Dict[str, MaterialRow] = {}
 
@@ -230,6 +233,10 @@ class MainWindow(QMainWindow):
         splitter.setSizes([420, 560, 420])
 
         root_layout.addWidget(splitter, 1)
+        footer = QLabel("Dimensions are in millimeters.")
+        footer.setStyleSheet("font-size: 11px; color: #8a7763;")
+        footer.setAlignment(Qt.AlignRight)
+        root_layout.addWidget(footer)
         self.setCentralWidget(root)
 
     def _build_left_panel(self) -> QWidget:
@@ -295,8 +302,24 @@ class MainWindow(QMainWindow):
         self.blur_combo = QComboBox()
         self.blur_combo.addItems(["none", "low", "medium", "strong"])
 
+        self.size_slider = QSlider(Qt.Horizontal)
+        self.size_slider.setRange(20, 300)
+        self.size_slider.setValue(int(DEFAULT_LONG_SIDE_MM))
+        self.size_slider.setEnabled(False)
+        self.size_slider.valueChanged.connect(self._sync_size_from_slider)
+        self.size_slider_label = QLabel("Long side: auto")
+        self.size_slider_label.setStyleSheet("color: #715d49; font-size: 12px;")
+
+        size_widget = QWidget()
+        size_layout = QVBoxLayout(size_widget)
+        size_layout.setContentsMargins(0, 0, 0, 0)
+        size_layout.setSpacing(4)
+        size_layout.addWidget(self.size_edit)
+        size_layout.addWidget(self.size_slider)
+        size_layout.addWidget(self.size_slider_label)
+
         settings_grid.addWidget(QLabel("Picture size"), 0, 0)
-        settings_grid.addWidget(self.size_edit, 0, 1)
+        settings_grid.addWidget(size_widget, 0, 1)
         settings_grid.addWidget(QLabel("Plate size"), 1, 0)
         settings_grid.addWidget(self.plate_size_edit, 1, 1)
         settings_grid.addWidget(QLabel("Resolution"), 2, 0)
@@ -491,7 +514,6 @@ class MainWindow(QMainWindow):
         spin.setDecimals(2)
         spin.setValue(value)
         spin.setSingleStep(step)
-        spin.setSuffix(" mm")
         return spin
 
     def _prepare_dialog(self) -> None:
@@ -528,22 +550,37 @@ class MainWindow(QMainWindow):
         for slot, row in self.material_rows.items():
             row.set_profile(self.default_profiles[slot])
 
-    def _suggest_model_size(self, image_path: Path) -> str:
+    def _suggest_model_size(self, image_path: Path, long_side_mm: float = DEFAULT_LONG_SIDE_MM) -> str:
         with Image.open(image_path) as image:
             width_px, height_px = image.size
+        self.source_image_size = (width_px, height_px)
         if width_px <= 0 or height_px <= 0:
             return "100x100"
         long_side = max(width_px, height_px)
-        scale = DEFAULT_LONG_SIDE_MM / float(long_side)
+        scale = long_side_mm / float(long_side)
         width_mm = width_px * scale
         height_mm = height_px * scale
         return f"{engine.format_number(width_mm)}x{engine.format_number(height_mm)}"
 
     def _sync_size_from_image(self, image_path: Path) -> None:
         try:
-            self.size_edit.setText(self._suggest_model_size(image_path))
+            self.size_slider.blockSignals(True)
+            self.size_slider.setEnabled(True)
+            self.size_slider.setValue(int(DEFAULT_LONG_SIDE_MM))
+            self.size_slider.blockSignals(False)
+            self.size_edit.setText(self._suggest_model_size(image_path, long_side_mm=float(self.size_slider.value())))
+            self.size_slider_label.setText(f"Long side: {self.size_slider.value()} mm")
         except Exception:
-            pass
+            self.source_image_size = None
+            self.size_slider.setEnabled(False)
+            self.size_slider_label.setText("Long side: auto")
+
+    def _sync_size_from_slider(self, value: int) -> None:
+        if self.input_path is None or self.source_image_size is None:
+            self.size_slider_label.setText("Long side: auto")
+            return
+        self.size_edit.setText(self._suggest_model_size(self.input_path, long_side_mm=float(value)))
+        self.size_slider_label.setText(f"Long side: {value} mm")
 
     def set_rgbwk_materials(self) -> None:
         rgbwk_profiles = {
@@ -633,7 +670,7 @@ class MainWindow(QMainWindow):
             str(SCRIPT_PATH),
             str(image_path),
             "--size",
-            self.size_edit.text().strip() or self._suggest_model_size(image_path),
+            self.size_edit.text().strip() or self._suggest_model_size(image_path, long_side_mm=float(self.size_slider.value())),
             "--plate-size",
             self.plate_size_edit.text().strip() or "270x270",
             "--resolution",
