@@ -3,6 +3,9 @@
 set -euo pipefail
 
 PROJECT_DIR="/Users/ecohen/Codex/imageTo3MF"
+LOG_FILE="${TMPDIR:-/tmp}/imageTo3MF_gui.log"
 
 cd "$PROJECT_DIR"
-exec uv run --project "$PROJECT_DIR" python "$PROJECT_DIR/image_grade_to_3mf_gui.py"
+nohup uv run --project "$PROJECT_DIR" python "$PROJECT_DIR/image_grade_to_3mf_gui.py" >>"$LOG_FILE" 2>&1 &
+disown
+exit 0
