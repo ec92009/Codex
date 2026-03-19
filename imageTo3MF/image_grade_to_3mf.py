@@ -813,6 +813,45 @@ def majority_smooth_masked(labels: np.ndarray, valid_mask: np.ndarray, num_class
     return result
 
 
+def fill_unassigned_labels(labels: np.ndarray) -> np.ndarray:
+    if not np.any(labels < 0):
+        return labels
+
+    result = labels.copy()
+    height, width = result.shape
+    for _ in range(height + width):
+        missing = result < 0
+        if not np.any(missing):
+            break
+        updated = result.copy()
+        for y in range(height):
+            for x in range(width):
+                if result[y, x] >= 0:
+                    continue
+                neighbors: List[int] = []
+                if y > 0 and result[y - 1, x] >= 0:
+                    neighbors.append(int(result[y - 1, x]))
+                if y + 1 < height and result[y + 1, x] >= 0:
+                    neighbors.append(int(result[y + 1, x]))
+                if x > 0 and result[y, x - 1] >= 0:
+                    neighbors.append(int(result[y, x - 1]))
+                if x + 1 < width and result[y, x + 1] >= 0:
+                    neighbors.append(int(result[y, x + 1]))
+                if neighbors:
+                    values, counts = np.unique(np.asarray(neighbors, dtype=np.int32), return_counts=True)
+                    updated[y, x] = int(values[np.argmax(counts)])
+        if np.array_equal(updated, result):
+            break
+        result = updated
+
+    if np.any(result < 0):
+        valid = result[result >= 0]
+        if valid.size:
+            fallback = int(np.bincount(valid).argmax())
+            result[result < 0] = fallback
+    return result
+
+
 def boundary_mask(labels: np.ndarray, radius_pixels: int) -> np.ndarray:
     diff = np.zeros_like(labels, dtype=bool)
     diff[:-1, :] |= labels[:-1, :] != labels[1:, :]
@@ -2558,9 +2597,10 @@ def main() -> int:
         region_labels_for_masks = labels
         save_stage_preview(args.stage_dir, 3, "generated_lead_mask", mask_preview(lines))
 
+    filled_region_labels = fill_unassigned_labels(region_labels_for_masks)
     region_masks = []
     for nuance_index in range(len(region_colors)):
-        region_masks.append((region_labels_for_masks == nuance_index) & ~lines)
+        region_masks.append(filled_region_labels == nuance_index)
 
     palette_recipes = build_palette_recipes(
         region_colors=region_colors,
