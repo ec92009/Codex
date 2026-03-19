@@ -370,8 +370,7 @@ class MainWindow(QMainWindow):
         layout.setSpacing(10)
 
         self.original_preview = ImagePreview("Original image preview")
-        self.generated_preview = ImagePreview("Generated preview will appear here")
-        self.stage_preview = ImagePreview("Intermediate stages will appear here")
+        self.stage_preview = ImagePreview("Preview will appear here")
 
         original_group = QGroupBox("Original")
         original_layout = QVBoxLayout(original_group)
@@ -384,7 +383,7 @@ class MainWindow(QMainWindow):
         self.summary_label.setStyleSheet("color: #5e4b39;")
         summary_layout.addWidget(self.summary_label)
 
-        stage_group = QGroupBox("Stages")
+        stage_group = QGroupBox("Preview")
         stage_layout = QVBoxLayout(stage_group)
         self.progress_label = QLabel("Idle")
         self.progress_label.setStyleSheet("color: #715d49; font-weight: 600;")
@@ -410,14 +409,9 @@ class MainWindow(QMainWindow):
         stage_layout.addWidget(stage_controls)
         stage_layout.addWidget(self.stage_preview)
 
-        generated_group = QGroupBox("Generated Preview")
-        generated_layout = QVBoxLayout(generated_group)
-        generated_layout.addWidget(self.generated_preview)
-
         layout.addWidget(original_group, 1)
         layout.addWidget(summary_group, 0)
-        layout.addWidget(stage_group, 1)
-        layout.addWidget(generated_group, 1)
+        layout.addWidget(stage_group, 2)
         self._update_stage_controls()
         return panel
 
@@ -708,8 +702,7 @@ class MainWindow(QMainWindow):
         if not self.size_edit.text().strip():
             self._sync_size_from_image(image_path)
         self.original_preview.set_image(image_path, "Original image preview")
-        self.generated_preview.set_image(None, "Generated preview will appear here")
-        self.stage_preview.set_image(None, "Intermediate stages will appear here")
+        self.stage_preview.set_image(None, "Preview will appear here")
         self.preview_path = None
         self.output_path = None
         self.stage_paths = []
@@ -766,7 +759,7 @@ class MainWindow(QMainWindow):
 
         process = QProcess(self)
         process.setProgram(sys.executable)
-        process.setArguments(args)
+        process.setArguments(["-u", *args])
         process.setWorkingDirectory(str(PROJECT_DIR))
         process.setProcessChannelMode(QProcess.MergedChannels)
         process.readyReadStandardOutput.connect(self._append_process_output)
@@ -790,8 +783,6 @@ class MainWindow(QMainWindow):
         log_text = self.log_view.toPlainText()
         self.preview_path = self._extract_path(log_text, "Preview PNG:")
         self.output_path = self._extract_path(log_text, "3MF output:")
-        self.generated_preview.set_image(self.preview_path, "Generated preview will appear here")
-
         if exit_code == 0:
             summary = "3MF generated successfully."
             if self.output_path is not None:
@@ -821,14 +812,14 @@ class MainWindow(QMainWindow):
     def _set_stage_index(self, index: int) -> None:
         if not self.stage_paths:
             self.stage_index = -1
-            self.stage_preview.set_image(None, "Intermediate stages will appear here")
+            self.stage_preview.set_image(None, "Preview will appear here")
             self.stage_caption_label.setText("No stage yet")
             self.stage_counter_label.setText("0 / 0")
             self._update_stage_controls()
             return
         self.stage_index = max(0, min(index, len(self.stage_paths) - 1))
         name, path = self.stage_paths[self.stage_index]
-        self.stage_preview.set_image(path, "Intermediate stages will appear here")
+        self.stage_preview.set_image(path, "Preview will appear here")
         self.stage_caption_label.setText(name.replace("_", " "))
         self.stage_counter_label.setText(f"{self.stage_index + 1} / {len(self.stage_paths)}")
         self._update_stage_controls()
