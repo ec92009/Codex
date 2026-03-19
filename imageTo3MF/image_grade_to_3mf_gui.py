@@ -376,13 +376,6 @@ class MainWindow(QMainWindow):
         original_layout = QVBoxLayout(original_group)
         original_layout.addWidget(self.original_preview)
 
-        summary_group = QGroupBox("Status")
-        summary_layout = QVBoxLayout(summary_group)
-        self.summary_label = QLabel("Choose an image and generate a 3MF.")
-        self.summary_label.setWordWrap(True)
-        self.summary_label.setStyleSheet("color: #5e4b39;")
-        summary_layout.addWidget(self.summary_label)
-
         stage_group = QGroupBox("Preview")
         stage_layout = QVBoxLayout(stage_group)
         self.progress_label = QLabel("Idle")
@@ -410,7 +403,6 @@ class MainWindow(QMainWindow):
         stage_layout.addWidget(self.stage_preview)
 
         layout.addWidget(original_group, 1)
-        layout.addWidget(summary_group, 0)
         layout.addWidget(stage_group, 2)
         self._update_stage_controls()
         return panel
@@ -454,6 +446,13 @@ class MainWindow(QMainWindow):
         materials_buttons_layout.addStretch(1)
         materials_layout.addWidget(materials_buttons)
 
+        summary_group = QGroupBox("Status")
+        summary_layout = QVBoxLayout(summary_group)
+        self.summary_label = QLabel("Choose an image and generate a 3MF.")
+        self.summary_label.setWordWrap(True)
+        self.summary_label.setStyleSheet("color: #5e4b39;")
+        summary_layout.addWidget(self.summary_label)
+
         log_group = QGroupBox("Run Log")
         log_layout = QVBoxLayout(log_group)
         self.log_view = QTextEdit()
@@ -461,6 +460,7 @@ class MainWindow(QMainWindow):
         log_layout.addWidget(self.log_view)
 
         layout.addWidget(materials_group, 0)
+        layout.addWidget(summary_group, 0)
         layout.addWidget(log_group, 1)
         return panel
 
