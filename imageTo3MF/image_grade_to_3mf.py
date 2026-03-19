@@ -425,6 +425,11 @@ def parse_args() -> argparse.Namespace:
         help="Do not open the generated 3MF in Snapmaker Orca after export.",
     )
     advanced.add_argument(
+        "--stage-dir",
+        dest="stage_dir",
+        help=argparse.SUPPRESS,
+    )
+    advanced.add_argument(
         "--template",
         "--snapmaker-template",
         dest="snapmaker_template",
@@ -450,6 +455,7 @@ def parse_args() -> argparse.Namespace:
         args.plate_width = args.plate_width_legacy
     if args.plate_height_legacy is not None:
         args.plate_height = args.plate_height_legacy
+    args.stage_dir = Path(args.stage_dir).expanduser().resolve() if args.stage_dir else None
     return args
 
 
@@ -1688,6 +1694,22 @@ def build_preview(labels: np.ndarray, mean_colors: np.ndarray, lines: np.ndarray
     return Image.fromarray(preview)
 
 
+def mask_preview(mask: np.ndarray) -> Image.Image:
+    canvas = np.full((mask.shape[0], mask.shape[1], 3), 245, dtype=np.uint8)
+    canvas[mask.astype(bool)] = np.array([0, 0, 0], dtype=np.uint8)
+    return Image.fromarray(canvas)
+
+
+def save_stage_preview(stage_dir: Optional[Path], index: int, name: str, image: Image.Image) -> None:
+    if stage_dir is None:
+        return
+    stage_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = sanitize_filename_bit(name) or f"stage_{index:02d}"
+    path = stage_dir / f"{index:02d}_{safe_name}.png"
+    image.save(path)
+    print(f"Stage preview {index}: {name}: {path}")
+
+
 def make_position(x: float, y: float, z: float) -> lib3mf.Position:
     position = lib3mf.Position()
     position.Coordinates[:] = [x, y, z]
@@ -2494,15 +2516,19 @@ def main() -> int:
         grid_height,
         blur_pixels=blur_pixels,
     )
+    save_stage_preview(args.stage_dir, 1, "resized_source", Image.fromarray(rgb_image))
     flat_rgb = rgb_image.reshape(-1, 3)
     flat_lab = srgb_to_lab(rgb_image).reshape(-1, 3)
 
     cell_size_for_lines = min(actual_resolution_x, actual_resolution_y)
     line_radius_pixels = max(0, math.ceil(args.lead_thickness / cell_size_for_lines) - 1)
     if args.lead_source == "detect":
-        lines = filter_detected_lead_components(
-            smooth_detected_lead_mask(detect_image_lead_mask(rgb_image))
-        )
+        raw_detected_lines = detect_image_lead_mask(rgb_image)
+        save_stage_preview(args.stage_dir, 2, "detected_lead_raw", mask_preview(raw_detected_lines))
+        smoothed_detected_lines = smooth_detected_lead_mask(raw_detected_lines)
+        save_stage_preview(args.stage_dir, 3, "detected_lead_smoothed", mask_preview(smoothed_detected_lines))
+        lines = filter_detected_lead_components(smoothed_detected_lines)
+        save_stage_preview(args.stage_dir, 4, "detected_lead_filtered", mask_preview(lines))
         labels, region_colors = detect_lead_partition_labels(
             lines_mask=lines,
             lab_image=flat_lab.reshape(grid_height, grid_width, 3),
@@ -2511,13 +2537,26 @@ def main() -> int:
             seed=args.seed,
         )
         region_labels_for_masks = labels
+        save_stage_preview(
+            args.stage_dir,
+            5,
+            "glass_cells_clustered",
+            build_preview(labels, region_colors, lines),
+        )
     else:
         raw_labels, lab_centers = kmeans(flat_lab, clusters=args.num_nuances, seed=args.seed)
         labels, _, region_colors = reorder_by_lightness(raw_labels, lab_centers, flat_rgb)
         labels = labels.reshape(grid_height, grid_width)
         labels = majority_smooth(labels, num_classes=args.num_nuances, passes=args.smooth_passes)
+        save_stage_preview(
+            args.stage_dir,
+            2,
+            "nuance_regions",
+            build_preview(labels, region_colors, np.zeros_like(labels, dtype=bool)),
+        )
         lines = boundary_mask(labels, radius_pixels=line_radius_pixels)
         region_labels_for_masks = labels
+        save_stage_preview(args.stage_dir, 3, "generated_lead_mask", mask_preview(lines))
 
     region_masks = []
     for nuance_index in range(len(region_colors)):
@@ -2531,6 +2570,7 @@ def main() -> int:
     )
     preview_colors = np.asarray([recipe.mixed_color for recipe in palette_recipes], dtype=np.uint8)
     preview = build_preview(labels, preview_colors, lines)
+    save_stage_preview(args.stage_dir, 6 if args.lead_source == "detect" else 4, "final_preview", preview)
     preview.save(preview_path)
 
     mesh_objects = build_mesh_objects(

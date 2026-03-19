@@ -6,6 +6,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -27,7 +28,6 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
-    QProgressBar,
     QSizePolicy,
     QSplitter,
     QSlider,
@@ -170,6 +170,9 @@ class MainWindow(QMainWindow):
         self.input_path: Optional[Path] = None
         self.preview_path: Optional[Path] = None
         self.output_path: Optional[Path] = None
+        self.stage_dir: Optional[Path] = None
+        self.stage_paths: list[tuple[str, Path]] = []
+        self.stage_index: int = -1
         self.source_image_size: Optional[tuple[int, int]] = None
         self.default_profiles = engine.default_material_profiles()
         self.material_rows: Dict[str, MaterialRow] = {}
@@ -368,6 +371,7 @@ class MainWindow(QMainWindow):
 
         self.original_preview = ImagePreview("Original image preview")
         self.generated_preview = ImagePreview("Generated preview will appear here")
+        self.stage_preview = ImagePreview("Intermediate stages will appear here")
 
         original_group = QGroupBox("Original")
         original_layout = QVBoxLayout(original_group)
@@ -380,27 +384,41 @@ class MainWindow(QMainWindow):
         self.summary_label.setStyleSheet("color: #5e4b39;")
         summary_layout.addWidget(self.summary_label)
 
+        stage_group = QGroupBox("Stages")
+        stage_layout = QVBoxLayout(stage_group)
+        self.progress_label = QLabel("Idle")
+        self.progress_label.setStyleSheet("color: #715d49; font-weight: 600;")
+        self.stage_caption_label = QLabel("No stage yet")
+        self.stage_caption_label.setStyleSheet("color: #715d49;")
+        stage_controls = QWidget()
+        stage_controls_layout = QHBoxLayout(stage_controls)
+        stage_controls_layout.setContentsMargins(0, 0, 0, 0)
+        self.stage_prev_button = QPushButton("-")
+        self.stage_prev_button.setFixedWidth(36)
+        self.stage_prev_button.clicked.connect(lambda: self._step_stage(-1))
+        self.stage_next_button = QPushButton("+")
+        self.stage_next_button.setFixedWidth(36)
+        self.stage_next_button.clicked.connect(lambda: self._step_stage(1))
+        self.stage_counter_label = QLabel("0 / 0")
+        self.stage_counter_label.setStyleSheet("color: #715d49;")
+        stage_controls_layout.addWidget(self.stage_prev_button)
+        stage_controls_layout.addWidget(self.stage_next_button)
+        stage_controls_layout.addWidget(self.stage_counter_label)
+        stage_controls_layout.addStretch(1)
+        stage_layout.addWidget(self.progress_label)
+        stage_layout.addWidget(self.stage_caption_label)
+        stage_layout.addWidget(stage_controls)
+        stage_layout.addWidget(self.stage_preview)
+
         generated_group = QGroupBox("Generated Preview")
         generated_layout = QVBoxLayout(generated_group)
         generated_layout.addWidget(self.generated_preview)
 
-        progress_group = QGroupBox("Export Status")
-        progress_layout = QVBoxLayout(progress_group)
-        self.progress_label = QLabel("Idle")
-        self.progress_label.setStyleSheet("color: #715d49; font-weight: 600;")
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 1)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setFixedHeight(10)
-        self.progress_bar.setVisible(False)
-        progress_layout.addWidget(self.progress_label)
-        progress_layout.addWidget(self.progress_bar)
-
         layout.addWidget(original_group, 1)
         layout.addWidget(summary_group, 0)
-        layout.addWidget(progress_group, 0)
+        layout.addWidget(stage_group, 1)
         layout.addWidget(generated_group, 1)
+        self._update_stage_controls()
         return panel
 
     def _build_right_panel(self) -> QWidget:
@@ -691,8 +709,15 @@ class MainWindow(QMainWindow):
             self._sync_size_from_image(image_path)
         self.original_preview.set_image(image_path, "Original image preview")
         self.generated_preview.set_image(None, "Generated preview will appear here")
+        self.stage_preview.set_image(None, "Intermediate stages will appear here")
         self.preview_path = None
         self.output_path = None
+        self.stage_paths = []
+        self.stage_index = -1
+        self.stage_dir = Path(tempfile.mkdtemp(prefix="imageTo3MF_stages_"))
+        self.stage_caption_label.setText("Waiting for stages...")
+        self.stage_counter_label.setText("0 / 0")
+        self._update_stage_controls()
 
         args = [
             str(SCRIPT_PATH),
@@ -717,6 +742,8 @@ class MainWindow(QMainWindow):
             self.blur_combo.currentText(),
             "--seed",
             str(int(self.seed_spin.value())),
+            "--stage-dir",
+            str(self.stage_dir),
         ]
 
         description = self.description_edit.text().strip()
@@ -735,8 +762,6 @@ class MainWindow(QMainWindow):
         self.log_view.clear()
         self.summary_label.setText("Generating 3MF...")
         self.progress_label.setText("Generating 3MF...")
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, 0)
         self.generate_button.setEnabled(False)
 
         process = QProcess(self)
@@ -758,6 +783,7 @@ class MainWindow(QMainWindow):
         self.log_view.moveCursor(QTextCursor.End)
         self.log_view.insertPlainText(chunk)
         self.log_view.moveCursor(QTextCursor.End)
+        self._ingest_stage_lines(chunk)
 
     def _process_finished(self, exit_code: int, _status) -> None:
         self.generate_button.setEnabled(True)
@@ -774,15 +800,48 @@ class MainWindow(QMainWindow):
                 summary += f"\nPreview: {self.preview_path}"
             self.summary_label.setText(summary)
             self.progress_label.setText("Done")
-            self.progress_bar.setRange(0, 1)
-            self.progress_bar.setValue(1)
+            if self.stage_paths:
+                self._set_stage_index(len(self.stage_paths) - 1)
         else:
             self.summary_label.setText("Generation failed. See the run log for details.")
             self.progress_label.setText("Failed")
-            self.progress_bar.setRange(0, 1)
-            self.progress_bar.setValue(0)
             QMessageBox.warning(self, "Generation failed", "The export did not complete successfully. See the run log.")
         self.process = None
+
+    def _ingest_stage_lines(self, text: str) -> None:
+        pattern = re.compile(r"^Stage preview\s+(\d+):\s+(.+?):\s+(.*)$", re.MULTILINE)
+        for match in pattern.finditer(text):
+            name = match.group(2).strip()
+            path = Path(match.group(3).strip())
+            if any(existing_path == path for _existing_name, existing_path in self.stage_paths):
+                continue
+            self.stage_paths.append((name, path))
+            self._set_stage_index(len(self.stage_paths) - 1)
+
+    def _set_stage_index(self, index: int) -> None:
+        if not self.stage_paths:
+            self.stage_index = -1
+            self.stage_preview.set_image(None, "Intermediate stages will appear here")
+            self.stage_caption_label.setText("No stage yet")
+            self.stage_counter_label.setText("0 / 0")
+            self._update_stage_controls()
+            return
+        self.stage_index = max(0, min(index, len(self.stage_paths) - 1))
+        name, path = self.stage_paths[self.stage_index]
+        self.stage_preview.set_image(path, "Intermediate stages will appear here")
+        self.stage_caption_label.setText(name.replace("_", " "))
+        self.stage_counter_label.setText(f"{self.stage_index + 1} / {len(self.stage_paths)}")
+        self._update_stage_controls()
+
+    def _step_stage(self, delta: int) -> None:
+        if not self.stage_paths:
+            return
+        self._set_stage_index(self.stage_index + delta)
+
+    def _update_stage_controls(self) -> None:
+        has_stages = bool(self.stage_paths)
+        self.stage_prev_button.setEnabled(has_stages and self.stage_index > 0)
+        self.stage_next_button.setEnabled(has_stages and self.stage_index < len(self.stage_paths) - 1)
 
     def _extract_path(self, text: str, prefix: str) -> Optional[Path]:
         pattern = re.compile(rf"^{re.escape(prefix)}\s+(.*)$", re.MULTILINE)

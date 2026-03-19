@@ -7,6 +7,7 @@ Use `--lead-source generate` for the normal synthetic lead, or `--lead-source de
 The GUI now leaves picture size blank until you choose an image, then auto-fills it so the source image's long side becomes `100 mm` and the short side follows the original aspect ratio. A slider under picture size lets you scale that long side up or down while preserving the same ratio.
 
 To use the desktop GUI, run `uv run python image_grade_to_3mf_gui.py`. The GUI keeps the CLI/exporter intact and wraps it with image selection, material TD editing, live run logs, and preview panes.
+The GUI stage viewer now shows intermediate refinement states instead of a generic progress bar, and you can step backward and forward through those stages with `-` and `+`.
 
 There are also launcher scripts at `/Users/ecohen/Codex/imageTo3MF/launch_imageTo3MF_gui.sh` and `/Users/ecohen/Codex/imageTo3MF/launch_imageTo3MF_gui.command`. On macOS, the `.command` version is the one to keep on the Desktop or in the Dock for reliable double-click launching in Terminal.
 
