@@ -2,7 +2,7 @@
 
 Use `uv run python image_grade_to_3mf.py /path/to/image.png --layer-height 0.2mm --base-layers 4 --size 100x100 --resolution 0.4mm --lead-thickness 0.4mm --lead-height 0.2mm --plate-size 270x270` to convert an image into segmented color zones plus black separator lines, export the result as a multi-object `.3mf`, and open it in Snapmaker Orca.
 
-Use `--lead-source generate` for the normal synthetic lead, or `--lead-source detect` when the source image already contains dark stained-glass lead that should be preserved as the top black layer. In `detect` mode, the detected lead now partitions the image into enclosed glass cells first, and the nuance palette is then assigned to those cells instead of being fit from loose non-lead pixels.
+Use `--lead-source generate` for the normal synthetic lead, or `--lead-source detect` when the source image already contains dark stained-glass lead that should be preserved as the top black layer. In `detect` mode, the detector now grows a connected dark-line network from strong lead pixels, filters out tiny disconnected junk, partitions the image into enclosed glass cells, and only then assigns the nuance palette to those cells.
 
 The GUI now leaves picture size blank until you choose an image, then auto-fills it so the source image's long side becomes `100 mm` and the short side follows the original aspect ratio. A slider under picture size lets you scale that long side up or down while preserving the same ratio.
 

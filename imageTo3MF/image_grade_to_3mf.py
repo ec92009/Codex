@@ -847,7 +847,8 @@ def dilate_mask(mask: np.ndarray, radius_pixels: int) -> np.ndarray:
 def detect_image_lead_mask(rgb_image: np.ndarray) -> np.ndarray:
     rgb = rgb_image.astype(np.float32)
     luma = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
-    threshold = min(92.0, float(np.percentile(luma, 18)))
+    strong_threshold = min(72.0, float(np.percentile(luma, 10)))
+    weak_threshold = min(92.0, float(np.percentile(luma, 18)))
 
     contrast = np.zeros_like(luma)
     contrast[:-1, :] = np.maximum(contrast[:-1, :], np.abs(luma[:-1, :] - luma[1:, :]))
@@ -856,10 +857,13 @@ def detect_image_lead_mask(rgb_image: np.ndarray) -> np.ndarray:
     contrast[:, 1:] = np.maximum(contrast[:, 1:], np.abs(luma[:, 1:] - luma[:, :-1]))
 
     color_range = np.max(rgb, axis=2) - np.min(rgb, axis=2)
-    dark_mask = luma <= threshold
-    edge_mask = contrast >= 18.0
-    neutral_mask = color_range <= 80.0
-    return dark_mask & edge_mask & neutral_mask
+    strong_mask = (luma <= strong_threshold) & (contrast >= 18.0) & (color_range <= 80.0)
+    weak_mask = (luma <= weak_threshold) & (contrast >= 12.0) & (color_range <= 110.0)
+
+    grown = strong_mask.copy()
+    for _ in range(3):
+        grown = dilate_mask(grown, radius_pixels=1) & weak_mask
+    return grown
 
 
 def extract_mask_boundary_segments(mask: np.ndarray) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
@@ -939,6 +943,57 @@ def connected_components(mask: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
             sizes.append(size)
 
     return labels, np.asarray(sizes, dtype=np.int32)
+
+
+def component_bounding_boxes(component_labels: np.ndarray, component_count: int) -> np.ndarray:
+    boxes = np.full((component_count, 4), -1, dtype=np.int32)
+    if component_count <= 0:
+        return boxes
+
+    for component_id in range(component_count):
+        ys, xs = np.nonzero(component_labels == component_id)
+        if ys.size == 0:
+            continue
+        boxes[component_id] = [int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max())]
+    return boxes
+
+
+def filter_detected_lead_components(mask: np.ndarray) -> np.ndarray:
+    component_labels, component_sizes = connected_components(mask)
+    if len(component_sizes) <= 1:
+        return mask
+
+    height, width = mask.shape
+    area = height * width
+    largest = int(component_sizes.max())
+    boxes = component_bounding_boxes(component_labels, len(component_sizes))
+
+    keep = np.zeros(len(component_sizes), dtype=bool)
+    absolute_min = max(12, int(round(area * 0.00025)))
+    relative_min = max(absolute_min, int(round(largest * 0.02)))
+
+    for component_id, size in enumerate(component_sizes):
+        if size >= relative_min:
+            keep[component_id] = True
+            continue
+
+        min_x, min_y, max_x, max_y = boxes[component_id]
+        if min_x < 0:
+            continue
+        box_width = max_x - min_x + 1
+        box_height = max_y - min_y + 1
+        touches_border = min_x == 0 or min_y == 0 or max_x == width - 1 or max_y == height - 1
+        elongated = max(box_width, box_height) >= max(10, 3 * min(box_width, box_height))
+        if size >= absolute_min and (touches_border or elongated):
+            keep[component_id] = True
+
+    if not np.any(keep):
+        keep[int(np.argmax(component_sizes))] = True
+
+    filtered = np.zeros_like(mask, dtype=bool)
+    valid = component_labels >= 0
+    filtered[valid] = keep[component_labels[valid]]
+    return filtered
 
 
 def component_color_means(
@@ -2445,7 +2500,9 @@ def main() -> int:
     cell_size_for_lines = min(actual_resolution_x, actual_resolution_y)
     line_radius_pixels = max(0, math.ceil(args.lead_thickness / cell_size_for_lines) - 1)
     if args.lead_source == "detect":
-        lines = smooth_detected_lead_mask(detect_image_lead_mask(rgb_image))
+        lines = filter_detected_lead_components(
+            smooth_detected_lead_mask(detect_image_lead_mask(rgb_image))
+        )
         labels, region_colors = detect_lead_partition_labels(
             lines_mask=lines,
             lab_image=flat_lab.reshape(grid_height, grid_width, 3),
