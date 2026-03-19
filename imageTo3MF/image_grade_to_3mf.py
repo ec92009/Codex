@@ -905,6 +905,197 @@ def smooth_detected_lead_mask(mask: np.ndarray) -> np.ndarray:
     return np.asarray(downsampled, dtype=np.uint8) >= 128
 
 
+def connected_components(mask: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    height, width = mask.shape
+    labels = np.full((height, width), -1, dtype=np.int32)
+    sizes: List[int] = []
+
+    for start_y in range(height):
+        for start_x in range(width):
+            if not mask[start_y, start_x] or labels[start_y, start_x] >= 0:
+                continue
+
+            component_id = len(sizes)
+            stack = [(start_y, start_x)]
+            labels[start_y, start_x] = component_id
+            size = 0
+
+            while stack:
+                y, x = stack.pop()
+                size += 1
+                if y > 0 and mask[y - 1, x] and labels[y - 1, x] < 0:
+                    labels[y - 1, x] = component_id
+                    stack.append((y - 1, x))
+                if y + 1 < height and mask[y + 1, x] and labels[y + 1, x] < 0:
+                    labels[y + 1, x] = component_id
+                    stack.append((y + 1, x))
+                if x > 0 and mask[y, x - 1] and labels[y, x - 1] < 0:
+                    labels[y, x - 1] = component_id
+                    stack.append((y, x - 1))
+                if x + 1 < width and mask[y, x + 1] and labels[y, x + 1] < 0:
+                    labels[y, x + 1] = component_id
+                    stack.append((y, x + 1))
+
+            sizes.append(size)
+
+    return labels, np.asarray(sizes, dtype=np.int32)
+
+
+def component_color_means(
+    component_labels: np.ndarray,
+    lab_image: np.ndarray,
+    rgb_image: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    valid = component_labels >= 0
+    component_ids = component_labels[valid]
+    component_count = int(component_ids.max()) + 1 if component_ids.size else 0
+    if component_count == 0:
+        return (
+            np.zeros((0, 3), dtype=np.float32),
+            np.zeros((0, 3), dtype=np.uint8),
+            np.zeros((0,), dtype=np.int32),
+        )
+
+    counts = np.bincount(component_ids, minlength=component_count).astype(np.int32)
+    lab_sums = np.zeros((component_count, 3), dtype=np.float64)
+    rgb_sums = np.zeros((component_count, 3), dtype=np.float64)
+    np.add.at(lab_sums, component_ids, lab_image[valid].astype(np.float64))
+    np.add.at(rgb_sums, component_ids, rgb_image[valid].astype(np.float64))
+    lab_means = (lab_sums / np.maximum(counts[:, None], 1)).astype(np.float32)
+    rgb_means = np.round(rgb_sums / np.maximum(counts[:, None], 1)).astype(np.uint8)
+    return lab_means, rgb_means, counts
+
+
+def weighted_kmeans_pp(data: np.ndarray, weights: np.ndarray, clusters: int, rng: np.random.Generator) -> np.ndarray:
+    centers = np.empty((clusters, data.shape[1]), dtype=np.float32)
+    probabilities = weights / np.maximum(float(weights.sum()), 1e-12)
+    first_index = int(rng.choice(len(data), p=probabilities))
+    centers[0] = data[first_index]
+    closest_sq = np.sum((data - centers[0]) ** 2, axis=1)
+
+    for index in range(1, clusters):
+        weighted_dist = closest_sq * weights
+        total = float(weighted_dist.sum())
+        if total <= 1e-12:
+            centers[index:] = data[int(rng.choice(len(data), p=probabilities))]
+            break
+        chosen = int(rng.choice(len(data), p=(weighted_dist / total)))
+        centers[index] = data[chosen]
+        new_dist_sq = np.sum((data - centers[index]) ** 2, axis=1)
+        closest_sq = np.minimum(closest_sq, new_dist_sq)
+    return centers
+
+
+def weighted_kmeans(
+    data: np.ndarray,
+    weights: np.ndarray,
+    clusters: int,
+    seed: int,
+    iterations: int = 25,
+) -> Tuple[np.ndarray, np.ndarray]:
+    if len(data) == 0:
+        return np.zeros((0,), dtype=np.int32), np.zeros((0, data.shape[1] if data.ndim == 2 else 3), dtype=np.float32)
+    if clusters >= len(data):
+        labels = np.arange(len(data), dtype=np.int32)
+        centers = data.astype(np.float32, copy=True)
+        return labels, centers
+
+    rng = np.random.default_rng(seed)
+    centers = weighted_kmeans_pp(data, weights, clusters, rng)
+
+    for _ in range(iterations):
+        distances = np.sum((data[:, None, :] - centers[None, :, :]) ** 2, axis=2)
+        labels = np.argmin(distances, axis=1)
+
+        new_centers = centers.copy()
+        for cluster_index in range(clusters):
+            members = labels == cluster_index
+            if not np.any(members):
+                new_centers[cluster_index] = data[int(rng.choice(len(data), p=weights / weights.sum()))]
+                continue
+            member_weights = weights[members][:, None]
+            new_centers[cluster_index] = np.sum(data[members] * member_weights, axis=0) / np.sum(member_weights)
+        if np.allclose(new_centers, centers, atol=1e-3):
+            centers = new_centers
+            break
+        centers = new_centers
+
+    distances = np.sum((data[:, None, :] - centers[None, :, :]) ** 2, axis=2)
+    labels = np.argmin(distances, axis=1)
+    return labels.astype(np.int32), centers.astype(np.float32)
+
+
+def reorder_region_clusters_by_lightness(
+    component_cluster_labels: np.ndarray,
+    lab_centers: np.ndarray,
+    component_rgb_means: np.ndarray,
+    component_sizes: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    if len(lab_centers) == 0:
+        return (
+            np.zeros((0,), dtype=np.int32),
+            np.zeros((0, 3), dtype=np.float32),
+            np.zeros((0, 3), dtype=np.uint8),
+        )
+
+    order = np.argsort(lab_centers[:, 0])
+    remap = np.empty(len(order), dtype=np.int32)
+    remap[order] = np.arange(len(order))
+    sorted_labels = remap[component_cluster_labels]
+    sorted_lab = lab_centers[order]
+    sorted_rgb = np.zeros((len(order), 3), dtype=np.uint8)
+
+    for new_index, old_index in enumerate(order):
+        members = component_cluster_labels == old_index
+        if not np.any(members):
+            rgb = np.clip(sorted_lab[new_index, 0] * 255.0 / 100.0, 0, 255)
+            sorted_rgb[new_index] = [rgb, rgb, rgb]
+            continue
+        weights = component_sizes[members].astype(np.float64)
+        weighted_rgb = np.sum(component_rgb_means[members].astype(np.float64) * weights[:, None], axis=0) / np.sum(weights)
+        sorted_rgb[new_index] = np.round(weighted_rgb).astype(np.uint8)
+
+    return sorted_labels, sorted_lab, sorted_rgb
+
+
+def detect_lead_partition_labels(
+    lines_mask: np.ndarray,
+    lab_image: np.ndarray,
+    rgb_image: np.ndarray,
+    target_nuances: int,
+    seed: int,
+) -> Tuple[np.ndarray, np.ndarray]:
+    glass_mask = ~lines_mask
+    component_labels, component_sizes = connected_components(glass_mask)
+    component_lab_means, component_rgb_means, component_sizes = component_color_means(
+        component_labels,
+        lab_image,
+        rgb_image,
+    )
+
+    if len(component_sizes) == 0:
+        return np.full(lines_mask.shape, -1, dtype=np.int32), np.zeros((0, 3), dtype=np.uint8)
+
+    cluster_count = max(1, min(target_nuances, len(component_sizes)))
+    component_cluster_labels, cluster_centers = weighted_kmeans(
+        component_lab_means,
+        component_sizes.astype(np.float32),
+        clusters=cluster_count,
+        seed=seed,
+    )
+    sorted_component_labels, _sorted_lab, region_colors = reorder_region_clusters_by_lightness(
+        component_cluster_labels,
+        cluster_centers,
+        component_rgb_means,
+        component_sizes,
+    )
+
+    labels = np.full(lines_mask.shape, -1, dtype=np.int32)
+    valid = component_labels >= 0
+    labels[valid] = sorted_component_labels[component_labels[valid]]
+    return labels, region_colors
+
+
 def extract_boundary_segments(labels: np.ndarray) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
     height, width = labels.shape
     segments: List[Tuple[Tuple[float, float], Tuple[float, float]]] = []
@@ -2255,19 +2446,12 @@ def main() -> int:
     line_radius_pixels = max(0, math.ceil(args.lead_thickness / cell_size_for_lines) - 1)
     if args.lead_source == "detect":
         lines = smooth_detected_lead_mask(detect_image_lead_mask(rgb_image))
-        non_lead_mask = ~lines.reshape(-1)
-        masked_lab = flat_lab[non_lead_mask]
-        masked_rgb = flat_rgb[non_lead_mask]
-        raw_labels, lab_centers = kmeans(masked_lab, clusters=args.num_nuances, seed=args.seed)
-        sorted_labels, _, region_colors = reorder_by_lightness(raw_labels, lab_centers, masked_rgb)
-        labels = np.full(grid_width * grid_height, -1, dtype=np.int32)
-        labels[non_lead_mask] = sorted_labels
-        labels = labels.reshape(grid_height, grid_width)
-        labels = majority_smooth_masked(
-            labels,
-            valid_mask=~lines,
-            num_classes=args.num_nuances,
-            passes=args.smooth_passes,
+        labels, region_colors = detect_lead_partition_labels(
+            lines_mask=lines,
+            lab_image=flat_lab.reshape(grid_height, grid_width, 3),
+            rgb_image=flat_rgb.reshape(grid_height, grid_width, 3),
+            target_nuances=args.num_nuances,
+            seed=args.seed,
         )
         region_labels_for_masks = labels
     else:
@@ -2279,7 +2463,7 @@ def main() -> int:
         region_labels_for_masks = labels
 
     region_masks = []
-    for nuance_index in range(args.num_nuances):
+    for nuance_index in range(len(region_colors)):
         region_masks.append((region_labels_for_masks == nuance_index) & ~lines)
 
     palette_recipes = build_palette_recipes(
