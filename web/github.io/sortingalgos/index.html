@@ -12,12 +12,13 @@
     :root{--bg:#0b0d12;--card:#151923;--line:#2a3140;--text:#eef3ff;--muted:#9aa6bf;--accent:#25c06d;}
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
     .wrap{max-width:1200px;margin:0 auto;padding:14px}
+    .sticky-head{position:sticky;top:0;z-index:20;background:rgba(11,13,18,.92);backdrop-filter:blur(8px);padding:10px 0 8px;border-bottom:1px solid rgba(42,49,64,.8);margin-bottom:10px}
     .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
     .title-row{display:flex;align-items:center;gap:10px}
     .site-logo{width:42px;height:42px;border-radius:12px;border:1px solid #2a3140;object-fit:cover;background:#101521}
     h1{margin:0;font-size:1.25rem}
     .meta{color:var(--muted);font-size:.92rem}
-    .controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
     button{border:1px solid var(--line);background:#111622;color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
     button.primary{background:var(--accent);color:#04130b;border-color:#16985a}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -26,22 +27,24 @@
     .name{font-weight:800}
     .stat{font-size:.82rem;color:var(--muted)}
     canvas{width:100%;height:180px;background:#0e1320;border-radius:8px;border:1px solid #243047}
-    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}.sticky-head{top:0;padding-top:8px}}
   </style>
 </head>
 <body>
 <div class="bg-brand" aria-hidden="true"></div>
 <div class="wrap">
-  <div class="top">
-    <div class="title-row"><img class="site-logo" src="../assets/logos/sorting-logo.png" alt="Sorting logo" /><h1>Sorting Algorithms Visualizer</h1></div>
-    <div class="meta">100 random integers · Bubble → Insertion → Selection → Merge → Quick · Version v11.4</div>
-  </div>
+  <div class="sticky-head">
+    <div class="top">
+      <div class="title-row"><img class="site-logo" src="../assets/logos/sorting-logo.png" alt="Sorting logo" /><h1>Sorting Algorithms Visualizer</h1></div>
+      <div class="meta">100 random integers · Bubble → Insertion → Selection → Merge → Quick · Version v23.0</div>
+    </div>
 
-  <div class="controls">
-    <button id="newSet" class="primary">New Random Set</button>
-    <button id="run">Run All</button>
-    <button id="pause">Pause</button>
-    <button id="step">Step</button>
+    <div class="controls">
+      <button id="newSet" class="primary">New Random Set</button>
+      <button id="run">Run All</button>
+      <button id="pause">Pause</button>
+      <button id="step">Step</button>
+    </div>
   </div>
 
   <div class="grid" id="grid"></div>
