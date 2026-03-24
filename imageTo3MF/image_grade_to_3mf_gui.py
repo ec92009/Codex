@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -27,14 +28,19 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMessageBox,
+    QDialog,
+    QDialogButtonBox,
     QPushButton,
     QSizePolicy,
     QSplitter,
     QSlider,
+    QTableWidget,
+    QTableWidgetItem,
     QTextEdit,
     QVBoxLayout,
     QWidget,
     QDoubleSpinBox,
+    QHeaderView,
 )
 from PIL import Image
 
@@ -44,6 +50,7 @@ import image_grade_to_3mf as engine
 PROJECT_DIR = Path(__file__).resolve().parent
 SCRIPT_PATH = PROJECT_DIR / "image_grade_to_3mf.py"
 PRESET_PATH = PROJECT_DIR / "material_presets.json"
+FILAMENT_DB_PATH = PROJECT_DIR.parent / "filamentDB" / "data" / "filaments.db"
 DEFAULT_LONG_SIDE_MM = 100.0
 DEFAULT_LONG_SIDE_MM = 100.0
 
@@ -121,11 +128,16 @@ class MaterialRow(QWidget):
         self.td_spin.setSuffix(" TD")
         self.td_spin.setFixedWidth(96)
 
+        self.db_button = QPushButton("DB")
+        self.db_button.setFixedWidth(42)
+        self.db_button.setToolTip("Pick a filament from filamentDB")
+
         layout.addWidget(self.slot_label)
         layout.addWidget(self.name_label)
         layout.addWidget(self.hex_edit)
         layout.addWidget(self.color_button)
         layout.addWidget(self.td_spin)
+        layout.addWidget(self.db_button)
         layout.addStretch(1)
         self._sync_button()
 
@@ -161,6 +173,102 @@ class MaterialRow(QWidget):
             "hex_color": self.hex_edit.text().strip().upper(),
             "td": self.td_spin.value(),
         }
+
+    def apply_db_filament(self, filament_name: str, hex_color: str, td: float) -> None:
+        self.hex_edit.setText(hex_color.strip().upper())
+        self.td_spin.setValue(td)
+        self.db_button.setToolTip(f"{filament_name} | {hex_color.strip().upper()} | {td:.2f} TD")
+
+
+class FilamentPickerDialog(QDialog):
+    def __init__(self, db_path: Path, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("Choose Filament from DB")
+        self.resize(760, 460)
+        self.selected_filament: Optional[dict[str, str | float]] = None
+
+        layout = QVBoxLayout(self)
+        help_label = QLabel("Pick a measured filament to fill this material slot.")
+        help_label.setWordWrap(True)
+        layout.addWidget(help_label)
+
+        self.table = QTableWidget(0, 6)
+        self.table.setHorizontalHeaderLabels(["ID", "Brand", "Type", "Name", "HEX", "TD"])
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SingleSelection)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.setAlternatingRowColors(True)
+        self.table.cellDoubleClicked.connect(lambda *_: self.accept_selection())
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.Stretch)
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        layout.addWidget(self.table, 1)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
+        use_button = buttons.addButton("Use Selected", QDialogButtonBox.AcceptRole)
+        use_button.clicked.connect(self.accept_selection)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+        self._load_rows(db_path)
+
+    def _load_rows(self, db_path: Path) -> None:
+        if not db_path.exists():
+            QMessageBox.information(self, "No DB found", f"filamentDB was not found at {db_path}")
+            return
+        connection = sqlite3.connect(str(db_path))
+        connection.row_factory = sqlite3.Row
+        try:
+            rows = list(
+                connection.execute(
+                    """
+                    SELECT id, brand, filament_type, name, color, td
+                    FROM filaments
+                    WHERE td IS NOT NULL
+                    ORDER BY id DESC
+                    LIMIT 500
+                    """
+                )
+            )
+        finally:
+            connection.close()
+
+        self.table.setRowCount(len(rows))
+        for row_index, row in enumerate(rows):
+            values = [
+                str(row["id"]),
+                row["brand"],
+                row["filament_type"],
+                row["name"],
+                row["color"],
+                f"{float(row['td']):.2f}",
+            ]
+            for column, value in enumerate(values):
+                item = QTableWidgetItem(value)
+                if column in (0, 5):
+                    item.setTextAlignment(Qt.AlignCenter)
+                self.table.setItem(row_index, column, item)
+        if rows:
+            self.table.selectRow(0)
+
+    def accept_selection(self) -> None:
+        row = self.table.currentRow()
+        if row < 0:
+            QMessageBox.information(self, "Nothing selected", "Choose a filament row first.")
+            return
+        self.selected_filament = {
+            "id": self.table.item(row, 0).text(),
+            "brand": self.table.item(row, 1).text(),
+            "type": self.table.item(row, 2).text(),
+            "name": self.table.item(row, 3).text(),
+            "hex_color": self.table.item(row, 4).text(),
+            "td": float(self.table.item(row, 5).text()),
+        }
+        self.accept()
 
 
 class MainWindow(QMainWindow):
@@ -422,6 +530,7 @@ class MainWindow(QMainWindow):
 
         for slot in ("1", "2", "3", "4", "5"):
             row = MaterialRow(slot, self.default_profiles[slot])
+            row.db_button.clicked.connect(lambda _=False, slot_key=slot: self.pick_material_from_db(slot_key))
             self.material_rows[slot] = row
             materials_layout.addWidget(row)
 
@@ -463,6 +572,20 @@ class MainWindow(QMainWindow):
         layout.addWidget(summary_group, 0)
         layout.addWidget(log_group, 1)
         return panel
+
+    def pick_material_from_db(self, slot: str) -> None:
+        dialog = FilamentPickerDialog(FILAMENT_DB_PATH, self)
+        if dialog.exec() != QDialog.Accepted or dialog.selected_filament is None:
+            return
+        selected = dialog.selected_filament
+        self.material_rows[slot].apply_db_filament(
+            f"{selected['brand']} {selected['type']} {selected['name']}",
+            str(selected["hex_color"]),
+            float(selected["td"]),
+        )
+        self.summary_label.setText(
+            f"Slot {slot} now uses {selected['brand']} {selected['type']} {selected['name']} from filamentDB."
+        )
 
     def _apply_style(self) -> None:
         self.setStyleSheet(
