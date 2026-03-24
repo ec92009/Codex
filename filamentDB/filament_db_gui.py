@@ -327,7 +327,12 @@ class FilamentDbWindow(QMainWindow):
         current = QColor(self.hex_input.text().strip())
         if not current.isValid():
             current = QColor("#CCCCCC")
-        chosen = QColorDialog.getColor(current, self, "Choose Filament Color")
+        dialog = QColorDialog(current, self)
+        dialog.setWindowTitle("Choose Filament Color")
+        dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog, False)
+        if dialog.exec() != QColorDialog.DialogCode.Accepted:
+            return
+        chosen = dialog.currentColor()
         if chosen.isValid():
             self.hex_input.setText(chosen.name().upper())
 
