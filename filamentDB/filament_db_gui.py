@@ -469,6 +469,8 @@ class FilamentDbWindow(QMainWindow):
         else:
             self.scan_status.setText(f"Deleted {count} filaments.")
         self.refresh_all()
+        self.table.clearSelection()
+        self.table.setCurrentCell(-1, -1)
 
     def on_table_cell_double_clicked(self, row: int, column: int) -> None:
         record_id = int(self.table.item(row, 0).text())
