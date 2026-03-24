@@ -22,9 +22,7 @@ Internally, the SQLite column for `type` is named `filament_type` to avoid SQL k
 - local SQLite database
 - simple CLI
 - optional starter sample rows
-- ready for future TD1 direct-ingest work
-
-The TD1 can clearly send readings to a computer for HueForge workflows, but the Mac-side protocol for direct standalone capture is not wired into this project yet. This project leaves room for that next step once we confirm how the device exposes readings outside HueForge.
+- direct TD1 capture from macOS serial output
 
 ## Usage
 
@@ -82,6 +80,25 @@ Export to CSV:
 
 ```bash
 uv run python filament_db.py export-csv out/filaments.csv
+```
+
+Capture one filament directly from the connected TD1:
+
+```bash
+uv run python filament_db.py scan \
+  --brand SUNLU \
+  --type "PLA+ 2.0" \
+  --name "Coffee"
+```
+
+If needed, you can point it at a specific serial device:
+
+```bash
+uv run python filament_db.py scan \
+  --brand SUNLU \
+  --type "PLA+ 2.0" \
+  --name "Coffee" \
+  --device /dev/cu.usbmodem21101
 ```
 
 ## Sample data note

@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import argparse
 import csv
+import glob
+import os
+import select
 import sqlite3
 import sys
+import time
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -175,6 +179,24 @@ def parse_args() -> argparse.Namespace:
     export_parser = subparsers.add_parser("export-csv", help="Export all records to CSV.")
     export_parser.add_argument("path", help="Destination CSV path.")
 
+    scan_parser = subparsers.add_parser("scan", help="Read one TD1 scan from the connected device and save it.")
+    scan_parser.add_argument("--brand", required=True, help="Brand.")
+    scan_parser.add_argument("--type", required=True, help="Type, for example PLA+ 2.0.")
+    scan_parser.add_argument("--name", required=True, help="HueForge-style material name.")
+    scan_parser.add_argument("--source", default="td1", help="Source label for the saved record.")
+    scan_parser.add_argument("--notes", default="", help="Optional notes.")
+    scan_parser.add_argument(
+        "--device",
+        default=None,
+        help="Serial device path for the TD1. If omitted, the script auto-detects /dev/cu.usbmodem*.",
+    )
+    scan_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=15.0,
+        help="Maximum seconds to wait for a reading from the TD1. Default: 15.",
+    )
+
     return parser.parse_args()
 
 
@@ -192,6 +214,61 @@ def connect(db_path: Path) -> sqlite3.Connection:
     connection = sqlite3.connect(str(db_path))
     connection.row_factory = sqlite3.Row
     return connection
+
+
+def detect_td1_device() -> Optional[Path]:
+    candidates = sorted(glob.glob("/dev/cu.usbmodem*"))
+    return Path(candidates[0]) if candidates else None
+
+
+def read_td1_scan(device_path: Path, timeout: float) -> tuple[float, str]:
+    fd = os.open(str(device_path), os.O_RDONLY | os.O_NONBLOCK)
+    start = time.time()
+    pending = ""
+    latest_td: Optional[float] = None
+    latest_hex: Optional[str] = None
+    try:
+        while time.time() - start < timeout:
+            readable, _, _ = select.select([fd], [], [], 0.5)
+            if fd not in readable:
+                continue
+            try:
+                chunk = os.read(fd, 4096)
+            except BlockingIOError:
+                continue
+            if not chunk:
+                continue
+            pending += chunk.decode("utf-8", "replace")
+            while "\n" in pending:
+                line, pending = pending.split("\n", 1)
+                line = line.strip()
+                if not line:
+                    continue
+                parts = [part.strip() for part in line.split(",")]
+                if len(parts) >= 6 and parts[-2] and parts[-1]:
+                    try:
+                        maybe_td = float(parts[-2])
+                    except ValueError:
+                        maybe_td = None
+                    maybe_hex = parts[-1].upper()
+                    if maybe_td is not None and len(maybe_hex) == 6 and all(ch in "0123456789ABCDEF" for ch in maybe_hex):
+                        latest_td = maybe_td
+                        latest_hex = maybe_hex
+                        return latest_td, f"#{latest_hex}"
+                if line.startswith("display,"):
+                    display_parts = [part.strip() for part in line.split(",")]
+                    if len(display_parts) >= 4:
+                        maybe_value = display_parts[1]
+                        try:
+                            latest_td = float(maybe_value)
+                        except ValueError:
+                            if len(maybe_value) == 6 and all(ch in "0123456789ABCDEFabcdef" for ch in maybe_value):
+                                latest_hex = maybe_value.upper()
+                    if latest_td is not None and latest_hex is not None:
+                        return latest_td, f"#{latest_hex}"
+    finally:
+        os.close(fd)
+    raise TimeoutError(f"No TD1 reading arrived on {device_path} within {timeout:.1f}s")
 
 
 def migrate_schema(connection: sqlite3.Connection) -> None:
@@ -490,6 +567,26 @@ def main() -> int:
         path = Path(args.path).expanduser().resolve()
         row_count = export_csv(connection, path)
         print(f"Exported {row_count} filaments to {path}")
+        return 0
+
+    if args.command == "scan":
+        device_path = Path(args.device).expanduser().resolve() if args.device else detect_td1_device()
+        if device_path is None:
+            print("No TD1 serial device found under /dev/cu.usbmodem*", file=sys.stderr)
+            return 1
+        print(f"Listening for TD1 scan on {device_path}...")
+        td, color = read_td1_scan(device_path, args.timeout)
+        record_id = add_filament(
+            connection,
+            brand=args.brand,
+            filament_type=args.type,
+            name=args.name,
+            color=color,
+            td=td,
+            source=args.source,
+            notes=args.notes,
+        )
+        print(f"Captured TD {td:.2f} and HEX {color}; added filament #{record_id} to {db_path}")
         return 0
 
     print(f"Unknown command: {args.command}", file=sys.stderr)
