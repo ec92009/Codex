@@ -57,6 +57,17 @@ class ScanWorker(QThread):
         self.finished_scan.emit(td, color, str(self.device_path))
 
 
+class NumericTableWidgetItem(QTableWidgetItem):
+    def __init__(self, numeric_value: float | int, text: str) -> None:
+        super().__init__(text)
+        self.numeric_value = numeric_value
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, NumericTableWidgetItem):
+            return self.numeric_value < other.numeric_value
+        return super().__lt__(other)
+
+
 class FilamentDbWindow(QMainWindow):
     COLOR_SWATCH_COLUMN = 4
 
@@ -255,7 +266,13 @@ class FilamentDbWindow(QMainWindow):
                 row["source"],
             ]
             for column, value in enumerate(values):
-                item = QTableWidgetItem(value)
+                if column == 0:
+                    item = NumericTableWidgetItem(int(row["id"]), value)
+                elif column == 6:
+                    numeric_td = float(row["td"]) if row["td"] is not None else -1.0
+                    item = NumericTableWidgetItem(numeric_td, value)
+                else:
+                    item = QTableWidgetItem(value)
                 if column in (0, 6):
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 if column == self.COLOR_SWATCH_COLUMN:
