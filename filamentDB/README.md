@@ -21,6 +21,7 @@ Internally, the SQLite column for `type` is named `filament_type` to avoid SQL k
 
 - local SQLite database
 - simple CLI
+- small desktop GUI
 - optional starter sample rows
 - direct TD1 capture from macOS serial output
 
@@ -31,6 +32,13 @@ Initialize the local database:
 ```bash
 cd /Users/ecohen/Codex/filamentDB
 uv run python filament_db.py init
+```
+
+Launch the desktop GUI:
+
+```bash
+cd /Users/ecohen/Codex/filamentDB
+uv run python filament_db_gui.py
 ```
 
 Seed a small starter sample set:
@@ -100,6 +108,14 @@ uv run python filament_db.py scan \
   --name "Coffee" \
   --device /dev/cu.usbmodem21101
 ```
+
+The GUI wraps the same workflow:
+
+- choose or type `brand`
+- choose or type `type`
+- choose or type `name`
+- press `Scan from TD1` while the filament is in the TD1
+- the measured `TD` and `HEX` are saved directly to the local DB
 
 ## Sample data note
 
