@@ -1,0 +1,10 @@
+[project]
+name = "filamentdb"
+version = "0.1.0"
+description = "Local SQLite filament database for TD1 readings and manual filament metadata."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.uv]
+package = false
