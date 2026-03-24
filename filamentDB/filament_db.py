@@ -77,7 +77,7 @@ SAMPLE_FILAMENTS = [
         "notes": "Starter sample row. TD not measured yet.",
     },
     {
-        "brand": "Generic",
+        "brand": "SUNLU",
         "type": "Transparent PLA",
         "name": "Transparent Blue",
         "color": "#2D6CDF",
@@ -86,7 +86,7 @@ SAMPLE_FILAMENTS = [
         "notes": "Starter sample row. TD not measured yet.",
     },
     {
-        "brand": "Generic",
+        "brand": "SUNLU",
         "type": "Transparent PLA",
         "name": "Transparent Red",
         "color": "#D83A34",
@@ -95,7 +95,7 @@ SAMPLE_FILAMENTS = [
         "notes": "Starter sample row. TD not measured yet.",
     },
     {
-        "brand": "Generic",
+        "brand": "SUNLU",
         "type": "Transparent PLA",
         "name": "Transparent Green",
         "color": "#2FAF5A",
@@ -104,7 +104,7 @@ SAMPLE_FILAMENTS = [
         "notes": "Starter sample row. TD not measured yet.",
     },
     {
-        "brand": "Generic",
+        "brand": "SUNLU",
         "type": "Transparent PLA",
         "name": "Transparent Yellow",
         "color": "#F2DA3A",
@@ -113,7 +113,7 @@ SAMPLE_FILAMENTS = [
         "notes": "Starter sample row. TD not measured yet.",
     },
     {
-        "brand": "Generic",
+        "brand": "SUNLU",
         "type": "Transparent PLA",
         "name": "Transparent Clear",
         "color": "#F4F7F9",
@@ -122,7 +122,7 @@ SAMPLE_FILAMENTS = [
         "notes": "Starter sample row. TD not measured yet.",
     },
     {
-        "brand": "Generic",
+        "brand": "SUNLU",
         "type": "Transparent PLA",
         "name": "Transparent Purple",
         "color": "#7A52CC",

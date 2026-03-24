@@ -91,7 +91,7 @@ The seeded sample rows are deliberately small and conservative. They are just st
 The current starter set includes:
 
 - `SUNLU PLA Matte`: Black, White, Red, Blue, Green
-- `Generic Transparent PLA`: Blue, Red, Green, Yellow, Clear, Purple
+- `SUNLU Transparent PLA`: Blue, Red, Green, Yellow, Clear, Purple
 
 ## Suggested next steps
 
