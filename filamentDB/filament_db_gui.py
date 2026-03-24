@@ -6,9 +6,11 @@ import sqlite3
 from pathlib import Path
 
 from PySide6.QtCore import QThread, Qt, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
+    QColorDialog,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -25,7 +27,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from filament_db import DEFAULT_DB_PATH, add_filament, connect, detect_td1_device, migrate_schema, read_td1_scan
+from filament_db import (
+    DEFAULT_DB_PATH,
+    add_filament,
+    connect,
+    detect_td1_device,
+    ensure_hex_color,
+    migrate_schema,
+    read_td1_scan,
+    update_filament_color,
+)
 
 
 class ScanWorker(QThread):
@@ -56,6 +67,7 @@ class FilamentDbWindow(QMainWindow):
         self.connection = connect(self.db_path)
         migrate_schema(self.connection)
         self.scan_worker: ScanWorker | None = None
+        self.last_saved_record_id: int | None = None
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -130,12 +142,31 @@ class FilamentDbWindow(QMainWindow):
 
         self.device_value = QLabel("Auto-detect")
         self.td_value = QLabel("—")
-        self.hex_value = QLabel("—")
+        self.hex_input = QLineEdit()
+        self.hex_input.setPlaceholderText("#AABBCC")
+        self.hex_input.setMaximumWidth(120)
+        self.hex_input.textChanged.connect(self.on_hex_changed)
+        self.color_swatch = QLabel()
+        self.color_swatch.setFixedSize(28, 28)
+        self.color_swatch.setStyleSheet("border: 1px solid #888; border-radius: 4px; background: #cccccc;")
+        self.pick_color_button = QPushButton("Pick")
+        self.pick_color_button.clicked.connect(self.pick_color)
+        self.save_color_button = QPushButton("Save Color")
+        self.save_color_button.clicked.connect(self.save_manual_color)
+        self.save_color_button.setEnabled(False)
         self.saved_value = QLabel("—")
+
+        hex_row = QHBoxLayout()
+        hex_row.setSpacing(8)
+        hex_row.addWidget(self.hex_input)
+        hex_row.addWidget(self.color_swatch)
+        hex_row.addWidget(self.pick_color_button)
+        hex_row.addWidget(self.save_color_button)
+        hex_row.addStretch(1)
 
         form.addRow("Device", self.device_value)
         form.addRow("TD", self.td_value)
-        form.addRow("HEX", self.hex_value)
+        form.addRow("HEX", hex_row)
         form.addRow("Saved", self.saved_value)
         return box
 
@@ -245,6 +276,7 @@ class FilamentDbWindow(QMainWindow):
         self.scan_status.setText("Listening for TD1 scan data...")
         self.device_value.setText(str(device_path))
         self.saved_value.setText("—")
+        self.save_color_button.setEnabled(False)
 
         self.scan_worker = ScanWorker(device_path, timeout=20.0)
         self.scan_worker.finished_scan.connect(lambda td, color, device: self.finish_scan(td, color, device, brand, filament_type, name, notes))
@@ -271,18 +303,58 @@ class FilamentDbWindow(QMainWindow):
             source="td1",
             notes=notes,
         )
+        self.last_saved_record_id = record_id
         self.td_value.setText(f"{td:.2f}")
-        self.hex_value.setText(color)
+        self.hex_input.setText(color)
+        self._set_swatch_color(color)
         self.device_value.setText(device_path)
         self.saved_value.setText(f"Saved as #{record_id}")
         self.scan_status.setText(f"Saved {brand} {filament_type} {name} with TD {td:.2f} and HEX {color}.")
         self.scan_button.setEnabled(True)
+        self.save_color_button.setEnabled(True)
         self.refresh_all()
 
     def fail_scan(self, error_message: str) -> None:
         self.scan_button.setEnabled(True)
         self.scan_status.setText(f"Scan failed: {error_message}")
         QMessageBox.warning(self, "Scan failed", error_message)
+
+    def on_hex_changed(self, text: str) -> None:
+        self._set_swatch_color(text)
+        self.save_color_button.setEnabled(self.last_saved_record_id is not None and bool(text.strip()))
+
+    def pick_color(self) -> None:
+        current = QColor(self.hex_input.text().strip())
+        if not current.isValid():
+            current = QColor("#CCCCCC")
+        chosen = QColorDialog.getColor(current, self, "Choose Filament Color")
+        if chosen.isValid():
+            self.hex_input.setText(chosen.name().upper())
+
+    def save_manual_color(self) -> None:
+        if self.last_saved_record_id is None:
+            QMessageBox.warning(self, "No scan yet", "Scan and save a filament first, then you can correct its color.")
+            return
+        try:
+            color = ensure_hex_color(self.hex_input.text())
+        except ValueError as exc:
+            QMessageBox.warning(self, "Invalid HEX", str(exc))
+            return
+        updated = update_filament_color(self.connection, self.last_saved_record_id, color)
+        if not updated:
+            QMessageBox.warning(self, "Update failed", "Could not update the saved filament color.")
+            return
+        self.hex_input.setText(color)
+        self.saved_value.setText(f"Saved as #{self.last_saved_record_id} (color updated)")
+        self.scan_status.setText(f"Updated filament #{self.last_saved_record_id} color to {color}.")
+        self.refresh_table()
+
+    def _set_swatch_color(self, value: str) -> None:
+        color = QColor(value.strip())
+        hex_value = color.name().upper() if color.isValid() else "#CCCCCC"
+        self.color_swatch.setStyleSheet(
+            f"border: 1px solid #888; border-radius: 4px; background: {hex_value};"
+        )
 
     def closeEvent(self, event) -> None:  # pragma: no cover - Qt close path
         if self.scan_worker is not None and self.scan_worker.isRunning():

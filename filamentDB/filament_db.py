@@ -486,6 +486,19 @@ def delete_row(connection: sqlite3.Connection, record_id: int) -> bool:
     return cursor.rowcount > 0
 
 
+def update_filament_color(connection: sqlite3.Connection, record_id: int, color: str) -> bool:
+    cursor = connection.execute(
+        """
+        UPDATE filaments
+        SET color = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (ensure_hex_color(color), record_id),
+    )
+    connection.commit()
+    return cursor.rowcount > 0
+
+
 def main() -> int:
     args = parse_args()
     db_path = Path(args.db).expanduser().resolve()

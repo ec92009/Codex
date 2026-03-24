@@ -116,6 +116,8 @@ The GUI wraps the same workflow:
 - choose or type `name`
 - press `Scan from TD1` while the filament is in the TD1
 - the measured `TD` and `HEX` are saved directly to the local DB
+- review the color swatch next to the saved `HEX`
+- if the TD1 color is off, type a new HEX or use `Pick`, then press `Save Color`
 
 ## Sample data note
 
