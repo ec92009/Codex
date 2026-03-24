@@ -88,6 +88,11 @@ uv run python filament_db.py export-csv out/filaments.csv
 
 The seeded sample rows are deliberately small and conservative. They are just starter placeholders and are labeled with `source=sample`. Their `td` values are left blank until you measure them or import trustworthy data.
 
+The current starter set includes:
+
+- `SUNLU PLA Matte`: Black, White, Red, Blue, Green
+- `Generic Transparent PLA`: Blue, Red, Green, Yellow, Clear, Purple
+
 ## Suggested next steps
 
 - add TD1 direct ingestion once the device transport is confirmed
