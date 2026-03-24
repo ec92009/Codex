@@ -106,6 +106,7 @@ class FilamentDbWindow(QMainWindow):
         self.scan_worker: ScanWorker | None = None
         self.last_saved_record_id: int | None = None
         self.current_edit_record_id: int | None = None
+        self.table_filter_text: str = ""
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -128,15 +129,19 @@ class FilamentDbWindow(QMainWindow):
 
         self.refresh_choices()
         self.refresh_table()
+        self._apply_style()
 
     def _build_scan_panel(self) -> QGroupBox:
         box = QGroupBox("Scan")
         layout = QVBoxLayout(box)
         layout.setSpacing(12)
+        layout.setContentsMargins(18, 18, 18, 18)
 
         form = QFormLayout()
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         form.setFormAlignment(Qt.AlignmentFlag.AlignTop)
+        form.setHorizontalSpacing(10)
+        form.setVerticalSpacing(10)
 
         self.brand_combo = self._editable_combo("SUNLU")
         self.type_combo = self._editable_combo("PLA+ 2.0")
@@ -151,9 +156,10 @@ class FilamentDbWindow(QMainWindow):
         layout.addLayout(form)
 
         button_row = QHBoxLayout()
-        button_row.setSpacing(10)
+        button_row.setSpacing(12)
 
         self.scan_button = QPushButton("Scan from TD1")
+        self.scan_button.setObjectName("primaryButton")
         self.scan_button.clicked.connect(self.start_scan)
         self.save_changes_button = QPushButton("Save Changes")
         self.save_changes_button.clicked.connect(self.save_changes)
@@ -168,6 +174,7 @@ class FilamentDbWindow(QMainWindow):
 
         self.scan_status = QLabel("Ready. Put filament in the TD1 and press Scan from TD1.")
         self.scan_status.setWordWrap(True)
+        self.scan_status.setObjectName("statusBanner")
         layout.addWidget(self.scan_status)
 
         return box
@@ -176,6 +183,9 @@ class FilamentDbWindow(QMainWindow):
         box = QGroupBox("Last Scan")
         form = QFormLayout(box)
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        form.setHorizontalSpacing(10)
+        form.setVerticalSpacing(10)
+        form.setContentsMargins(18, 18, 18, 18)
 
         self.device_value = QLabel("Auto-detect")
         self.td_value = QLabel("—")
@@ -207,13 +217,21 @@ class FilamentDbWindow(QMainWindow):
         box = QGroupBox("Filaments")
         layout = QVBoxLayout(box)
         layout.setSpacing(10)
+        layout.setContentsMargins(18, 18, 18, 18)
 
         controls = QHBoxLayout()
         controls.setSpacing(10)
         self.delete_button = QPushButton("Delete Selected")
+        self.delete_button.setObjectName("destructiveButton")
         self.delete_button.clicked.connect(self.delete_selected_row)
         controls.addWidget(self.delete_button)
         controls.addStretch(1)
+        self.search_edit = QLineEdit()
+        self.search_edit.setPlaceholderText("Search filaments")
+        self.search_edit.setClearButtonEnabled(True)
+        self.search_edit.setFixedWidth(260)
+        self.search_edit.textChanged.connect(self.on_search_changed)
+        controls.addWidget(self.search_edit)
         layout.addLayout(controls)
 
         self.table = QTableWidget(0, 8)
@@ -235,12 +253,12 @@ class FilamentDbWindow(QMainWindow):
         header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(7, QHeaderView.ResizeMode.Fixed)
         self.table.setColumnWidth(0, 48)
-        self.table.setColumnWidth(1, 110)
-        self.table.setColumnWidth(2, 115)
+        self.table.setColumnWidth(1, 132)
+        self.table.setColumnWidth(2, 140)
         self.table.setColumnWidth(4, 54)
-        self.table.setColumnWidth(5, 92)
-        self.table.setColumnWidth(6, 56)
-        self.table.setColumnWidth(7, 78)
+        self.table.setColumnWidth(5, 98)
+        self.table.setColumnWidth(6, 72)
+        self.table.setColumnWidth(7, 90)
         layout.addWidget(self.table, 1)
         return box
 
@@ -271,16 +289,36 @@ class FilamentDbWindow(QMainWindow):
         self._set_combo_items(self.name_combo, names, current_name)
 
     def refresh_table(self) -> None:
-        rows = list(
-            self.connection.execute(
-                """
-                SELECT id, brand, filament_type, name, color, td, source
-                FROM filaments
-                ORDER BY id DESC
-                LIMIT 200
-                """
+        if self.table_filter_text:
+            like = f"%{self.table_filter_text}%"
+            rows = list(
+                self.connection.execute(
+                    """
+                    SELECT id, brand, filament_type, name, color, td, source
+                    FROM filaments
+                    WHERE brand LIKE ?
+                       OR filament_type LIKE ?
+                       OR name LIKE ?
+                       OR color LIKE ?
+                       OR source LIKE ?
+                       OR notes LIKE ?
+                    ORDER BY id DESC
+                    LIMIT 200
+                    """,
+                    (like, like, like, like, like, like),
+                )
             )
-        )
+        else:
+            rows = list(
+                self.connection.execute(
+                    """
+                    SELECT id, brand, filament_type, name, color, td, source
+                    FROM filaments
+                    ORDER BY id DESC
+                    LIMIT 200
+                    """
+                )
+            )
         self.table.setSortingEnabled(False)
         selected_id = self.current_edit_record_id or self.last_saved_record_id
         self.table.setRowCount(len(rows))
@@ -303,8 +341,10 @@ class FilamentDbWindow(QMainWindow):
                     item = NumericTableWidgetItem(numeric_td, value)
                 else:
                     item = QTableWidgetItem(value)
-                if column in (0, 6):
+                if column == 0:
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                if column == 6:
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 if column == self.COLOR_SWATCH_COLUMN:
                     item.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
                     item.setToolTip(f"Double-click to change {row['name']} color")
@@ -330,6 +370,10 @@ class FilamentDbWindow(QMainWindow):
         combo.addItems(items)
         combo.setCurrentText(current_text)
         combo.blockSignals(False)
+
+    def on_search_changed(self, text: str) -> None:
+        self.table_filter_text = text.strip()
+        self.refresh_table()
 
     def start_scan(self) -> None:
         brand = self.brand_combo.currentText().strip()
@@ -568,6 +612,106 @@ class FilamentDbWindow(QMainWindow):
         self.notes_input.clear()
         self.save_color_button.setEnabled(False)
         self.save_changes_button.setEnabled(False)
+
+    def _apply_style(self) -> None:
+        self.setStyleSheet(
+            """
+            QMainWindow, QWidget {
+                background: #2b2b2b;
+                color: #f2f2f2;
+                font-size: 13px;
+            }
+            QGroupBox {
+                border: 1px solid #4a4a4a;
+                border-radius: 10px;
+                margin-top: 12px;
+                padding-top: 12px;
+                background: #323232;
+                font-weight: 600;
+            }
+            QGroupBox::title {
+                left: 12px;
+                padding: 0 6px;
+                color: #d9d9d9;
+            }
+            QLabel {
+                color: #efefef;
+            }
+            QLineEdit, QComboBox {
+                background: #1f1f1f;
+                border: 1px solid #555555;
+                border-radius: 7px;
+                padding: 6px 8px;
+                color: #f3f3f3;
+                selection-background-color: #0a84ff;
+            }
+            QLineEdit[readOnly="false"], QComboBox {
+                placeholder-text-color: #a8a8a8;
+            }
+            QDoubleSpinBox {
+                background: #1f1f1f;
+                border: 1px solid #555555;
+                border-radius: 7px;
+                padding: 6px 8px;
+                color: #f3f3f3;
+            }
+            QTableWidget {
+                background: #202020;
+                alternate-background-color: #252525;
+                gridline-color: #3b3b3b;
+                border: 1px solid #4c4c4c;
+                border-radius: 8px;
+                color: #f2f2f2;
+            }
+            QHeaderView::section {
+                background: #373737;
+                color: #e8e8e8;
+                padding: 6px 8px;
+                border: none;
+                border-right: 1px solid #4a4a4a;
+                border-bottom: 1px solid #4a4a4a;
+            }
+            QPushButton {
+                background: #565656;
+                color: #fafafa;
+                border: none;
+                border-radius: 8px;
+                padding: 8px 12px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background: #666666;
+            }
+            QPushButton#primaryButton {
+                background: #0a84ff;
+            }
+            QPushButton#primaryButton:hover {
+                background: #2b95ff;
+            }
+            QPushButton#destructiveButton {
+                background: transparent;
+                border: 1px solid #a55a5a;
+                color: #f0b4b4;
+            }
+            QPushButton#destructiveButton:hover {
+                background: #4a2424;
+                color: #ffd0d0;
+            }
+            QPushButton:disabled {
+                background: #434343;
+                color: #8d8d8d;
+                border: 1px solid #4e4e4e;
+            }
+            QLabel#statusBanner {
+                background: #1e3347;
+                border: 1px solid #335b7c;
+                border-radius: 8px;
+                padding: 10px 12px;
+                color: #d5ebff;
+                font-weight: 600;
+            }
+            """
+        )
 
     def closeEvent(self, event) -> None:  # pragma: no cover - Qt close path
         if self.scan_worker is not None and self.scan_worker.isRunning():

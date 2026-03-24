@@ -124,6 +124,7 @@ The GUI wraps the same workflow:
 - use `Save Changes` to commit edits to brand, type, name, and notes
 - select a row and press `Delete Selected` to remove it from the DB
 - click a table header to sort by that column
+- use the search field above the table to quickly filter filaments
 
 ## Sample data note
 
