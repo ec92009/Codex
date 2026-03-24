@@ -224,6 +224,7 @@ class FilamentDbWindow(QMainWindow):
         self.table = QTableWidget(0, 8)
         self.table.setHorizontalHeaderLabels(["ID", "Brand", "Type", "Name", "Color", "HEX", "TD", "Source"])
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
@@ -436,26 +437,37 @@ class FilamentDbWindow(QMainWindow):
         if not selected_rows:
             QMessageBox.information(self, "Nothing selected", "Select a filament row first.")
             return
-        row_index = selected_rows[0].row()
-        record_id = int(self.table.item(row_index, 0).text())
-        name = self.table.item(row_index, 3).text()
+        selected_record_ids = sorted({int(self.table.item(index.row(), 0).text()) for index in selected_rows})
+        count = len(selected_record_ids)
+        if count == 1:
+            row_index = selected_rows[0].row()
+            name = self.table.item(row_index, 3).text()
+            prompt = f"Delete filament #{selected_record_ids[0]} ({name}) from the database?"
+            title = "Delete filament"
+        else:
+            prompt = f"Delete {count} selected filaments from the database?"
+            title = "Delete filaments"
         answer = QMessageBox.question(
             self,
-            "Delete filament",
-            f"Delete filament #{record_id} ({name}) from the database?",
+            title,
+            prompt,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
         if answer != QMessageBox.StandardButton.Yes:
             return
-        self.connection.execute("DELETE FROM filaments WHERE id = ?", (record_id,))
+        placeholders = ",".join("?" for _ in selected_record_ids)
+        self.connection.execute(f"DELETE FROM filaments WHERE id IN ({placeholders})", selected_record_ids)
         self.connection.commit()
-        if self.last_saved_record_id == record_id:
+        if self.last_saved_record_id in selected_record_ids:
             self.last_saved_record_id = None
-        if self.current_edit_record_id == record_id:
+        if self.current_edit_record_id in selected_record_ids:
             self.current_edit_record_id = None
             self._clear_form_after_delete()
-        self.scan_status.setText(f"Deleted filament #{record_id}.")
+        if count == 1:
+            self.scan_status.setText(f"Deleted filament #{selected_record_ids[0]}.")
+        else:
+            self.scan_status.setText(f"Deleted {count} filaments.")
         self.refresh_all()
 
     def on_table_cell_double_clicked(self, row: int, column: int) -> None:
