@@ -109,23 +109,18 @@ class FilamentDbWindow(QMainWindow):
 
         central = QWidget()
         self.setCentralWidget(central)
-        root = QHBoxLayout(central)
+        root = QVBoxLayout(central)
         root.setContentsMargins(16, 16, 16, 16)
         root.setSpacing(16)
 
-        left_column = QVBoxLayout()
-        left_column.setSpacing(16)
-        root.addLayout(left_column, 0)
+        top_row = QHBoxLayout()
+        top_row.setSpacing(16)
+        root.addLayout(top_row, 0)
 
-        right_column = QVBoxLayout()
-        right_column.setSpacing(16)
-        root.addLayout(right_column, 1)
+        top_row.addWidget(self._build_scan_panel(), 1)
+        top_row.addWidget(self._build_details_panel(), 1)
 
-        left_column.addWidget(self._build_scan_panel())
-        left_column.addWidget(self._build_details_panel())
-        left_column.addStretch(1)
-
-        right_column.addWidget(self._build_table_panel(), 1)
+        root.addWidget(self._build_table_panel(), 1)
 
         status = QStatusBar()
         status.showMessage(f"Database: {self.db_path}")
