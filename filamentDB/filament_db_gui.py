@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QFrame,
     QStatusBar,
     QTableWidget,
     QTableWidgetItem,
@@ -66,6 +67,27 @@ class NumericTableWidgetItem(QTableWidgetItem):
         if isinstance(other, NumericTableWidgetItem):
             return self.numeric_value < other.numeric_value
         return super().__lt__(other)
+
+
+class ClickableColorSwatch(QFrame):
+    clicked = Signal()
+
+    def __init__(self, size: int = 28) -> None:
+        super().__init__()
+        self.setFixedSize(size, size)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.set_color("#CCCCCC")
+
+    def set_color(self, value: str) -> None:
+        color = QColor(value.strip())
+        hex_value = color.name().upper() if color.isValid() else "#CCCCCC"
+        self.setStyleSheet(
+            f"border: 1px solid #888; border-radius: 4px; background: {hex_value};"
+        )
+
+    def mouseDoubleClickEvent(self, event) -> None:  # pragma: no cover - UI path
+        self.clicked.emit()
+        super().mouseDoubleClickEvent(event)
 
 
 class FilamentDbWindow(QMainWindow):
@@ -159,11 +181,8 @@ class FilamentDbWindow(QMainWindow):
         self.hex_input.setPlaceholderText("#AABBCC")
         self.hex_input.setMaximumWidth(120)
         self.hex_input.textChanged.connect(self.on_hex_changed)
-        self.color_swatch = QLabel()
-        self.color_swatch.setFixedSize(28, 28)
-        self.color_swatch.setStyleSheet("border: 1px solid #888; border-radius: 4px; background: #cccccc;")
-        self.pick_color_button = QPushButton("Pick")
-        self.pick_color_button.clicked.connect(self.pick_color)
+        self.color_swatch = ClickableColorSwatch()
+        self.color_swatch.clicked.connect(self.pick_color)
         self.save_color_button = QPushButton("Save Color")
         self.save_color_button.clicked.connect(self.save_manual_color)
         self.save_color_button.setEnabled(False)
@@ -173,7 +192,6 @@ class FilamentDbWindow(QMainWindow):
         hex_row.setSpacing(8)
         hex_row.addWidget(self.hex_input)
         hex_row.addWidget(self.color_swatch)
-        hex_row.addWidget(self.pick_color_button)
         hex_row.addWidget(self.save_color_button)
         hex_row.addStretch(1)
 
@@ -253,6 +271,7 @@ class FilamentDbWindow(QMainWindow):
             )
         )
         self.table.setSortingEnabled(False)
+        selected_id = self.last_saved_record_id
         self.table.setRowCount(len(rows))
         for row_index, row in enumerate(rows):
             values = [
@@ -277,9 +296,15 @@ class FilamentDbWindow(QMainWindow):
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 if column == self.COLOR_SWATCH_COLUMN:
                     item.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
-                    item.setBackground(QColor(row["color"]))
                     item.setToolTip(f"Double-click to change {row['name']} color")
                 self.table.setItem(row_index, column, item)
+            swatch = ClickableColorSwatch()
+            swatch.set_color(row["color"])
+            swatch.clicked.connect(lambda record_id=row["id"]: self.edit_table_color(int(record_id)))
+            self.table.setCellWidget(row_index, self.COLOR_SWATCH_COLUMN, swatch)
+            if selected_id is not None and int(row["id"]) == selected_id:
+                self.table.selectRow(row_index)
+                self.table.scrollToItem(self.table.item(row_index, 0))
         self.table.resizeRowsToContents()
         self.table.setSortingEnabled(True)
 
@@ -392,11 +417,7 @@ class FilamentDbWindow(QMainWindow):
         self.refresh_table()
 
     def _set_swatch_color(self, value: str) -> None:
-        color = QColor(value.strip())
-        hex_value = color.name().upper() if color.isValid() else "#CCCCCC"
-        self.color_swatch.setStyleSheet(
-            f"border: 1px solid #888; border-radius: 4px; background: {hex_value};"
-        )
+        self.color_swatch.set_color(value)
 
     def delete_selected_row(self) -> None:
         selected_rows = self.table.selectionModel().selectedRows()
@@ -428,6 +449,12 @@ class FilamentDbWindow(QMainWindow):
         if column != self.COLOR_SWATCH_COLUMN:
             return
         record_id = int(self.table.item(row, 0).text())
+        self.edit_table_color(record_id)
+
+    def edit_table_color(self, record_id: int) -> None:
+        row = self._find_row_by_id(record_id)
+        if row is None:
+            return
         current_hex = self.table.item(row, 5).text()
         current = QColor(current_hex)
         if not current.isValid():
@@ -448,6 +475,13 @@ class FilamentDbWindow(QMainWindow):
             self.hex_input.setText(color)
         self.scan_status.setText(f"Updated filament #{record_id} color to {color}.")
         self.refresh_table()
+
+    def _find_row_by_id(self, record_id: int) -> int | None:
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, 0)
+            if item is not None and int(item.text()) == record_id:
+                return row
+        return None
 
     def closeEvent(self, event) -> None:  # pragma: no cover - Qt close path
         if self.scan_worker is not None and self.scan_worker.isRunning():
