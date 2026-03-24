@@ -18,26 +18,70 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS filaments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     brand TEXT NOT NULL,
-    material_type TEXT NOT NULL,
-    color_name TEXT NOT NULL,
-    hex_color TEXT NOT NULL,
-    td REAL NOT NULL,
+    filament_type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    color TEXT NOT NULL,
+    td REAL,
     source TEXT NOT NULL DEFAULT 'manual',
     notes TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX IF NOT EXISTS idx_filaments_brand ON filaments(brand);
-CREATE INDEX IF NOT EXISTS idx_filaments_material_type ON filaments(material_type);
-CREATE INDEX IF NOT EXISTS idx_filaments_color_name ON filaments(color_name);
-CREATE INDEX IF NOT EXISTS idx_filaments_hex_color ON filaments(hex_color);
 """
+
+
+SAMPLE_FILAMENTS = [
+    {
+        "brand": "SUNLU",
+        "type": "PLA Matte",
+        "name": "Matte Black",
+        "color": "#111111",
+        "td": None,
+        "source": "sample",
+        "notes": "Starter sample row. TD not measured yet.",
+    },
+    {
+        "brand": "SUNLU",
+        "type": "PLA Matte",
+        "name": "Matte White",
+        "color": "#F2F0E9",
+        "td": None,
+        "source": "sample",
+        "notes": "Starter sample row. TD not measured yet.",
+    },
+    {
+        "brand": "SUNLU",
+        "type": "PLA Matte",
+        "name": "Matte Red",
+        "color": "#C62828",
+        "td": None,
+        "source": "sample",
+        "notes": "Starter sample row. TD not measured yet.",
+    },
+    {
+        "brand": "SUNLU",
+        "type": "PLA Matte",
+        "name": "Matte Blue",
+        "color": "#1F4AA8",
+        "td": None,
+        "source": "sample",
+        "notes": "Starter sample row. TD not measured yet.",
+    },
+    {
+        "brand": "SUNLU",
+        "type": "PLA Matte",
+        "name": "Matte Green",
+        "color": "#2E8B57",
+        "td": None,
+        "source": "sample",
+        "notes": "Starter sample row. TD not measured yet.",
+    },
+]
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Local SQLite filament database for TD1 and manual filament records."
+        description="Local SQLite filament database using HueForge-style brand/type/name/td/color fields."
     )
     parser.add_argument(
         "--db",
@@ -49,13 +93,16 @@ def parse_args() -> argparse.Namespace:
 
     subparsers.add_parser("init", help="Initialize the local filament database.")
 
+    seed_parser = subparsers.add_parser("seed-samples", help="Insert a small starter sample set.")
+    seed_parser.add_argument("--replace", action="store_true", help="Clear existing rows before seeding samples.")
+
     add_parser = subparsers.add_parser("add", help="Add a filament record.")
-    add_parser.add_argument("--brand", required=True, help="Filament brand.")
-    add_parser.add_argument("--type", dest="material_type", required=True, help="Material type, for example PLA.")
-    add_parser.add_argument("--color", dest="color_name", required=True, help="Human-readable color name.")
-    add_parser.add_argument("--hex", dest="hex_color", required=True, help="HEX color like #AABBCC.")
-    add_parser.add_argument("--td", type=float, required=True, help="Transmission Distance value.")
-    add_parser.add_argument("--source", default="manual", help="Source of the record, for example td1 or vendor.")
+    add_parser.add_argument("--brand", required=True, help="Brand.")
+    add_parser.add_argument("--type", required=True, help="Type, for example PLA Matte.")
+    add_parser.add_argument("--name", required=True, help="HueForge-style material name.")
+    add_parser.add_argument("--color", required=True, help="Color HEX like #AABBCC.")
+    add_parser.add_argument("--td", type=float, default=None, help="Transmission Distance value, if known.")
+    add_parser.add_argument("--source", default="manual", help="Source of the record, for example td1, vendor, or sample.")
     add_parser.add_argument("--notes", default="", help="Optional notes.")
 
     list_parser = subparsers.add_parser("list", help="List filament records.")
@@ -93,8 +140,99 @@ def connect(db_path: Path) -> sqlite3.Connection:
     return connection
 
 
-def init_db(connection: sqlite3.Connection) -> None:
-    connection.executescript(SCHEMA)
+def migrate_schema(connection: sqlite3.Connection) -> None:
+    table_exists = connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='filaments'"
+    ).fetchone()
+    if not table_exists:
+        connection.executescript(SCHEMA)
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_brand ON filaments(brand)")
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_type ON filaments(filament_type)")
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_name ON filaments(name)")
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_color ON filaments(color)")
+        connection.commit()
+        return
+
+    existing_columns = [row["name"] for row in connection.execute("PRAGMA table_info(filaments)")]
+    target_columns = ["id", "brand", "filament_type", "name", "color", "td", "source", "notes", "created_at", "updated_at"]
+    if existing_columns == target_columns:
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_brand ON filaments(brand)")
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_type ON filaments(filament_type)")
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_name ON filaments(name)")
+        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_color ON filaments(color)")
+        connection.commit()
+        return
+
+    connection.execute("DROP TABLE IF EXISTS filaments_new")
+    connection.execute(
+        """
+        CREATE TABLE filaments_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            brand TEXT NOT NULL,
+            filament_type TEXT NOT NULL,
+            name TEXT NOT NULL,
+            color TEXT NOT NULL,
+            td REAL,
+            source TEXT NOT NULL DEFAULT 'manual',
+            notes TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    if "material_type" in existing_columns:
+        type_expr = '"material_type"'
+    elif "type" in existing_columns:
+        type_expr = '"type"'
+    else:
+        type_expr = "''"
+
+    if "color_name" in existing_columns:
+        name_expr = '"color_name"'
+    elif "name" in existing_columns:
+        name_expr = '"name"'
+    else:
+        name_expr = "''"
+
+    if "hex_color" in existing_columns:
+        color_expr = '"hex_color"'
+    elif "color" in existing_columns:
+        color_expr = '"color"'
+    else:
+        color_expr = "''"
+
+    td_expr = '"td"' if "td" in existing_columns else "NULL"
+    source_expr = '"source"' if "source" in existing_columns else "'manual'"
+    notes_expr = '"notes"' if "notes" in existing_columns else "''"
+    created_expr = '"created_at"' if "created_at" in existing_columns else "CURRENT_TIMESTAMP"
+    updated_expr = '"updated_at"' if "updated_at" in existing_columns else "CURRENT_TIMESTAMP"
+
+    connection.execute(
+        f"""
+        INSERT INTO filaments_new (
+            id, brand, filament_type, name, color, td, source, notes, created_at, updated_at
+        )
+        SELECT
+            id,
+            brand,
+            {type_expr},
+            {name_expr},
+            {color_expr},
+            {td_expr},
+            {source_expr},
+            {notes_expr},
+            {created_expr},
+            {updated_expr}
+        FROM filaments
+        """
+    )
+    connection.execute("DROP TABLE filaments")
+    connection.execute("ALTER TABLE filaments_new RENAME TO filaments")
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_brand ON filaments(brand)")
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_type ON filaments(filament_type)")
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_name ON filaments(name)")
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_color ON filaments(color)")
     connection.commit()
 
 
@@ -102,26 +240,26 @@ def add_filament(
     connection: sqlite3.Connection,
     *,
     brand: str,
-    material_type: str,
-    color_name: str,
-    hex_color: str,
-    td: float,
+    filament_type: str,
+    name: str,
+    color: str,
+    td: Optional[float],
     source: str,
     notes: str,
 ) -> int:
     cursor = connection.execute(
         """
         INSERT INTO filaments (
-            brand, material_type, color_name, hex_color, td, source, notes
+            brand, filament_type, name, color, td, source, notes
         )
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             brand.strip(),
-            material_type.strip(),
-            color_name.strip(),
-            ensure_hex_color(hex_color),
-            float(td),
+            filament_type.strip(),
+            name.strip(),
+            ensure_hex_color(color),
+            None if td is None else float(td),
             source.strip() or "manual",
             notes.strip(),
         ),
@@ -130,8 +268,32 @@ def add_filament(
     return int(cursor.lastrowid)
 
 
+def seed_samples(connection: sqlite3.Connection, replace: bool) -> int:
+    if replace:
+        connection.execute("DELETE FROM filaments")
+        connection.commit()
+    inserted = 0
+    for item in SAMPLE_FILAMENTS:
+        add_filament(
+            connection,
+            brand=item["brand"],
+            filament_type=item["type"],
+            name=item["name"],
+            color=item["color"],
+            td=item["td"],
+            source=item["source"],
+            notes=item["notes"],
+        )
+        inserted += 1
+    return inserted
+
+
 def fetch_rows(connection: sqlite3.Connection, sql: str, params: Iterable[object] = ()) -> list[sqlite3.Row]:
     return list(connection.execute(sql, tuple(params)))
+
+
+def format_td(value: Optional[float]) -> str:
+    return "" if value is None else f"{float(value):.2f}"
 
 
 def print_rows(rows: list[sqlite3.Row]) -> None:
@@ -139,19 +301,19 @@ def print_rows(rows: list[sqlite3.Row]) -> None:
         print("No filament records found.")
         return
 
-    headers = ["id", "brand", "type", "color", "hex", "td", "source"]
+    headers = ["id", "brand", "type", "name", "color", "td", "source"]
     print(" | ".join(headers))
-    print("-" * 78)
+    print("-" * 96)
     for row in rows:
         print(
             " | ".join(
                 [
                     str(row["id"]),
                     row["brand"],
-                    row["material_type"],
-                    row["color_name"],
-                    row["hex_color"],
-                    f"{row['td']:.2f}",
+                    row["filament_type"],
+                    row["name"],
+                    row["color"],
+                    format_td(row["td"]),
                     row["source"],
                 ]
             )
@@ -165,7 +327,7 @@ def show_row(row: Optional[sqlite3.Row]) -> None:
     for key in row.keys():
         value = row[key]
         if key == "td":
-            value = f"{float(value):.2f}"
+            value = format_td(value)
         print(f"{key}: {value}")
 
 
@@ -173,17 +335,17 @@ def export_csv(connection: sqlite3.Connection, path: Path) -> int:
     rows = fetch_rows(
         connection,
         """
-        SELECT id, brand, material_type, color_name, hex_color, td, source, notes, created_at, updated_at
+        SELECT id, brand, type, name, color, td, source, notes, created_at, updated_at
         FROM filaments
-        ORDER BY brand, material_type, color_name, id
+        ORDER BY brand, type, name, id
         """,
     )
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["id", "brand", "material_type", "color_name", "hex_color", "td", "source", "notes", "created_at", "updated_at"])
+        writer.writerow(["id", "brand", "type", "name", "color", "td", "source", "notes", "created_at", "updated_at"])
         for row in rows:
-            writer.writerow([row["id"], row["brand"], row["material_type"], row["color_name"], row["hex_color"], row["td"], row["source"], row["notes"], row["created_at"], row["updated_at"]])
+            writer.writerow([row["id"], row["brand"], row["filament_type"], row["name"], row["color"], row["td"], row["source"], row["notes"], row["created_at"], row["updated_at"]])
     return len(rows)
 
 
@@ -197,19 +359,24 @@ def main() -> int:
     args = parse_args()
     db_path = Path(args.db).expanduser().resolve()
     connection = connect(db_path)
-    init_db(connection)
+    migrate_schema(connection)
 
     if args.command == "init":
         print(f"Initialized filament database at {db_path}")
+        return 0
+
+    if args.command == "seed-samples":
+        inserted = seed_samples(connection, replace=args.replace)
+        print(f"Seeded {inserted} sample filaments into {db_path}")
         return 0
 
     if args.command == "add":
         record_id = add_filament(
             connection,
             brand=args.brand,
-            material_type=args.material_type,
-            color_name=args.color_name,
-            hex_color=args.hex_color,
+            filament_type=args.type,
+            name=args.name,
+            color=args.color,
             td=args.td,
             source=args.source,
             notes=args.notes,
@@ -221,9 +388,9 @@ def main() -> int:
         rows = fetch_rows(
             connection,
             """
-            SELECT id, brand, material_type, color_name, hex_color, td, source
+            SELECT id, brand, filament_type, name, color, td, source
             FROM filaments
-            ORDER BY brand, material_type, color_name, id
+            ORDER BY brand, filament_type, name, id
             LIMIT ?
             """,
             (args.limit,),
@@ -249,15 +416,15 @@ def main() -> int:
         rows = fetch_rows(
             connection,
             """
-            SELECT id, brand, material_type, color_name, hex_color, td, source
+            SELECT id, brand, filament_type, name, color, td, source
             FROM filaments
             WHERE brand LIKE ?
-               OR material_type LIKE ?
-               OR color_name LIKE ?
-               OR hex_color LIKE ?
+               OR filament_type LIKE ?
+               OR name LIKE ?
+               OR color LIKE ?
                OR source LIKE ?
                OR notes LIKE ?
-            ORDER BY brand, material_type, color_name, id
+            ORDER BY brand, filament_type, name, id
             LIMIT ?
             """,
             (like, like, like, like, like, like, args.limit),
