@@ -34,8 +34,10 @@ from filament_db import (
     connect,
     detect_td1_device,
     ensure_hex_color,
+    fetch_filament,
     migrate_schema,
     read_td1_scan,
+    update_filament,
     update_filament_color,
 )
 
@@ -103,6 +105,7 @@ class FilamentDbWindow(QMainWindow):
         migrate_schema(self.connection)
         self.scan_worker: ScanWorker | None = None
         self.last_saved_record_id: int | None = None
+        self.current_edit_record_id: int | None = None
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -157,10 +160,14 @@ class FilamentDbWindow(QMainWindow):
 
         self.scan_button = QPushButton("Scan from TD1")
         self.scan_button.clicked.connect(self.start_scan)
+        self.save_changes_button = QPushButton("Save Changes")
+        self.save_changes_button.clicked.connect(self.save_changes)
+        self.save_changes_button.setEnabled(False)
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.clicked.connect(self.refresh_all)
 
         button_row.addWidget(self.scan_button)
+        button_row.addWidget(self.save_changes_button)
         button_row.addWidget(self.refresh_button)
         layout.addLayout(button_row)
 
@@ -271,7 +278,7 @@ class FilamentDbWindow(QMainWindow):
             )
         )
         self.table.setSortingEnabled(False)
-        selected_id = self.last_saved_record_id
+        selected_id = self.current_edit_record_id or self.last_saved_record_id
         self.table.setRowCount(len(rows))
         for row_index, row in enumerate(rows):
             values = [
@@ -335,6 +342,7 @@ class FilamentDbWindow(QMainWindow):
             return
 
         self.scan_button.setEnabled(False)
+        self.save_changes_button.setEnabled(False)
         self.scan_status.setText("Listening for TD1 scan data...")
         self.device_value.setText(str(device_path))
         self.saved_value.setText("—")
@@ -366,6 +374,7 @@ class FilamentDbWindow(QMainWindow):
             notes=notes,
         )
         self.last_saved_record_id = record_id
+        self.current_edit_record_id = record_id
         self.td_value.setText(f"{td:.2f}")
         self.hex_input.setText(color)
         self._set_swatch_color(color)
@@ -374,6 +383,7 @@ class FilamentDbWindow(QMainWindow):
         self.scan_status.setText(f"Saved {brand} {filament_type} {name} with TD {td:.2f} and HEX {color}.")
         self.scan_button.setEnabled(True)
         self.save_color_button.setEnabled(True)
+        self.save_changes_button.setEnabled(True)
         self.refresh_all()
 
     def fail_scan(self, error_message: str) -> None:
@@ -383,7 +393,8 @@ class FilamentDbWindow(QMainWindow):
 
     def on_hex_changed(self, text: str) -> None:
         self._set_swatch_color(text)
-        self.save_color_button.setEnabled(self.last_saved_record_id is not None and bool(text.strip()))
+        target_id = self.current_edit_record_id or self.last_saved_record_id
+        self.save_color_button.setEnabled(target_id is not None and bool(text.strip()))
 
     def pick_color(self) -> None:
         current = QColor(self.hex_input.text().strip())
@@ -399,21 +410,22 @@ class FilamentDbWindow(QMainWindow):
             self.hex_input.setText(chosen.name().upper())
 
     def save_manual_color(self) -> None:
-        if self.last_saved_record_id is None:
-            QMessageBox.warning(self, "No scan yet", "Scan and save a filament first, then you can correct its color.")
+        target_id = self.current_edit_record_id or self.last_saved_record_id
+        if target_id is None:
+            QMessageBox.warning(self, "No filament selected", "Scan a filament or load one from the table first.")
             return
         try:
             color = ensure_hex_color(self.hex_input.text())
         except ValueError as exc:
             QMessageBox.warning(self, "Invalid HEX", str(exc))
             return
-        updated = update_filament_color(self.connection, self.last_saved_record_id, color)
+        updated = update_filament_color(self.connection, target_id, color)
         if not updated:
             QMessageBox.warning(self, "Update failed", "Could not update the saved filament color.")
             return
         self.hex_input.setText(color)
-        self.saved_value.setText(f"Saved as #{self.last_saved_record_id} (color updated)")
-        self.scan_status.setText(f"Updated filament #{self.last_saved_record_id} color to {color}.")
+        self.saved_value.setText(f"Saved as #{target_id} (color updated)")
+        self.scan_status.setText(f"Updated filament #{target_id} color to {color}.")
         self.refresh_table()
 
     def _set_swatch_color(self, value: str) -> None:
@@ -440,16 +452,18 @@ class FilamentDbWindow(QMainWindow):
         self.connection.commit()
         if self.last_saved_record_id == record_id:
             self.last_saved_record_id = None
-            self.saved_value.setText("Deleted")
-            self.save_color_button.setEnabled(False)
+        if self.current_edit_record_id == record_id:
+            self.current_edit_record_id = None
+            self._clear_form_after_delete()
         self.scan_status.setText(f"Deleted filament #{record_id}.")
         self.refresh_all()
 
     def on_table_cell_double_clicked(self, row: int, column: int) -> None:
-        if column != self.COLOR_SWATCH_COLUMN:
-            return
         record_id = int(self.table.item(row, 0).text())
-        self.edit_table_color(record_id)
+        if column == self.COLOR_SWATCH_COLUMN:
+            self.edit_table_color(record_id)
+            return
+        self.load_filament_into_form(record_id)
 
     def edit_table_color(self, record_id: int) -> None:
         row = self._find_row_by_id(record_id)
@@ -482,6 +496,61 @@ class FilamentDbWindow(QMainWindow):
             if item is not None and int(item.text()) == record_id:
                 return row
         return None
+
+    def load_filament_into_form(self, record_id: int) -> None:
+        row = fetch_filament(self.connection, record_id)
+        if row is None:
+            QMessageBox.warning(self, "Not found", f"Could not load filament #{record_id}.")
+            return
+        self.current_edit_record_id = record_id
+        self.last_saved_record_id = record_id
+        self.brand_combo.setCurrentText(row["brand"])
+        self.type_combo.setCurrentText(row["filament_type"])
+        self.name_combo.setCurrentText(row["name"])
+        self.notes_input.setText(row["notes"])
+        self.td_value.setText("—" if row["td"] is None else f"{float(row['td']):.2f}")
+        self.hex_input.setText(row["color"])
+        self.device_value.setText("Saved record")
+        self.saved_value.setText(f"Loaded #{record_id}")
+        self.save_color_button.setEnabled(True)
+        self.save_changes_button.setEnabled(True)
+        self.scan_status.setText(f"Loaded filament #{record_id} for editing.")
+        self.refresh_table()
+
+    def save_changes(self) -> None:
+        if self.current_edit_record_id is None:
+            QMessageBox.information(self, "Nothing loaded", "Double-click a filament row first to edit it.")
+            return
+        brand = self.brand_combo.currentText().strip()
+        filament_type = self.type_combo.currentText().strip()
+        name = self.name_combo.currentText().strip()
+        notes = self.notes_input.text().strip()
+        if not brand or not filament_type or not name:
+            QMessageBox.warning(self, "Missing details", "Brand, type, and name are required.")
+            return
+        updated = update_filament(
+            self.connection,
+            record_id=self.current_edit_record_id,
+            brand=brand,
+            filament_type=filament_type,
+            name=name,
+            notes=notes,
+        )
+        if not updated:
+            QMessageBox.warning(self, "Update failed", "Could not save the filament changes.")
+            return
+        self.saved_value.setText(f"Saved as #{self.current_edit_record_id} (details updated)")
+        self.scan_status.setText(f"Updated filament #{self.current_edit_record_id}.")
+        self.refresh_all()
+
+    def _clear_form_after_delete(self) -> None:
+        self.saved_value.setText("Deleted")
+        self.device_value.setText("Auto-detect")
+        self.td_value.setText("—")
+        self.hex_input.clear()
+        self.notes_input.clear()
+        self.save_color_button.setEnabled(False)
+        self.save_changes_button.setEnabled(False)
 
     def closeEvent(self, event) -> None:  # pragma: no cover - Qt close path
         if self.scan_worker is not None and self.scan_worker.isRunning():

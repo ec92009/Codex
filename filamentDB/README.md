@@ -120,6 +120,8 @@ The GUI wraps the same workflow:
 - if the TD1 color is off, type a new HEX or double-click the swatch, then press `Save Color`
 - each saved row shows a color sample swatch in the table
 - double-click a row swatch to change that filament's color with the native macOS picker
+- double-click any non-swatch cell in a row to load that filament into the left panel for editing
+- use `Save Changes` to commit edits to brand, type, name, and notes
 - select a row and press `Delete Selected` to remove it from the DB
 - click a table header to sort by that column
 

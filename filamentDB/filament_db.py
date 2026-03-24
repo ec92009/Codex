@@ -499,6 +499,31 @@ def update_filament_color(connection: sqlite3.Connection, record_id: int, color:
     return cursor.rowcount > 0
 
 
+def update_filament(
+    connection: sqlite3.Connection,
+    *,
+    record_id: int,
+    brand: str,
+    filament_type: str,
+    name: str,
+    notes: str,
+) -> bool:
+    cursor = connection.execute(
+        """
+        UPDATE filaments
+        SET brand = ?, filament_type = ?, name = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (brand.strip(), filament_type.strip(), name.strip(), notes.strip(), record_id),
+    )
+    connection.commit()
+    return cursor.rowcount > 0
+
+
+def fetch_filament(connection: sqlite3.Connection, record_id: int) -> Optional[sqlite3.Row]:
+    return connection.execute("SELECT * FROM filaments WHERE id = ?", (record_id,)).fetchone()
+
+
 def main() -> int:
     args = parse_args()
     db_path = Path(args.db).expanduser().resolve()
