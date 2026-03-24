@@ -118,6 +118,10 @@ The GUI wraps the same workflow:
 - the measured `TD` and `HEX` are saved directly to the local DB
 - review the color swatch next to the saved `HEX`
 - if the TD1 color is off, type a new HEX or use `Pick`, then press `Save Color`
+- each saved row shows a color sample swatch in the table
+- double-click a row swatch to change that filament's color with the native macOS picker
+- select a row and press `Delete Selected` to remove it from the DB
+- click a table header to sort by that column
 
 ## Sample data note
 

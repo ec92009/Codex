@@ -58,6 +58,8 @@ class ScanWorker(QThread):
 
 
 class FilamentDbWindow(QMainWindow):
+    COLOR_SWATCH_COLUMN = 4
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("filamentDB")
@@ -175,11 +177,21 @@ class FilamentDbWindow(QMainWindow):
         layout = QVBoxLayout(box)
         layout.setSpacing(10)
 
-        self.table = QTableWidget(0, 7)
-        self.table.setHorizontalHeaderLabels(["ID", "Brand", "Type", "Name", "HEX", "TD", "Source"])
+        controls = QHBoxLayout()
+        controls.setSpacing(10)
+        self.delete_button = QPushButton("Delete Selected")
+        self.delete_button.clicked.connect(self.delete_selected_row)
+        controls.addWidget(self.delete_button)
+        controls.addStretch(1)
+        layout.addLayout(controls)
+
+        self.table = QTableWidget(0, 8)
+        self.table.setHorizontalHeaderLabels(["ID", "Brand", "Type", "Name", "Color", "HEX", "TD", "Source"])
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
+        self.table.setSortingEnabled(True)
+        self.table.cellDoubleClicked.connect(self.on_table_cell_double_clicked)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
@@ -188,6 +200,7 @@ class FilamentDbWindow(QMainWindow):
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)
         layout.addWidget(self.table, 1)
         return box
 
@@ -228,6 +241,7 @@ class FilamentDbWindow(QMainWindow):
                 """
             )
         )
+        self.table.setSortingEnabled(False)
         self.table.setRowCount(len(rows))
         for row_index, row in enumerate(rows):
             values = [
@@ -235,16 +249,22 @@ class FilamentDbWindow(QMainWindow):
                 row["brand"],
                 row["filament_type"],
                 row["name"],
+                "",
                 row["color"],
                 "" if row["td"] is None else f"{float(row['td']):.2f}",
                 row["source"],
             ]
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
-                if column in (0, 5):
+                if column in (0, 6):
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                if column == self.COLOR_SWATCH_COLUMN:
+                    item.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
+                    item.setBackground(QColor(row["color"]))
+                    item.setToolTip(f"Double-click to change {row['name']} color")
                 self.table.setItem(row_index, column, item)
         self.table.resizeRowsToContents()
+        self.table.setSortingEnabled(True)
 
     def _fetch_distinct(self, column: str) -> list[str]:
         sql = f"SELECT DISTINCT {column} FROM filaments WHERE {column} <> '' ORDER BY {column}"
@@ -360,6 +380,57 @@ class FilamentDbWindow(QMainWindow):
         self.color_swatch.setStyleSheet(
             f"border: 1px solid #888; border-radius: 4px; background: {hex_value};"
         )
+
+    def delete_selected_row(self) -> None:
+        selected_rows = self.table.selectionModel().selectedRows()
+        if not selected_rows:
+            QMessageBox.information(self, "Nothing selected", "Select a filament row first.")
+            return
+        row_index = selected_rows[0].row()
+        record_id = int(self.table.item(row_index, 0).text())
+        name = self.table.item(row_index, 3).text()
+        answer = QMessageBox.question(
+            self,
+            "Delete filament",
+            f"Delete filament #{record_id} ({name}) from the database?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self.connection.execute("DELETE FROM filaments WHERE id = ?", (record_id,))
+        self.connection.commit()
+        if self.last_saved_record_id == record_id:
+            self.last_saved_record_id = None
+            self.saved_value.setText("Deleted")
+            self.save_color_button.setEnabled(False)
+        self.scan_status.setText(f"Deleted filament #{record_id}.")
+        self.refresh_all()
+
+    def on_table_cell_double_clicked(self, row: int, column: int) -> None:
+        if column != self.COLOR_SWATCH_COLUMN:
+            return
+        record_id = int(self.table.item(row, 0).text())
+        current_hex = self.table.item(row, 5).text()
+        current = QColor(current_hex)
+        if not current.isValid():
+            current = QColor("#CCCCCC")
+        dialog = QColorDialog(current, self)
+        dialog.setWindowTitle("Choose Filament Color")
+        dialog.setOption(QColorDialog.ColorDialogOption.DontUseNativeDialog, False)
+        if dialog.exec() != QColorDialog.DialogCode.Accepted:
+            return
+        chosen = dialog.currentColor()
+        if not chosen.isValid():
+            return
+        color = chosen.name().upper()
+        if not update_filament_color(self.connection, record_id, color):
+            QMessageBox.warning(self, "Update failed", "Could not update the selected filament color.")
+            return
+        if self.last_saved_record_id == record_id:
+            self.hex_input.setText(color)
+        self.scan_status.setText(f"Updated filament #{record_id} color to {color}.")
+        self.refresh_table()
 
     def closeEvent(self, event) -> None:  # pragma: no cover - Qt close path
         if self.scan_worker is not None and self.scan_worker.isRunning():
