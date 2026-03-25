@@ -10,6 +10,8 @@ import select
 import sqlite3
 import sys
 import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -17,23 +19,20 @@ from typing import Iterable, Optional
 PROJECT_DIR = Path(__file__).resolve().parent
 SOURCE_PROJECT_DIR = Path("/Users/ecohen/Codex/filamentDB")
 RUNTIME_PROJECT_DIR = SOURCE_PROJECT_DIR if not (PROJECT_DIR / "data").exists() and SOURCE_PROJECT_DIR.exists() else PROJECT_DIR
-DEFAULT_DB_PATH = RUNTIME_PROJECT_DIR / "data" / "filaments.db"
-
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS filaments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    brand TEXT NOT NULL,
-    filament_type TEXT NOT NULL,
-    name TEXT NOT NULL,
-    color TEXT NOT NULL,
-    td REAL,
-    source TEXT NOT NULL DEFAULT 'manual',
-    notes TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-"""
+DEFAULT_DB_PATH = RUNTIME_PROJECT_DIR / "data" / "filaments.tsv"
+LEGACY_DB_PATH = RUNTIME_PROJECT_DIR / "data" / "filaments.db"
+FIELDNAMES = [
+    "id",
+    "brand",
+    "filament_type",
+    "name",
+    "color",
+    "td",
+    "source",
+    "notes",
+    "created_at",
+    "updated_at",
+]
 
 
 SAMPLE_FILAMENTS = [
@@ -139,14 +138,33 @@ SAMPLE_FILAMENTS = [
 ]
 
 
+@dataclass
+class FilamentStore:
+    path: Path
+    records: list[dict[str, object]]
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path = self.path.with_suffix(self.path.suffix + ".tmp")
+        with temp_path.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=FIELDNAMES, delimiter="\t")
+            writer.writeheader()
+            for record in sorted(self.records, key=lambda item: int(item["id"])):
+                writer.writerow(serialize_record(record))
+        temp_path.replace(self.path)
+
+    def close(self) -> None:
+        return
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Local SQLite filament database using HueForge-style brand/type/name/td/color fields."
+        description="Local TSV filament database using HueForge-style brand/type/name/td/color fields."
     )
     parser.add_argument(
         "--db",
         default=str(DEFAULT_DB_PATH),
-        help=f"SQLite database path. Default: {DEFAULT_DB_PATH}",
+        help=f"TSV database path. Default: {DEFAULT_DB_PATH}",
     )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -211,11 +229,98 @@ def ensure_hex_color(value: str) -> str:
     return cleaned
 
 
-def connect(db_path: Path) -> sqlite3.Connection:
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(str(db_path))
+def now_timestamp() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def normalize_td(value: object) -> Optional[float]:
+    if value in (None, "", "None"):
+        return None
+    return float(value)
+
+
+def normalize_record(raw: dict[str, object]) -> dict[str, object]:
+    return {
+        "id": int(raw["id"]),
+        "brand": str(raw.get("brand", "")).strip(),
+        "filament_type": str(raw.get("filament_type", "")).strip(),
+        "name": str(raw.get("name", "")).strip(),
+        "color": ensure_hex_color(str(raw.get("color", "#000000"))),
+        "td": normalize_td(raw.get("td")),
+        "source": str(raw.get("source", "manual")).strip() or "manual",
+        "notes": str(raw.get("notes", "")).strip(),
+        "created_at": str(raw.get("created_at", "")).strip() or now_timestamp(),
+        "updated_at": str(raw.get("updated_at", "")).strip() or now_timestamp(),
+    }
+
+
+def serialize_record(record: dict[str, object]) -> dict[str, str]:
+    return {
+        "id": str(int(record["id"])),
+        "brand": str(record["brand"]),
+        "filament_type": str(record["filament_type"]),
+        "name": str(record["name"]),
+        "color": str(record["color"]),
+        "td": "" if record["td"] is None else f"{float(record['td']):.2f}",
+        "source": str(record["source"]),
+        "notes": str(record["notes"]),
+        "created_at": str(record["created_at"]),
+        "updated_at": str(record["updated_at"]),
+    }
+
+
+def legacy_db_candidates(tsv_path: Path) -> list[Path]:
+    candidates = [tsv_path.with_suffix(".db"), tsv_path.with_suffix(".sqlite3"), LEGACY_DB_PATH]
+    ordered: list[Path] = []
+    for candidate in candidates:
+        if candidate not in ordered:
+            ordered.append(candidate)
+    return ordered
+
+
+def import_legacy_sqlite(legacy_path: Path) -> list[dict[str, object]]:
+    connection = sqlite3.connect(str(legacy_path))
     connection.row_factory = sqlite3.Row
-    return connection
+    try:
+        rows = list(
+            connection.execute(
+                """
+                SELECT id, brand, filament_type, name, color, td, source, notes, created_at, updated_at
+                FROM filaments
+                ORDER BY id
+                """
+            )
+        )
+    finally:
+        connection.close()
+    return [normalize_record(dict(row)) for row in rows]
+
+
+def connect(db_path: Path) -> FilamentStore:
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    records: list[dict[str, object]] = []
+    if db_path.exists():
+        with db_path.open("r", newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle, delimiter="\t")
+            if reader.fieldnames is None:
+                records = []
+            else:
+                records = [normalize_record(row) for row in reader]
+    if not records:
+        for legacy_path in legacy_db_candidates(db_path):
+            if legacy_path.exists():
+                migrated_records = import_legacy_sqlite(legacy_path)
+                if migrated_records:
+                    records = migrated_records
+                    break
+    store = FilamentStore(path=db_path, records=records)
+    migrate_schema(store)
+    return store
+
+
+def migrate_schema(store: FilamentStore) -> None:
+    if not store.path.exists():
+        store.save()
 
 
 def detect_td1_device() -> Optional[Path]:
@@ -273,104 +378,12 @@ def read_td1_scan(device_path: Path, timeout: float) -> tuple[float, str]:
     raise TimeoutError(f"No TD1 reading arrived on {device_path} within {timeout:.1f}s")
 
 
-def migrate_schema(connection: sqlite3.Connection) -> None:
-    table_exists = connection.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='filaments'"
-    ).fetchone()
-    if not table_exists:
-        connection.executescript(SCHEMA)
-        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_brand ON filaments(brand)")
-        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_type ON filaments(filament_type)")
-        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_name ON filaments(name)")
-        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_color ON filaments(color)")
-        connection.commit()
-        return
-
-    existing_columns = [row["name"] for row in connection.execute("PRAGMA table_info(filaments)")]
-    target_columns = ["id", "brand", "filament_type", "name", "color", "td", "source", "notes", "created_at", "updated_at"]
-    if existing_columns == target_columns:
-        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_brand ON filaments(brand)")
-        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_type ON filaments(filament_type)")
-        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_name ON filaments(name)")
-        connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_color ON filaments(color)")
-        connection.commit()
-        return
-
-    connection.execute("DROP TABLE IF EXISTS filaments_new")
-    connection.execute(
-        """
-        CREATE TABLE filaments_new (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            brand TEXT NOT NULL,
-            filament_type TEXT NOT NULL,
-            name TEXT NOT NULL,
-            color TEXT NOT NULL,
-            td REAL,
-            source TEXT NOT NULL DEFAULT 'manual',
-            notes TEXT NOT NULL DEFAULT '',
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-        """
-    )
-
-    if "material_type" in existing_columns:
-        type_expr = '"material_type"'
-    elif "type" in existing_columns:
-        type_expr = '"type"'
-    else:
-        type_expr = "''"
-
-    if "color_name" in existing_columns:
-        name_expr = '"color_name"'
-    elif "name" in existing_columns:
-        name_expr = '"name"'
-    else:
-        name_expr = "''"
-
-    if "hex_color" in existing_columns:
-        color_expr = '"hex_color"'
-    elif "color" in existing_columns:
-        color_expr = '"color"'
-    else:
-        color_expr = "''"
-
-    td_expr = '"td"' if "td" in existing_columns else "NULL"
-    source_expr = '"source"' if "source" in existing_columns else "'manual'"
-    notes_expr = '"notes"' if "notes" in existing_columns else "''"
-    created_expr = '"created_at"' if "created_at" in existing_columns else "CURRENT_TIMESTAMP"
-    updated_expr = '"updated_at"' if "updated_at" in existing_columns else "CURRENT_TIMESTAMP"
-
-    connection.execute(
-        f"""
-        INSERT INTO filaments_new (
-            id, brand, filament_type, name, color, td, source, notes, created_at, updated_at
-        )
-        SELECT
-            id,
-            brand,
-            {type_expr},
-            {name_expr},
-            {color_expr},
-            {td_expr},
-            {source_expr},
-            {notes_expr},
-            {created_expr},
-            {updated_expr}
-        FROM filaments
-        """
-    )
-    connection.execute("DROP TABLE filaments")
-    connection.execute("ALTER TABLE filaments_new RENAME TO filaments")
-    connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_brand ON filaments(brand)")
-    connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_type ON filaments(filament_type)")
-    connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_name ON filaments(name)")
-    connection.execute("CREATE INDEX IF NOT EXISTS idx_filaments_color ON filaments(color)")
-    connection.commit()
+def next_record_id(store: FilamentStore) -> int:
+    return 1 + max((int(record["id"]) for record in store.records), default=0)
 
 
 def add_filament(
-    connection: sqlite3.Connection,
+    store: FilamentStore,
     *,
     brand: str,
     filament_type: str,
@@ -380,35 +393,35 @@ def add_filament(
     source: str,
     notes: str,
 ) -> int:
-    cursor = connection.execute(
-        """
-        INSERT INTO filaments (
-            brand, filament_type, name, color, td, source, notes
+    timestamp = now_timestamp()
+    record_id = next_record_id(store)
+    store.records.append(
+        normalize_record(
+            {
+                "id": record_id,
+                "brand": brand,
+                "filament_type": filament_type,
+                "name": name,
+                "color": color,
+                "td": td,
+                "source": source,
+                "notes": notes,
+                "created_at": timestamp,
+                "updated_at": timestamp,
+            }
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            brand.strip(),
-            filament_type.strip(),
-            name.strip(),
-            ensure_hex_color(color),
-            None if td is None else float(td),
-            source.strip() or "manual",
-            notes.strip(),
-        ),
     )
-    connection.commit()
-    return int(cursor.lastrowid)
+    store.save()
+    return record_id
 
 
-def seed_samples(connection: sqlite3.Connection, replace: bool) -> int:
+def seed_samples(store: FilamentStore, replace: bool) -> int:
     if replace:
-        connection.execute("DELETE FROM filaments")
-        connection.commit()
+        store.records = []
     inserted = 0
     for item in SAMPLE_FILAMENTS:
         add_filament(
-            connection,
+            store,
             brand=item["brand"],
             filament_type=item["type"],
             name=item["name"],
@@ -421,15 +434,36 @@ def seed_samples(connection: sqlite3.Connection, replace: bool) -> int:
     return inserted
 
 
-def fetch_rows(connection: sqlite3.Connection, sql: str, params: Iterable[object] = ()) -> list[sqlite3.Row]:
-    return list(connection.execute(sql, tuple(params)))
-
-
 def format_td(value: Optional[float]) -> str:
     return "" if value is None else f"{float(value):.2f}"
 
 
-def print_rows(rows: list[sqlite3.Row]) -> None:
+def list_filaments(store: FilamentStore, *, limit: Optional[int] = None, query: Optional[str] = None) -> list[dict[str, object]]:
+    rows = list(store.records)
+    if query:
+        needle = query.strip().lower()
+        rows = [
+            row
+            for row in rows
+            if needle in str(row["brand"]).lower()
+            or needle in str(row["filament_type"]).lower()
+            or needle in str(row["name"]).lower()
+            or needle in str(row["color"]).lower()
+            or needle in str(row["source"]).lower()
+            or needle in str(row["notes"]).lower()
+        ]
+    rows.sort(key=lambda row: int(row["id"]), reverse=True)
+    if limit is not None:
+        rows = rows[:limit]
+    return rows
+
+
+def fetch_distinct_values(store: FilamentStore, column: str) -> list[str]:
+    values = {str(record.get(column, "")).strip() for record in store.records}
+    return sorted(value for value in values if value)
+
+
+def print_rows(rows: list[dict[str, object]]) -> None:
     if not rows:
         print("No filament records found.")
         return
@@ -442,67 +476,83 @@ def print_rows(rows: list[sqlite3.Row]) -> None:
             " | ".join(
                 [
                     str(row["id"]),
-                    row["brand"],
-                    row["filament_type"],
-                    row["name"],
-                    row["color"],
-                    format_td(row["td"]),
-                    row["source"],
+                    str(row["brand"]),
+                    str(row["filament_type"]),
+                    str(row["name"]),
+                    str(row["color"]),
+                    format_td(normalize_td(row["td"])),
+                    str(row["source"]),
                 ]
             )
         )
 
 
-def show_row(row: Optional[sqlite3.Row]) -> None:
+def show_row(row: Optional[dict[str, object]]) -> None:
     if row is None:
         print("Record not found.")
         return
-    for key in row.keys():
-        value = row[key]
+    for key in FIELDNAMES:
+        value = row.get(key)
         if key == "td":
-            value = format_td(value)
+            value = format_td(normalize_td(value))
         print(f"{key}: {value}")
 
 
-def export_csv(connection: sqlite3.Connection, path: Path) -> int:
-    rows = fetch_rows(
-        connection,
-        """
-        SELECT id, brand, type, name, color, td, source, notes, created_at, updated_at
-        FROM filaments
-        ORDER BY brand, type, name, id
-        """,
-    )
+def export_csv(store: FilamentStore, path: Path) -> int:
+    rows = sorted(store.records, key=lambda row: (str(row["brand"]), str(row["filament_type"]), str(row["name"]), int(row["id"])))
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(["id", "brand", "type", "name", "color", "td", "source", "notes", "created_at", "updated_at"])
         for row in rows:
-            writer.writerow([row["id"], row["brand"], row["filament_type"], row["name"], row["color"], row["td"], row["source"], row["notes"], row["created_at"], row["updated_at"]])
+            writer.writerow(
+                [
+                    row["id"],
+                    row["brand"],
+                    row["filament_type"],
+                    row["name"],
+                    row["color"],
+                    normalize_td(row["td"]),
+                    row["source"],
+                    row["notes"],
+                    row["created_at"],
+                    row["updated_at"],
+                ]
+            )
     return len(rows)
 
 
-def delete_row(connection: sqlite3.Connection, record_id: int) -> bool:
-    cursor = connection.execute("DELETE FROM filaments WHERE id = ?", (record_id,))
-    connection.commit()
-    return cursor.rowcount > 0
+def delete_row(store: FilamentStore, record_id: int) -> bool:
+    before = len(store.records)
+    store.records = [record for record in store.records if int(record["id"]) != record_id]
+    if len(store.records) == before:
+        return False
+    store.save()
+    return True
 
 
-def update_filament_color(connection: sqlite3.Connection, record_id: int, color: str) -> bool:
-    cursor = connection.execute(
-        """
-        UPDATE filaments
-        SET color = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-        """,
-        (ensure_hex_color(color), record_id),
-    )
-    connection.commit()
-    return cursor.rowcount > 0
+def delete_filaments(store: FilamentStore, record_ids: Iterable[int]) -> int:
+    id_set = {int(record_id) for record_id in record_ids}
+    before = len(store.records)
+    store.records = [record for record in store.records if int(record["id"]) not in id_set]
+    removed = before - len(store.records)
+    if removed:
+        store.save()
+    return removed
+
+
+def update_filament_color(store: FilamentStore, record_id: int, color: str) -> bool:
+    for record in store.records:
+        if int(record["id"]) == record_id:
+            record["color"] = ensure_hex_color(color)
+            record["updated_at"] = now_timestamp()
+            store.save()
+            return True
+    return False
 
 
 def update_filament(
-    connection: sqlite3.Connection,
+    store: FilamentStore,
     *,
     record_id: int,
     brand: str,
@@ -510,40 +560,42 @@ def update_filament(
     name: str,
     notes: str,
 ) -> bool:
-    cursor = connection.execute(
-        """
-        UPDATE filaments
-        SET brand = ?, filament_type = ?, name = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-        """,
-        (brand.strip(), filament_type.strip(), name.strip(), notes.strip(), record_id),
-    )
-    connection.commit()
-    return cursor.rowcount > 0
+    for record in store.records:
+        if int(record["id"]) == record_id:
+            record["brand"] = brand.strip()
+            record["filament_type"] = filament_type.strip()
+            record["name"] = name.strip()
+            record["notes"] = notes.strip()
+            record["updated_at"] = now_timestamp()
+            store.save()
+            return True
+    return False
 
 
-def fetch_filament(connection: sqlite3.Connection, record_id: int) -> Optional[sqlite3.Row]:
-    return connection.execute("SELECT * FROM filaments WHERE id = ?", (record_id,)).fetchone()
+def fetch_filament(store: FilamentStore, record_id: int) -> Optional[dict[str, object]]:
+    for record in store.records:
+        if int(record["id"]) == record_id:
+            return dict(record)
+    return None
 
 
 def main() -> int:
     args = parse_args()
     db_path = Path(args.db).expanduser().resolve()
-    connection = connect(db_path)
-    migrate_schema(connection)
+    store = connect(db_path)
 
     if args.command == "init":
         print(f"Initialized filament database at {db_path}")
         return 0
 
     if args.command == "seed-samples":
-        inserted = seed_samples(connection, replace=args.replace)
+        inserted = seed_samples(store, replace=args.replace)
         print(f"Seeded {inserted} sample filaments into {db_path}")
         return 0
 
     if args.command == "add":
         record_id = add_filament(
-            connection,
+            store,
             brand=args.brand,
             filament_type=args.type,
             name=args.name,
@@ -556,26 +608,17 @@ def main() -> int:
         return 0
 
     if args.command == "list":
-        rows = fetch_rows(
-            connection,
-            """
-            SELECT id, brand, filament_type, name, color, td, source
-            FROM filaments
-            ORDER BY brand, filament_type, name, id
-            LIMIT ?
-            """,
-            (args.limit,),
-        )
+        rows = list_filaments(store, limit=args.limit)
+        rows.sort(key=lambda row: (str(row["brand"]), str(row["filament_type"]), str(row["name"]), int(row["id"])))
         print_rows(rows)
         return 0
 
     if args.command == "show":
-        row = connection.execute("SELECT * FROM filaments WHERE id = ?", (args.id,)).fetchone()
-        show_row(row)
+        show_row(fetch_filament(store, args.id))
         return 0
 
     if args.command == "delete":
-        deleted = delete_row(connection, args.id)
+        deleted = delete_row(store, args.id)
         if deleted:
             print(f"Deleted filament #{args.id}")
             return 0
@@ -583,29 +626,14 @@ def main() -> int:
         return 1
 
     if args.command == "search":
-        like = f"%{args.query.strip()}%"
-        rows = fetch_rows(
-            connection,
-            """
-            SELECT id, brand, filament_type, name, color, td, source
-            FROM filaments
-            WHERE brand LIKE ?
-               OR filament_type LIKE ?
-               OR name LIKE ?
-               OR color LIKE ?
-               OR source LIKE ?
-               OR notes LIKE ?
-            ORDER BY brand, filament_type, name, id
-            LIMIT ?
-            """,
-            (like, like, like, like, like, like, args.limit),
-        )
+        rows = list_filaments(store, limit=args.limit, query=args.query)
+        rows.sort(key=lambda row: (str(row["brand"]), str(row["filament_type"]), str(row["name"]), int(row["id"])))
         print_rows(rows)
         return 0
 
     if args.command == "export-csv":
         path = Path(args.path).expanduser().resolve()
-        row_count = export_csv(connection, path)
+        row_count = export_csv(store, path)
         print(f"Exported {row_count} filaments to {path}")
         return 0
 
@@ -617,7 +645,7 @@ def main() -> int:
         print(f"Listening for TD1 scan on {device_path}...")
         td, color = read_td1_scan(device_path, args.timeout)
         record_id = add_filament(
-            connection,
+            store,
             brand=args.brand,
             filament_type=args.type,
             name=args.name,

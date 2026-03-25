@@ -1,6 +1,6 @@
 # filamentDB
 
-Small local SQLite database for filament records, aligned to the simple HueForge-style naming:
+Small local TSV library for filament records, aligned to the simple HueForge-style naming:
 
 - `brand`
 - `type`
@@ -15,11 +15,11 @@ Optional support fields:
 
 The initial goal is to keep a clean local library of your own filaments and measured TD1 readings.
 
-Internally, the SQLite column for `type` is named `filament_type` to avoid SQL keyword awkwardness, but the CLI and exported shape are presented as `type`.
+Internally, the stored column name is `filament_type` to avoid `type` awkwardness in the code, but the CLI and exported shape are presented as `type`.
 
 ## Current scope
 
-- local SQLite database
+- local TSV library
 - simple CLI
 - small desktop GUI
 - optional starter sample rows
@@ -33,6 +33,8 @@ Initialize the local database:
 cd /Users/ecohen/Codex/filamentDB
 uv run python filament_db.py init
 ```
+
+The saved data now lives in `/Users/ecohen/Codex/filamentDB/data/filaments.tsv`, which is plain text and Git-friendly. If an older `/Users/ecohen/Codex/filamentDB/data/filaments.db` exists on a machine, the app will import it automatically the first time the TSV is empty.
 
 Launch the desktop GUI:
 
@@ -123,7 +125,7 @@ The GUI wraps the same workflow:
 - choose or type `type`
 - choose or type `name`
 - press `Scan from TD1` while the filament is in the TD1
-- the measured `TD` and `HEX` are saved directly to the local DB
+- the measured `TD` and `HEX` are saved directly to the local TSV library
 - review the color swatch next to the saved `HEX`
 - if the TD1 color is off, type a new HEX or double-click the swatch, then press `Save Color`
 - each saved row shows a color sample swatch in the table

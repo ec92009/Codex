@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sqlite3
 from pathlib import Path
 
 from PySide6.QtCore import QThread, Qt, Signal
@@ -33,9 +32,12 @@ from filament_db import (
     RUNTIME_PROJECT_DIR,
     add_filament,
     connect,
+    delete_filaments,
     detect_td1_device,
     ensure_hex_color,
     fetch_filament,
+    fetch_distinct_values,
+    list_filaments,
     migrate_schema,
     read_td1_scan,
     update_filament,
@@ -126,7 +128,7 @@ class FilamentDbWindow(QMainWindow):
         root.addWidget(self._build_table_panel(), 1)
 
         status = QStatusBar()
-        status.showMessage(f"Database: {self.db_path}")
+        status.showMessage(f"Library: {self.db_path}")
         self.setStatusBar(status)
 
         self.refresh_choices()
@@ -284,45 +286,20 @@ class FilamentDbWindow(QMainWindow):
         current_type = self.type_combo.currentText()
         current_name = self.name_combo.currentText()
 
-        brands = self._fetch_distinct("brand")
-        types = self._fetch_distinct("filament_type")
-        names = self._fetch_distinct("name")
+        brands = fetch_distinct_values(self.connection, "brand")
+        types = fetch_distinct_values(self.connection, "filament_type")
+        names = fetch_distinct_values(self.connection, "name")
 
         self._set_combo_items(self.brand_combo, brands, current_brand)
         self._set_combo_items(self.type_combo, types, current_type)
         self._set_combo_items(self.name_combo, names, current_name)
 
     def refresh_table(self) -> None:
-        if self.table_filter_text:
-            like = f"%{self.table_filter_text}%"
-            rows = list(
-                self.connection.execute(
-                    """
-                    SELECT id, brand, filament_type, name, color, td, source
-                    FROM filaments
-                    WHERE brand LIKE ?
-                       OR filament_type LIKE ?
-                       OR name LIKE ?
-                       OR color LIKE ?
-                       OR source LIKE ?
-                       OR notes LIKE ?
-                    ORDER BY id DESC
-                    LIMIT 200
-                    """,
-                    (like, like, like, like, like, like),
-                )
-            )
-        else:
-            rows = list(
-                self.connection.execute(
-                    """
-                    SELECT id, brand, filament_type, name, color, td, source
-                    FROM filaments
-                    ORDER BY id DESC
-                    LIMIT 200
-                    """
-                )
-            )
+        rows = list_filaments(
+            self.connection,
+            limit=200,
+            query=self.table_filter_text or None,
+        )
         self.table.setSortingEnabled(False)
         selected_id = self.current_edit_record_id or self.last_saved_record_id
         self.table.setRowCount(len(rows))
@@ -362,10 +339,6 @@ class FilamentDbWindow(QMainWindow):
                 self.table.scrollToItem(self.table.item(row_index, 0))
         self.table.resizeRowsToContents()
         self.table.setSortingEnabled(True)
-
-    def _fetch_distinct(self, column: str) -> list[str]:
-        sql = f"SELECT DISTINCT {column} FROM filaments WHERE {column} <> '' ORDER BY {column}"
-        return [row[0] for row in self.connection.execute(sql)]
 
     @staticmethod
     def _set_combo_items(combo: QComboBox, items: list[str], current_text: str) -> None:
@@ -493,10 +466,10 @@ class FilamentDbWindow(QMainWindow):
         if count == 1:
             row_index = selected_rows[0].row()
             name = self.table.item(row_index, 3).text()
-            prompt = f"Delete filament #{selected_record_ids[0]} ({name}) from the database?"
+            prompt = f"Delete filament #{selected_record_ids[0]} ({name}) from the library?"
             title = "Delete filament"
         else:
-            prompt = f"Delete {count} selected filaments from the database?"
+            prompt = f"Delete {count} selected filaments from the library?"
             title = "Delete filaments"
         answer = QMessageBox.question(
             self,
@@ -507,9 +480,7 @@ class FilamentDbWindow(QMainWindow):
         )
         if answer != QMessageBox.StandardButton.Yes:
             return
-        placeholders = ",".join("?" for _ in selected_record_ids)
-        self.connection.execute(f"DELETE FROM filaments WHERE id IN ({placeholders})", selected_record_ids)
-        self.connection.commit()
+        delete_filaments(self.connection, selected_record_ids)
         if self.last_saved_record_id in selected_record_ids:
             self.last_saved_record_id = None
         if self.current_edit_record_id in selected_record_ids:

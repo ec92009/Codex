@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import json
 import re
-import sqlite3
 import shutil
 import subprocess
 import sys
 import tempfile
+import csv
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -53,7 +53,7 @@ SOURCE_PROJECT_DIR = Path("/Users/ecohen/Codex/imageTo3MF")
 RUNTIME_PROJECT_DIR = SOURCE_PROJECT_DIR if not (PROJECT_DIR / "image_grade_to_3mf.py").exists() and SOURCE_PROJECT_DIR.exists() else PROJECT_DIR
 SCRIPT_PATH = RUNTIME_PROJECT_DIR / "image_grade_to_3mf.py"
 PRESET_PATH = RUNTIME_PROJECT_DIR / "material_presets.json"
-FILAMENT_DB_PATH = RUNTIME_PROJECT_DIR.parent / "filamentDB" / "data" / "filaments.db"
+FILAMENT_DB_PATH = RUNTIME_PROJECT_DIR.parent / "filamentDB" / "data" / "filaments.tsv"
 DEFAULT_LONG_SIDE_MM = 100.0
 DEFAULT_LONG_SIDE_MM = 100.0
 
@@ -223,22 +223,15 @@ class FilamentPickerDialog(QDialog):
         if not db_path.exists():
             QMessageBox.information(self, "No DB found", f"filamentDB was not found at {db_path}")
             return
-        connection = sqlite3.connect(str(db_path))
-        connection.row_factory = sqlite3.Row
-        try:
-            rows = list(
-                connection.execute(
-                    """
-                    SELECT id, brand, filament_type, name, color, td
-                    FROM filaments
-                    WHERE td IS NOT NULL
-                    ORDER BY id DESC
-                    LIMIT 500
-                    """
-                )
-            )
-        finally:
-            connection.close()
+        with db_path.open("r", newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle, delimiter="\t")
+            rows = [
+                row
+                for row in reader
+                if row.get("td", "").strip()
+            ]
+        rows.sort(key=lambda row: int(row["id"]), reverse=True)
+        rows = rows[:500]
 
         self.table.setRowCount(len(rows))
         for row_index, row in enumerate(rows):
