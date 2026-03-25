@@ -723,6 +723,9 @@ class FilamentDbWindow(QMainWindow):
 
 def main() -> int:
     app = QApplication([])
+    app.setApplicationName("filamentDB")
+    app.setApplicationDisplayName("filamentDB")
+    app.setOrganizationName("Codex")
     window = FilamentDbWindow()
     window.show()
     return app.exec()

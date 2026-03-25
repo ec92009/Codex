@@ -974,6 +974,9 @@ class MainWindow(QMainWindow):
 
 def main() -> int:
     app = QApplication(sys.argv)
+    app.setApplicationName("LeadLight")
+    app.setApplicationDisplayName("LeadLight")
+    app.setOrganizationName("Codex")
     window = MainWindow()
     window.show()
     return app.exec()
