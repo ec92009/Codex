@@ -4,21 +4,21 @@ Use this file as a quick checkpoint before stopping work.
 
 ## Current Task
 
-- Review Olea Tax Co `v25.1` redesign against the PDF-inspired advisory-deck direction and refine copy, contact flow, and proof elements.
+- Review Olea Tax Co `v25.2` redesign against the PDF-inspired advisory-deck direction and refine copy, contact flow, and proof elements.
 
 ## Last Completed
 
-- Rebuilt Olea Tax Co homepage into a materially different `v25.1` layout on `codex/oleataxco-new-look`
-- Synced the local hub page and the Olea Tax Co page to show `v25.1`
+- Reworked Olea Tax Co again into a closer `v25.2` PDF-cover style with stricter split-slide composition
+- Synced the local hub page and the Olea Tax Co page to show `v25.2`
 
 ## Next Command To Run
 
 - `cd /Users/ecohen/Codex/web/github.io && python3 -m http.server 8000`
-- Open `http://localhost:8000/oleataxco/` to review the `v25.1` redesign
+- Open `http://localhost:8000/oleataxco/` to review the `v25.2` redesign
 
 ## Open Questions
 
-- Is the `v25.1` visual direction far enough from the old homepage, or should the next pass become even more deck-like?
+- Is the `v25.2` direction now close enough to the PDFs, or does it still need a stronger visual match?
 - Should the placeholder booking block be replaced now with a real inquiry CTA instead of a fake scheduler?
 
 ## Blockers
