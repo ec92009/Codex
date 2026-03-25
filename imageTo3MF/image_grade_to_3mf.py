@@ -2292,7 +2292,7 @@ def build_model_settings(
         '    <metadata key="plater_name" value=""/>\n'
         '    <metadata key="locked" value="false"/>\n'
         '    <metadata key="filament_map_mode" value="Auto For Flush"/>\n'
-        f'    <metadata key="filament_maps" value={quoteattr(" ".join(["1"] * len(material_profiles)))}/>\n'
+        f'    <metadata key="filament_maps" value={quoteattr(" ".join(str(index) for index in range(1, len(material_profiles) + 1)))}/>\n'
         '    <metadata key="thumbnail_file" value="Metadata/plate_1.png"/>\n'
         '    <metadata key="thumbnail_no_light_file" value="Metadata/plate_no_light_1.png"/>\n'
         '    <metadata key="top_file" value="Metadata/top_1.png"/>\n'
