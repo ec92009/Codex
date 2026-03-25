@@ -1,4 +1,4 @@
-# Image grading to 3MF
+# LeadLight
 
 Use `uv run python image_grade_to_3mf.py /path/to/image.png --layer-height 0.2mm --base-layers 4 --size 100x100 --resolution 0.4mm --lead-thickness 0.4mm --lead-height 0.2mm --plate-size 270x270` to convert an image into segmented color zones plus black separator lines, export the result as a multi-object `.3mf`, and open it in Snapmaker Orca.
 
@@ -6,12 +6,12 @@ Use `--lead-source generate` for the normal synthetic lead, or `--lead-source de
 
 The GUI now leaves picture size blank until you choose an image, then auto-fills it so the source image's long side becomes `100 mm` and the short side follows the original aspect ratio. A slider under picture size lets you scale that long side up or down while preserving the same ratio.
 
-To use the desktop GUI, run `uv run python image_grade_to_3mf_gui.py`. The GUI keeps the CLI/exporter intact and wraps it with image selection, material TD editing, live run logs, and preview panes. The Materials panel now also includes a `DB` button on each slot row so you can pick measured filaments directly from the local `filamentDB`.
+To use the LeadLight desktop GUI, run `uv run python image_grade_to_3mf_gui.py`. The GUI keeps the CLI/exporter intact and wraps it with image selection, material TD editing, live run logs, and preview panes. The Materials panel now also includes a `DB` button on each slot row so you can pick measured filaments directly from the local `filamentDB`.
 The GUI stage viewer now shows intermediate refinement states instead of a generic progress bar, and you can step backward and forward through those stages with `-` and `+`.
 
-There are also launcher scripts at `/Users/ecohen/Codex/imageTo3MF/launch_imageTo3MF_gui.sh` and `/Users/ecohen/Codex/imageTo3MF/launch_imageTo3MF_gui.command`. On macOS, the `.command` version is the one to keep on the Desktop or in the Dock for reliable double-click launching in Terminal.
+There are also launcher scripts at `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.sh` and `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.command`. On macOS, the `.command` version is the one to keep on the Desktop or in the Dock for reliable double-click launching in Terminal.
 
-For a no-Terminal macOS launcher, compile `/Users/ecohen/Codex/imageTo3MF/launch_imageTo3MF_gui.applescript` into an app bundle and keep that `.app` on the Desktop or in the Dock.
+For a no-Terminal macOS launcher, compile `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.applescript` into an app bundle and keep that `.app` on the Desktop or in the Dock.
 
 If no image path is passed, the script opens a file picker on macOS.
 

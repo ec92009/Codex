@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
         self.default_profiles = engine.default_material_profiles()
         self.material_rows: Dict[str, MaterialRow] = {}
 
-        self.setWindowTitle("Image to 3MF Studio")
+        self.setWindowTitle("LeadLight")
         self._build_ui()
         self._apply_style()
         self.reset_materials()
@@ -325,7 +325,7 @@ class MainWindow(QMainWindow):
         root_layout.setContentsMargins(16, 16, 16, 16)
         root_layout.setSpacing(12)
 
-        header = QLabel("Image to 3MF Studio")
+        header = QLabel("LeadLight")
         header.setStyleSheet("font-size: 28px; font-weight: 700; color: #3f2d1d;")
         subheader = QLabel(
             "Build Snapmaker-Orca-ready layered color plates with TD-aware materials and a dedicated black lead cap."
@@ -830,7 +830,7 @@ class MainWindow(QMainWindow):
         self.output_path = None
         self.stage_paths = []
         self.stage_index = -1
-        self.stage_dir = Path(tempfile.mkdtemp(prefix="imageTo3MF_stages_"))
+        self.stage_dir = Path(tempfile.mkdtemp(prefix="leadlight_stages_"))
         self.stage_caption_label.setText("Waiting for stages...")
         self.stage_counter_label.setText("0 / 0")
         self._update_stage_controls()

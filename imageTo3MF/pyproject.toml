@@ -1,7 +1,7 @@
 [project]
-name = "image-grading-3mf"
+name = "leadlight"
 version = "0.1.0"
-description = "Convert an image into color-graded regions and export a multi-object 3MF for OrcaSlicer."
+description = "LeadLight converts images into stained-glass-style multi-object 3MF files for Snapmaker Orca."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
