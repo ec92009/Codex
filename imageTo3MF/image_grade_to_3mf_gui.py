@@ -187,7 +187,7 @@ class FilamentPickerDialog(QDialog):
     def __init__(self, db_path: Path, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Choose Filament from DB")
-        self.resize(760, 460)
+        self.resize(820, 460)
         self.selected_filament: Optional[dict[str, str | float]] = None
 
         layout = QVBoxLayout(self)
@@ -195,12 +195,13 @@ class FilamentPickerDialog(QDialog):
         help_label.setWordWrap(True)
         layout.addWidget(help_label)
 
-        self.table = QTableWidget(0, 6)
-        self.table.setHorizontalHeaderLabels(["ID", "Brand", "Type", "Name", "HEX", "TD"])
+        self.table = QTableWidget(0, 7)
+        self.table.setHorizontalHeaderLabels(["ID", "Brand", "Type", "Name", "Color", "HEX", "TD"])
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setAlternatingRowColors(True)
+        self.table.setSortingEnabled(True)
         self.table.cellDoubleClicked.connect(lambda *_: self.accept_selection())
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
@@ -209,6 +210,7 @@ class FilamentPickerDialog(QDialog):
         header.setSectionResizeMode(3, QHeaderView.Stretch)
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
         layout.addWidget(self.table, 1)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
@@ -233,6 +235,7 @@ class FilamentPickerDialog(QDialog):
         rows.sort(key=lambda row: int(row["id"]), reverse=True)
         rows = rows[:500]
 
+        self.table.setSortingEnabled(False)
         self.table.setRowCount(len(rows))
         for row_index, row in enumerate(rows):
             values = [
@@ -240,16 +243,28 @@ class FilamentPickerDialog(QDialog):
                 row["brand"],
                 row["filament_type"],
                 row["name"],
+                "",
                 row["color"],
                 f"{float(row['td']):.2f}",
             ]
             for column, value in enumerate(values):
                 item = QTableWidgetItem(value)
-                if column in (0, 5):
+                if column == 0:
+                    item.setData(Qt.EditRole, int(row["id"]))
                     item.setTextAlignment(Qt.AlignCenter)
+                elif column == 6:
+                    item.setData(Qt.EditRole, float(row["td"]))
+                    item.setTextAlignment(Qt.AlignCenter)
+                elif column == 4:
+                    color = QColor(str(row["color"]))
+                    if color.isValid():
+                        item.setBackground(color)
+                        item.setToolTip(str(row["color"]))
                 self.table.setItem(row_index, column, item)
         if rows:
             self.table.selectRow(0)
+        self.table.setSortingEnabled(True)
+        self.table.sortItems(0, Qt.DescendingOrder)
 
     def accept_selection(self) -> None:
         row = self.table.currentRow()
@@ -261,8 +276,8 @@ class FilamentPickerDialog(QDialog):
             "brand": self.table.item(row, 1).text(),
             "type": self.table.item(row, 2).text(),
             "name": self.table.item(row, 3).text(),
-            "hex_color": self.table.item(row, 4).text(),
-            "td": float(self.table.item(row, 5).text()),
+            "hex_color": self.table.item(row, 5).text(),
+            "td": float(self.table.item(row, 6).text()),
         }
         self.accept()
 
@@ -586,7 +601,8 @@ class MainWindow(QMainWindow):
         library_row_layout.setSpacing(8)
         self.filament_db_status_label = QLabel("")
         self.filament_db_status_label.setWordWrap(True)
-        settings_button = QPushButton("Settings")
+        settings_button = QPushButton("...")
+        settings_button.setFixedWidth(36)
         settings_button.clicked.connect(self.choose_filament_db_path)
         reset_library_button = QPushButton("Default")
         reset_library_button.clicked.connect(self.reset_filament_db_path)
