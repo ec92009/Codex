@@ -860,6 +860,9 @@ class MainWindow(QMainWindow):
 
     def _export_launcher(self, script_args: list[str]) -> tuple[str, list[str]]:
         if getattr(sys, "frozen", False):
+            project_python = SOURCE_PROJECT_DIR / ".venv" / "bin" / "python"
+            if project_python.exists():
+                return str(project_python), ["-u", str(SCRIPT_PATH), *script_args]
             uv_path = shutil.which("uv") or "/opt/homebrew/bin/uv"
             if Path(uv_path).exists():
                 return (
@@ -923,11 +926,11 @@ class MainWindow(QMainWindow):
 
         description = self.description_edit.text().strip()
         if description:
-            args.extend(["--description", description])
+            script_args.extend(["--description", description])
 
         output_path = self.output_edit.text().strip()
         if output_path:
-            args.extend(["--output", output_path])
+            script_args.extend(["--output", output_path])
 
         if not self.open_orca_checkbox.isChecked():
             script_args.append("--no-open")

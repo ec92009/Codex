@@ -13,3 +13,5 @@
 **/.playwright-profile/
 **/logs/
 **/listing_report.*
+**/build/
+**/dist/
