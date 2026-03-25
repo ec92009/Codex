@@ -6,23 +6,29 @@
 
   if (!button.dataset.toggleReady) {
     button.innerHTML =
-      '<span class="toggle-label toggle-label-light">Day</span>' +
+      '<span class="toggle-label toggle-label-light">Light</span>' +
       '<span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>' +
-      '<span class="toggle-label toggle-label-dark">Night</span>';
+      '<span class="toggle-label toggle-label-dark">Dark</span>';
     button.dataset.toggleReady = "true";
   }
 
   function getPreferredTheme() {
     var saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "light" || saved === "dark") return saved;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    /* Default to dark — the executive deck look */
+    return "dark";
   }
 
   function applyTheme(theme) {
-    var isDark = theme === "dark";
-    root.setAttribute("data-theme", theme);
-    button.setAttribute("aria-pressed", isDark ? "true" : "false");
-    button.setAttribute("aria-label", "Toggle day/night mode");
+    var isLight = theme === "light";
+    if (isLight) {
+      root.setAttribute("data-theme", "light");
+    } else {
+      root.removeAttribute("data-theme");
+    }
+    /* aria-pressed true = light mode active (toggle is "on") */
+    button.setAttribute("aria-pressed", isLight ? "true" : "false");
+    button.setAttribute("aria-label", "Toggle light/dark mode");
   }
 
   var currentTheme = getPreferredTheme();
