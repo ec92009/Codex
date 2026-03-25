@@ -3,36 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Olea Tax Co. | CPA Services</title>
+  <title>Olea Tax Co. | Strategic CPA Advisory</title>
   <link rel="icon" type="image/png" sizes="512x512" href="../assets/logos/oleatax-logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/styles.css" />
-  <style>
-    .bg-brand{position:fixed;inset:0;pointer-events:none;z-index:0;background:url('../assets/logos/oleatax-logo.png') center 18vh / min(58vmin,520px) no-repeat;opacity:.16;filter:drop-shadow(0 18px 40px rgba(0,0,0,.22));}
-    body > *{position:relative;z-index:1;}
-
-    .brand { display:flex; align-items:center; gap:10px; }
-    .site-logo { width:46px; height:46px; border-radius:14px; border:1px solid rgba(255,255,255,.16); object-fit:cover; }
-  </style>
 </head>
 <body class="concept-neighborhood">
-  <div class="bg-brand" aria-hidden="true"></div>
   <a class="skip-link" href="#main-content">Skip to content</a>
+
   <section class="draft-banner" aria-label="Draft disclaimer">
     <strong>MOCK DRAFT</strong>
     <p>Internal review only. Content, pricing, and visuals are placeholders for team feedback.</p>
   </section>
 
   <main id="main-content" class="site-shell">
-    <header class="topbar panel">
+    <header class="topbar">
       <div class="brand-wrap">
-        <div class="brand"><img class="site-logo" src="../assets/logos/oleatax-logo.png" alt="Olea Tax logo" />Olea Tax Co.</div>
-        <p class="brand-meta">Strategic CPA advisory for business owners, real estate investors, and high-income families · Version 11.4</p>
+        <div class="brand">
+          <img class="site-logo" src="../assets/logos/oleatax-logo.png" alt="Olea Tax logo" />
+          <span>Olea Tax Co.</span>
+        </div>
+        <p class="brand-meta">
+          Strategic CPA advisory for business owners, real estate investors, and high-income families
+          <span class="build-version" aria-label="Build version">v25.1</span>
+        </p>
       </div>
       <nav aria-label="Primary">
-        <a href="#services">Packages</a>
+        <a href="#services">Services</a>
         <a href="#who">About Kelly</a>
         <a href="#process">Process</a>
         <a href="#faqs">FAQs</a>
@@ -41,197 +40,252 @@
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle color theme">Theme</button>
     </header>
 
-    <section class="hero">
-      <div class="hero-copy panel">
+    <section class="hero-grid">
+      <div class="hero-image">
+        <img src="assets/kelly-portrait.jpg" alt="Kelly Olea, CPA" loading="eager" />
+        <div class="hero-image-note">Founder-led advisory designed for complex decisions</div>
+      </div>
+      <section class="hero-panel">
         <p class="eyebrow">Olea Tax Co.</p>
-        <h1>Strategic tax planning for investors and business owners — not just annual filing</h1>
-        <div class="trust-strip" aria-label="Trust highlights">
+        <h1>Tax planning built like an advisory relationship, not a filing transaction.</h1>
+        <p class="hero-lead">
+          Olea Tax Co. helps investors, business owners, and high-income families move from reactive tax stress
+          to year-round strategic decision-making with clearer structure, tighter execution, and direct CPA guidance.
+        </p>
+        <div class="hero-tags" aria-label="Trust highlights">
           <span>Licensed CPA</span>
           <span>Nearly 10 years experience</span>
           <span>Remote and local support</span>
         </div>
-        <p>
-          Tax is not a once-a-year event. Olea Tax Co. helps you make better decisions year-round with proactive planning, cleaner structure, and fewer surprises at filing time.
-        </p>
-        <div class="cta-row">
-          <a class="button" href="#book-call">Book a Call</a>
-          <a class="button alt" href="#services">See Services</a>
+        <div class="hero-actions">
+          <a class="button" href="#book-call">Book a Strategy Call</a>
+          <a class="button alt" href="#services">Review Services</a>
         </div>
+        <div class="hero-subgrid">
+          <article class="mini-panel">
+            <h2>Best fit</h2>
+            <p>Clients who want proactive planning, direct access, and tax strategy integrated into business and personal decisions.</p>
+          </article>
+          <article class="mini-panel">
+            <h2>Approach</h2>
+            <p>"My goal is to move clients from reactive deadlines to confident, informed strategy."</p>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <section class="signal-band" aria-label="Core value points">
+      <article>
+        <span class="signal-kicker">01</span>
+        <h2>Clarity before filing season.</h2>
+        <p>Quarterly checkpoints and forward-looking projections reduce surprises and rushed decisions.</p>
+      </article>
+      <article>
+        <span class="signal-kicker">02</span>
+        <h2>Structure before complexity compounds.</h2>
+        <p>Entity, compensation, and timing choices are evaluated before they become expensive to undo.</p>
+      </article>
+      <article>
+        <span class="signal-kicker">03</span>
+        <h2>Execution that actually keeps up.</h2>
+        <p>Direct communication, organized workflows, and a boutique client load keep the relationship usable.</p>
+      </article>
+    </section>
+
+    <section id="who" class="story-grid">
+      <aside class="story-quote">
+        <p class="quote-mark">"</p>
+        <p class="quote-copy">I believe tax strategy should be intentional, integrated, and tailored to each client.</p>
+        <p class="quote-meta">Kelly Olea, CPA</p>
+      </aside>
+      <article class="story-copy">
+        <p class="eyebrow">Founder Perspective</p>
+        <h2>Built for clients who need thinking, not just processing.</h2>
+        <p>
+          Kelly brings nearly a decade of experience advising entrepreneurs, multi-entity businesses, and growing founders.
+          After working inside established tax and advisory environments, she saw how often clients were forced into reactive,
+          fragmented decision-making instead of receiving the structured strategic support they actually needed.
+        </p>
+        <p>
+          Olea Tax Co. was built to work differently: a tighter client relationship, more proactive planning, and decisions made
+          before year-end pressure narrows the options.
+        </p>
+      </article>
+    </section>
+
+    <section id="services" class="services-section">
+      <div class="section-head">
+        <p class="eyebrow">Services</p>
+        <h2>Three levels of support, all built around strategy.</h2>
       </div>
-      <aside class="hero-side panel">
-        <div class="card">
-          <h3>Who we serve best</h3>
+
+      <article class="service-row">
+        <div class="service-label">
+          <span class="service-index">01</span>
+          <h3>Tax Filing</h3>
+          <p>For clients who need reliable preparation with a clear, guided process.</p>
+        </div>
+        <div class="service-body">
           <ul>
-            <li>Real estate investors managing growing portfolios</li>
-            <li>Business owners scaling revenue and complexity</li>
-            <li>High-income families needing integrated planning</li>
+            <li>Annual tax return preparation</li>
+            <li>Personalized document checklist</li>
+            <li>Email support for tax-related questions</li>
           </ul>
         </div>
-        <div class="card">
-          <p class="quote">"My goal is simple: move clients from reactive tax stress to confident, informed strategy."</p>
-          <p class="small">Draft brand voice statement</p>
+      </article>
+
+      <article class="service-row">
+        <div class="service-label">
+          <span class="service-index">02</span>
+          <h3>Tax Filing + Estimates</h3>
+          <p>For business owners who want filing support plus steadier quarterly tax management.</p>
         </div>
-      </aside>
-    </section>
-
-    <section class="section-grid">
-      <section class="section panel span-12">
-        <h2>What changes when strategy comes first</h2>
-        <div class="cards cols-3">
-          <div class="card">
-            <h3>Fewer surprises</h3>
-            <p>Quarterly checkpoints and projection updates reduce last-minute tax shocks.</p>
-          </div>
-          <div class="card">
-            <h3>Better decisions</h3>
-            <p>Entity, compensation, and timing choices are evaluated before they become expensive.</p>
-          </div>
-          <div class="card">
-            <h3>Cleaner execution</h3>
-            <p>Structured workflows, clear timelines, and direct communication keep your team moving.</p>
-          </div>
-        </div>
-      </section>
-    </section>
-
-    <section id="who" class="section-grid whoami-row">
-      <aside class="section panel span-5 whoami-photo">
-        <figure class="profile-shot">
-          <img src="assets/kelly-portrait.jpg" alt="Kelly Olea, CPA" loading="lazy" />
-          <figcaption>Kelly Olea, CPA</figcaption>
-        </figure>
-      </aside>
-      <section class="section panel span-7 whoami-copy">
-        <h2>Founder perspective</h2>
-        <p><strong>I believe tax strategy should be intentional, integrated, and tailored to each client.</strong></p>
-        <p>
-          I'm a licensed CPA with nearly a decade of experience advising entrepreneurs, multi-entity businesses, and growing founders.
-          Before Olea Tax Co., I spent years inside tax departments and advisory environments supporting complex client situations. That experience shaped how I work today: proactive planning over last-minute reaction.
-        </p>
-        <p>
-          Over time, I saw how messy workflows, reactive deadlines, and fragmented communication often distracted from what clients actually needed:
-          clarity, structure, and thoughtful strategy.
-        </p>
-        <p>
-          I founded Olea Tax Co to work differently.
-          Here, I work directly with each client to reduce tax exposure, improve entity structure, and ensure business decisions are made intentionally and not rushed at year-end.
-          My approach is proactive, structured, and built around long-term thinking.
-        </p>
-      </section>
-    </section>
-
-    <section id="services" class="section-grid">
-      <section class="section panel span-12">
-        <h2>Service packages</h2>
-        <div class="cards cols-3">
-          <div class="card">
-            <h3>Tax Filing</h3>
-            <p>For individuals and business owners who need reliable, accurate tax preparation.</p>
-            <ul>
-              <li>Annual tax return preparation</li>
-              <li>Personalized document checklist</li>
-              <li>Email support for tax-related questions</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h3>Tax Filing + Estimates</h3>
-            <p>For business owners who want help staying on top of quarterly tax payments.</p>
-            <ul>
-              <li>Annual tax return preparation</li>
-              <li>Quarterly estimated tax calculations</li>
-              <li>Personalized document checklist</li>
-              <li>Email support for tax-related questions</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h3>Tax Planning &amp; Filing</h3>
-            <p>For business owners who want proactive tax strategy throughout the year.</p>
-            <ul>
-              <li>Annual tax return preparation</li>
-              <li>Quarterly estimated tax calculations</li>
-              <li>Mid-year tax planning review</li>
-              <li>Year-end tax strategy session</li>
-              <li>Email advisory support</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-    </section>
-
-    <section class="section-grid">
-      <section id="process" class="section panel span-6">
-        <h2>How we work</h2>
-        <ol>
-          <li><strong>Discovery:</strong> we review goals, entity setup, and current tax posture.</li>
-          <li><strong>Strategy plan:</strong> you get a clear roadmap with priority actions and timeline.</li>
-          <li><strong>Implementation:</strong> filings, estimates, and structure updates are executed with you.</li>
-          <li><strong>Ongoing advisory:</strong> regular checkpoints keep strategy aligned as life and business evolve.</li>
-        </ol>
-      </section>
-      <section class="section panel span-6">
-        <h2>Is this the right fit?</h2>
-        <div class="card">
-          <p>This model is best for clients who want an ongoing strategic relationship, not one-off transactional filing only.</p>
-          <p class="small">If that is what you want, start with a strategy call and we will map the right next step.</p>
-        </div>
-        <p class="small">Boutique model: limited client slots to protect quality and response time.</p>
-      </section>
-    </section>
-
-    <section id="book-call" class="section panel">
-      <h2>Book a strategy call</h2>
-      <div class="book-call-grid">
-        <div class="card">
-          <p>
-            Choose a time for a 20-minute intro call. We'll discuss your goals, current setup, and whether Olea Tax Co. is the right strategic fit.
-          </p>
+        <div class="service-body">
           <ul>
-            <li>Fast intake call</li>
-            <li>Clear next steps afterward</li>
-            <li>No obligation to proceed</li>
+            <li>Annual tax return preparation</li>
+            <li>Quarterly estimated tax calculations</li>
+            <li>Personalized document checklist</li>
+            <li>Email support for tax-related questions</li>
           </ul>
-          <p class="small">Placeholder scheduler only for draft review (no external booking service connected yet).</p>
         </div>
-        <div class="calendar-embed" aria-label="Booking calendar">
-          <form class="booking-form" action="#" method="post" onsubmit="return false;">
-            <div class="booking-row">
-              <label for="call-date">Pick a date</label>
-              <input id="call-date" name="call_date" type="date" />
-            </div>
-            <div class="booking-row">
-              <label for="call-time">Pick a start time (30-minute increments)</label>
-              <select id="call-time" name="call_time" required>
-                <option value="">Select a time</option>
-              </select>
-            </div>
-            <div class="booking-row">
-              <button type="button" class="button">Reserve Placeholder Slot</button>
-            </div>
-            <p class="small">Available window shown: 10:00 AM to 4:00 PM.</p>
-          </form>
+      </article>
+
+      <article class="service-row emphasis">
+        <div class="service-label">
+          <span class="service-index">03</span>
+          <h3>Tax Planning &amp; Filing</h3>
+          <p>For clients who want a proactive advisory relationship throughout the year.</p>
         </div>
-      </div>
-      <p class="small book-call-note">This is a UI placeholder. Final booking workflow can later connect to SquareSpace Scheduling, Calendly, or another provider.</p>
+        <div class="service-body">
+          <ul>
+            <li>Annual tax return preparation</li>
+            <li>Quarterly estimated tax calculations</li>
+            <li>Mid-year tax planning review</li>
+            <li>Year-end strategy session</li>
+            <li>Email advisory support</li>
+          </ul>
+        </div>
+      </article>
     </section>
 
-    <section id="faqs" class="section panel">
-      <h2>Frequently asked questions</h2>
-      <div class="cards">
-        <div class="card"><h3>Do you only work locally?</h3><p>No. I work remotely with secure document sharing and video meetings.</p></div>
-        <div class="card"><h3>Can you help if my books are behind?</h3><p>Yes. I can scope a catch-up phase first, then move into periodic support.</p></div>
-        <div class="card"><h3>Do you offer one-time tax services?</h3><p>Yes, and I can also recommend an ongoing package if needed.</p></div>
+    <section id="process" class="process-section">
+      <div class="section-head">
+        <p class="eyebrow">Process</p>
+        <h2>A structured advisory flow from first call to ongoing planning.</h2>
+      </div>
+      <ol class="process-track">
+        <li>
+          <span class="step-num">01</span>
+          <div>
+            <h3>Discovery</h3>
+            <p>We review goals, current structure, tax posture, and what is creating friction today.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">02</span>
+          <div>
+            <h3>Strategy Plan</h3>
+            <p>You receive a roadmap with priority actions, planning windows, and decision points.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">03</span>
+          <div>
+            <h3>Implementation</h3>
+            <p>Filings, estimates, structure updates, and tax actions are executed with clarity and follow-through.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-num">04</span>
+          <div>
+            <h3>Ongoing Advisory</h3>
+            <p>Regular checkpoints keep strategy aligned as business, investments, and life evolve.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="fit-grid">
+      <article class="fit-panel dark">
+        <p class="eyebrow">Who This Is For</p>
+        <h2>Designed for ongoing strategic relationships.</h2>
+        <p>This model is strongest for clients who want planning and thoughtful decision support, not one-off transactional filing only.</p>
+      </article>
+      <article class="fit-panel light">
+        <p class="eyebrow">Operating Model</p>
+        <h2>Boutique by design.</h2>
+        <p>Client capacity stays intentionally limited so response time, advisory quality, and strategic continuity do not erode as the firm grows.</p>
+      </article>
+    </section>
+
+    <section id="book-call" class="booking-shell">
+      <div class="booking-copy">
+        <p class="eyebrow">Next Step</p>
+        <h2>Book a 20-minute strategy call.</h2>
+        <p>
+          We will discuss your goals, current setup, and whether Olea Tax Co. is the right strategic fit.
+          The objective is clarity, not pressure.
+        </p>
+        <ul class="booking-points">
+          <li>Fast intake conversation</li>
+          <li>Clear next steps afterward</li>
+          <li>No obligation to proceed</li>
+        </ul>
+        <p class="small">This scheduler is still a placeholder for internal review.</p>
+      </div>
+
+      <div class="booking-panel" aria-label="Booking calendar">
+        <form class="booking-form" action="#" method="post" onsubmit="return false;">
+          <div class="booking-row">
+            <label for="call-date">Pick a date</label>
+            <input id="call-date" name="call_date" type="date" />
+          </div>
+          <div class="booking-row">
+            <label for="call-time">Pick a start time</label>
+            <select id="call-time" name="call_time" required>
+              <option value="">Select a time</option>
+            </select>
+          </div>
+          <div class="booking-row">
+            <button type="button" class="button">Reserve Placeholder Slot</button>
+          </div>
+          <p class="small">Available window shown: 10:00 AM to 4:00 PM.</p>
+        </form>
       </div>
     </section>
 
-    <section id="contact" class="section panel">
-      <h2>Contact section idea</h2>
-      <p>Use a warm intro paragraph, a SquareSpace form, and optional office hours/location details if Kelly wants local clients to call.</p>
-      <div class="cta-row">
+    <section id="faqs" class="faq-shell">
+      <div class="section-head">
+        <p class="eyebrow">FAQs</p>
+        <h2>Questions clients usually ask before they reach out.</h2>
+      </div>
+      <div class="faq-grid">
+        <article class="faq-item">
+          <h3>Do you only work locally?</h3>
+          <p>No. Olea Tax Co. works remotely with secure document sharing and video meetings, in addition to local client support.</p>
+        </article>
+        <article class="faq-item">
+          <h3>Can you help if my books are behind?</h3>
+          <p>Yes. A catch-up phase can be scoped first, then transitioned into more structured ongoing support.</p>
+        </article>
+        <article class="faq-item">
+          <h3>Do you offer one-time tax services?</h3>
+          <p>Yes, but clients with ongoing planning needs may be a better fit for an advisory package.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="contact" class="contact-shell">
+      <p class="eyebrow">Contact</p>
+      <h2>Use a simple, direct inquiry path at launch.</h2>
+      <p>The public version should replace these placeholder buttons with a real form, email link, and optional phone CTA.</p>
+      <div class="hero-actions">
         <a class="button" href="#">Send a Message</a>
         <a class="button alt" href="#">Call Kelly</a>
       </div>
     </section>
   </main>
+
   <script>
     (function () {
       var dateInput = document.getElementById("call-date");
