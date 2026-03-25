@@ -12,7 +12,7 @@ import csv
 from pathlib import Path
 from typing import Dict, Optional
 
-from PySide6.QtCore import Qt, QProcess, QSize, QTimer
+from PySide6.QtCore import Qt, QProcess, QSize, QTimer, QSettings
 from PySide6.QtGui import QColor, QPixmap, QTextCursor, QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -53,7 +53,7 @@ SOURCE_PROJECT_DIR = Path("/Users/ecohen/Codex/imageTo3MF")
 RUNTIME_PROJECT_DIR = SOURCE_PROJECT_DIR if not (PROJECT_DIR / "image_grade_to_3mf.py").exists() and SOURCE_PROJECT_DIR.exists() else PROJECT_DIR
 SCRIPT_PATH = RUNTIME_PROJECT_DIR / "image_grade_to_3mf.py"
 PRESET_PATH = RUNTIME_PROJECT_DIR / "material_presets.json"
-FILAMENT_DB_PATH = RUNTIME_PROJECT_DIR.parent / "filamentDB" / "data" / "filaments.tsv"
+DEFAULT_FILAMENT_DB_PATH = RUNTIME_PROJECT_DIR.parent / "filamentDB" / "data" / "filaments.tsv"
 DEFAULT_LONG_SIDE_MM = 100.0
 DEFAULT_LONG_SIDE_MM = 100.0
 
@@ -270,6 +270,7 @@ class FilamentPickerDialog(QDialog):
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
+        self.settings = QSettings("Codex", "LeadLight")
         self.process: Optional[QProcess] = None
         self.input_path: Optional[Path] = None
         self.preview_path: Optional[Path] = None
@@ -281,6 +282,7 @@ class MainWindow(QMainWindow):
         self.default_profiles = engine.default_material_profiles()
         self.material_rows: Dict[str, MaterialRow] = {}
         self.app_icon_path = RUNTIME_PROJECT_DIR / "leadlight_icon.svg"
+        self.filament_db_path = self._load_filament_db_path()
 
         self.setWindowTitle("LeadLight")
         if self.app_icon_path.exists():
@@ -288,7 +290,48 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._apply_style()
         self.reset_materials()
+        self._refresh_filament_db_status()
         self._apply_initial_geometry()
+
+    def _load_filament_db_path(self) -> Path:
+        raw_path = self.settings.value("filament_db_path", str(DEFAULT_FILAMENT_DB_PATH))
+        return Path(str(raw_path)).expanduser()
+
+    def _set_filament_db_path(self, path: Path) -> None:
+        resolved = path.expanduser()
+        self.filament_db_path = resolved
+        self.settings.setValue("filament_db_path", str(resolved))
+        self._refresh_filament_db_status()
+
+    def _refresh_filament_db_status(self) -> None:
+        if not hasattr(self, "filament_db_status_label"):
+            return
+        path_text = str(self.filament_db_path)
+        if self.filament_db_path.exists():
+            self.filament_db_status_label.setText(f"Library: {path_text}")
+            self.filament_db_status_label.setStyleSheet("color: #715d49; font-size: 12px;")
+        else:
+            self.filament_db_status_label.setText(f"Library missing: {path_text}")
+            self.filament_db_status_label.setStyleSheet("color: #8c4c2f; font-size: 12px; font-weight: 600;")
+
+    def choose_filament_db_path(self) -> None:
+        self._prepare_dialog()
+        start_dir = str(self.filament_db_path.parent if self.filament_db_path.parent.exists() else Path.home())
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Choose filament TSV library",
+            start_dir,
+            "TSV Files (*.tsv);;All Files (*)",
+        )
+        if not path:
+            return
+        chosen_path = Path(path).expanduser()
+        self._set_filament_db_path(chosen_path)
+        self.summary_label.setText(f"LeadLight will use filament library:\n{chosen_path}")
+
+    def reset_filament_db_path(self) -> None:
+        self._set_filament_db_path(DEFAULT_FILAMENT_DB_PATH)
+        self.summary_label.setText(f"LeadLight filament library reset to:\n{DEFAULT_FILAMENT_DB_PATH}")
 
     def _apply_initial_geometry(self) -> None:
         screen = QApplication.primaryScreen()
@@ -537,6 +580,21 @@ class MainWindow(QMainWindow):
         materials_help.setStyleSheet("color: #715d49;")
         materials_layout.addWidget(materials_help)
 
+        library_row = QWidget()
+        library_row_layout = QHBoxLayout(library_row)
+        library_row_layout.setContentsMargins(0, 0, 0, 0)
+        library_row_layout.setSpacing(8)
+        self.filament_db_status_label = QLabel("")
+        self.filament_db_status_label.setWordWrap(True)
+        settings_button = QPushButton("Settings")
+        settings_button.clicked.connect(self.choose_filament_db_path)
+        reset_library_button = QPushButton("Default")
+        reset_library_button.clicked.connect(self.reset_filament_db_path)
+        library_row_layout.addWidget(self.filament_db_status_label, 1)
+        library_row_layout.addWidget(settings_button)
+        library_row_layout.addWidget(reset_library_button)
+        materials_layout.addWidget(library_row)
+
         for slot in ("1", "2", "3", "4", "5"):
             row = MaterialRow(slot, self.default_profiles[slot])
             row.db_button.clicked.connect(lambda _=False, slot_key=slot: self.pick_material_from_db(slot_key))
@@ -586,7 +644,19 @@ class MainWindow(QMainWindow):
         return panel
 
     def pick_material_from_db(self, slot: str) -> None:
-        dialog = FilamentPickerDialog(FILAMENT_DB_PATH, self)
+        if not self.filament_db_path.exists():
+            answer = QMessageBox.question(
+                self,
+                "Filament library not found",
+                f"LeadLight could not find the filament TSV at:\n{self.filament_db_path}\n\nChoose a different TSV now?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes,
+            )
+            if answer == QMessageBox.StandardButton.Yes:
+                self.choose_filament_db_path()
+            return
+
+        dialog = FilamentPickerDialog(self.filament_db_path, self)
         if dialog.exec() != QDialog.Accepted or dialog.selected_filament is None:
             return
         selected = dialog.selected_filament
