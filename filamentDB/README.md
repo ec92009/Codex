@@ -36,6 +36,8 @@ uv run python filament_db.py init
 
 The saved data now lives in `/Users/ecohen/Codex/filamentDB/data/filaments.tsv`, which is plain text and Git-friendly. If an older `/Users/ecohen/Codex/filamentDB/data/filaments.db` exists on a machine, the app will import it automatically the first time the TSV is empty.
 
+After you confirm the TSV contains the expected rows on both computers, archive or delete any leftover local `filaments.db` files so the TSV is the only active source of truth.
+
 Launch the desktop GUI:
 
 ```bash

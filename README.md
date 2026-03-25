@@ -78,3 +78,13 @@ Notes:
 - Do not commit generated `build/` or `dist/` folders.
 - If you change both `imageTo3MF` and `filamentDB`, commit them together from the repo root so the two apps stay in sync.
 - Before starting work on another computer, always `git pull` first.
+
+## Cleanup Routine
+
+Use this when settling a machine after pulling fresh changes:
+
+1. `git pull --ff-only origin main`
+2. Verify `filamentDB/data/filaments.tsv` looks current.
+3. If an old local `filaments.db` is still present and the TSV is confirmed good, archive it to `filaments.db.bak` or remove it.
+4. Rebuild local app bundles if launcher, icon, or app-wrapper code changed.
+5. Start work only after the repo and local wrappers are current.
