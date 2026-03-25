@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from PySide6.QtCore import Qt, QProcess, QSize, QTimer
-from PySide6.QtGui import QColor, QPixmap, QTextCursor
+from PySide6.QtGui import QColor, QPixmap, QTextCursor, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -48,9 +48,11 @@ import image_grade_to_3mf as engine
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
-SCRIPT_PATH = PROJECT_DIR / "image_grade_to_3mf.py"
-PRESET_PATH = PROJECT_DIR / "material_presets.json"
-FILAMENT_DB_PATH = PROJECT_DIR.parent / "filamentDB" / "data" / "filaments.db"
+SOURCE_PROJECT_DIR = Path("/Users/ecohen/Codex/imageTo3MF")
+RUNTIME_PROJECT_DIR = SOURCE_PROJECT_DIR if not (PROJECT_DIR / "image_grade_to_3mf.py").exists() and SOURCE_PROJECT_DIR.exists() else PROJECT_DIR
+SCRIPT_PATH = RUNTIME_PROJECT_DIR / "image_grade_to_3mf.py"
+PRESET_PATH = RUNTIME_PROJECT_DIR / "material_presets.json"
+FILAMENT_DB_PATH = RUNTIME_PROJECT_DIR.parent / "filamentDB" / "data" / "filaments.db"
 DEFAULT_LONG_SIDE_MM = 100.0
 DEFAULT_LONG_SIDE_MM = 100.0
 
@@ -284,8 +286,11 @@ class MainWindow(QMainWindow):
         self.source_image_size: Optional[tuple[int, int]] = None
         self.default_profiles = engine.default_material_profiles()
         self.material_rows: Dict[str, MaterialRow] = {}
+        self.app_icon_path = RUNTIME_PROJECT_DIR / "leadlight_icon.svg"
 
         self.setWindowTitle("LeadLight")
+        if self.app_icon_path.exists():
+            self.setWindowIcon(QIcon(str(self.app_icon_path)))
         self._build_ui()
         self._apply_style()
         self.reset_materials()
@@ -676,7 +681,7 @@ class MainWindow(QMainWindow):
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Choose output 3MF path",
-            str(PROJECT_DIR / "out" / "output.3mf"),
+            str(RUNTIME_PROJECT_DIR / "out" / "output.3mf"),
             "3MF Files (*.3mf)",
         )
         if path:
@@ -775,7 +780,7 @@ class MainWindow(QMainWindow):
         path, _ = QFileDialog.getOpenFileName(
             self,
             "Load material preset",
-            str(PRESET_PATH if PRESET_PATH.exists() else PROJECT_DIR),
+            str(PRESET_PATH if PRESET_PATH.exists() else RUNTIME_PROJECT_DIR),
             "JSON Files (*.json)",
         )
         if not path:
@@ -883,7 +888,7 @@ class MainWindow(QMainWindow):
         process = QProcess(self)
         process.setProgram(sys.executable)
         process.setArguments(["-u", *args])
-        process.setWorkingDirectory(str(PROJECT_DIR))
+        process.setWorkingDirectory(str(RUNTIME_PROJECT_DIR))
         process.setProcessChannelMode(QProcess.MergedChannels)
         process.readyReadStandardOutput.connect(self._append_process_output)
         process.finished.connect(self._process_finished)

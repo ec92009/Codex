@@ -6,7 +6,7 @@ import sqlite3
 from pathlib import Path
 
 from PySide6.QtCore import QThread, Qt, Signal
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 
 from filament_db import (
     DEFAULT_DB_PATH,
+    RUNTIME_PROJECT_DIR,
     add_filament,
     connect,
     detect_td1_device,
@@ -107,6 +108,7 @@ class FilamentDbWindow(QMainWindow):
         self.last_saved_record_id: int | None = None
         self.current_edit_record_id: int | None = None
         self.table_filter_text: str = ""
+        self.app_icon_path = RUNTIME_PROJECT_DIR / "filamentdb_icon.svg"
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -130,6 +132,8 @@ class FilamentDbWindow(QMainWindow):
         self.refresh_choices()
         self.refresh_table()
         self._apply_style()
+        if self.app_icon_path.exists():
+            self.setWindowIcon(QIcon(str(self.app_icon_path)))
 
     def _build_scan_panel(self) -> QGroupBox:
         box = QGroupBox("Scan")
