@@ -362,6 +362,10 @@ class MainWindow(QMainWindow):
 
         image_group = QGroupBox("Source")
         image_form = QFormLayout(image_group)
+        image_form.setHorizontalSpacing(10)
+        image_form.setVerticalSpacing(10)
+        image_form.setContentsMargins(18, 18, 18, 18)
+        image_form.setLabelAlignment(Qt.AlignRight)
         self.image_path_edit = QLineEdit()
         self.image_path_edit.setPlaceholderText("/Users/ecohen/Desktop/image.png")
         browse_button = QPushButton("Choose Image")
@@ -392,8 +396,9 @@ class MainWindow(QMainWindow):
 
         settings_group = QGroupBox("Model")
         settings_grid = QGridLayout(settings_group)
-        settings_grid.setHorizontalSpacing(10)
-        settings_grid.setVerticalSpacing(8)
+        settings_grid.setContentsMargins(18, 18, 18, 18)
+        settings_grid.setHorizontalSpacing(12)
+        settings_grid.setVerticalSpacing(10)
 
         self.size_edit = QLineEdit("")
         self.size_edit.setPlaceholderText("Auto from image")
@@ -465,7 +470,9 @@ class MainWindow(QMainWindow):
         run_buttons = QWidget()
         run_buttons_layout = QHBoxLayout(run_buttons)
         run_buttons_layout.setContentsMargins(0, 0, 0, 0)
+        run_buttons_layout.setSpacing(12)
         self.generate_button = QPushButton("Generate 3MF")
+        self.generate_button.setObjectName("primaryButton")
         self.generate_button.clicked.connect(self.run_export)
         self.generate_button.setMinimumHeight(40)
         reveal_button = QPushButton("Reveal Output")
@@ -487,12 +494,14 @@ class MainWindow(QMainWindow):
 
         original_group = QGroupBox("Original")
         original_layout = QVBoxLayout(original_group)
+        original_layout.setContentsMargins(18, 18, 18, 18)
         original_layout.addWidget(self.original_preview)
 
         stage_group = QGroupBox("Preview")
         stage_layout = QVBoxLayout(stage_group)
+        stage_layout.setContentsMargins(18, 18, 18, 18)
         self.progress_label = QLabel("Idle")
-        self.progress_label.setStyleSheet("color: #715d49; font-weight: 600;")
+        self.progress_label.setObjectName("statusBanner")
         self.stage_caption_label = QLabel("No stage yet")
         self.stage_caption_label.setStyleSheet("color: #715d49;")
         stage_controls = QWidget()
@@ -527,7 +536,8 @@ class MainWindow(QMainWindow):
 
         materials_group = QGroupBox("Materials")
         materials_layout = QVBoxLayout(materials_group)
-        materials_layout.setSpacing(8)
+        materials_layout.setSpacing(10)
+        materials_layout.setContentsMargins(18, 18, 18, 18)
         materials_help = QLabel("Use measured TD values when you have them. Leave untouched to use the built-in CMYWK defaults.")
         materials_help.setWordWrap(True)
         materials_help.setStyleSheet("color: #715d49;")
@@ -542,6 +552,7 @@ class MainWindow(QMainWindow):
         materials_buttons = QWidget()
         materials_buttons_layout = QHBoxLayout(materials_buttons)
         materials_buttons_layout.setContentsMargins(0, 0, 0, 0)
+        materials_buttons_layout.setSpacing(12)
         cmywk_button = QPushButton("CMYWK")
         cmywk_button.clicked.connect(self.reset_materials)
         rgbwk_button = QPushButton("RGBWK")
@@ -562,13 +573,15 @@ class MainWindow(QMainWindow):
 
         summary_group = QGroupBox("Status")
         summary_layout = QVBoxLayout(summary_group)
+        summary_layout.setContentsMargins(18, 18, 18, 18)
         self.summary_label = QLabel("Choose an image and generate a 3MF.")
         self.summary_label.setWordWrap(True)
-        self.summary_label.setStyleSheet("color: #5e4b39;")
+        self.summary_label.setObjectName("statusBanner")
         summary_layout.addWidget(self.summary_label)
 
         log_group = QGroupBox("Run Log")
         log_layout = QVBoxLayout(log_group)
+        log_layout.setContentsMargins(18, 18, 18, 18)
         self.log_view = QTextEdit()
         self.log_view.setReadOnly(True)
         log_layout.addWidget(self.log_view)
@@ -613,20 +626,32 @@ class MainWindow(QMainWindow):
                 padding: 0 6px;
                 color: #584635;
             }
+            QLabel {
+                color: #2f241a;
+            }
             QLineEdit, QTextEdit, QComboBox, QDoubleSpinBox {
                 background: #fffdfa;
                 border: 1px solid #cfbfa7;
                 border-radius: 8px;
                 padding: 6px 8px;
+                selection-background-color: #0a84ff;
+                placeholder-text-color: #9a866f;
             }
-            QProgressBar {
-                background: #eadbc8;
+            QTextEdit {
+                color: #493726;
+            }
+            QSlider::groove:horizontal {
                 border: 1px solid #cfbfa7;
-                border-radius: 5px;
+                height: 6px;
+                background: #eadbc8;
+                border-radius: 3px;
             }
-            QProgressBar::chunk {
-                background: #b56f38;
-                border-radius: 4px;
+            QSlider::handle:horizontal {
+                background: #0a84ff;
+                border: none;
+                width: 18px;
+                margin: -7px 0;
+                border-radius: 9px;
             }
             QPushButton {
                 background: #b56f38;
@@ -639,12 +664,27 @@ class MainWindow(QMainWindow):
             QPushButton:hover {
                 background: #a55f2d;
             }
+            QPushButton#primaryButton {
+                background: #0a84ff;
+            }
+            QPushButton#primaryButton:hover {
+                background: #2b95ff;
+            }
             QPushButton:disabled {
-                background: #c6b7a6;
-                color: #f1ece6;
+                background: #d5c8b7;
+                color: #f4efe8;
+                border: 1px solid #d9cdbf;
             }
             QCheckBox {
                 spacing: 8px;
+            }
+            QLabel#statusBanner {
+                background: #efe1cf;
+                border: 1px solid #d5c2a5;
+                border-radius: 8px;
+                padding: 10px 12px;
+                color: #6a4b2d;
+                font-weight: 600;
             }
             """
         )
