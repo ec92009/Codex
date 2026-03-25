@@ -43,3 +43,38 @@ GitHub Pages is deployed by `.github/workflows/deploy-oleamediaco-site.yml`, whi
 - Work inside project folders under `/Users/ecohen/Codex`.
 - Commit changes from the repo root with clear messages.
 - Push to `main` to sync with GitHub: [ec92009/Codex](https://github.com/ec92009/Codex).
+
+## Cross-Computer Workflow
+
+Use GitHub as the source of truth for code and tracked scripts. Local generated artifacts such as `build/` and `dist/` are ignored and should be rebuilt on each machine.
+
+Finish on computer A:
+
+```bash
+cd /Users/ecohen/Codex
+git status
+git add .
+git commit -m "short clear message"
+git push origin main
+```
+
+Start on computer B:
+
+```bash
+cd /Users/ecohen/Codex
+git pull --ff-only origin main
+```
+
+Rebuild local macOS app bundles after pulling when needed:
+
+```bash
+/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh
+/Users/ecohen/Codex/filamentDB/build_filamentdb_app.sh
+```
+
+Notes:
+
+- Commit source changes, docs, scripts, icons, and launcher changes.
+- Do not commit generated `build/` or `dist/` folders.
+- If you change both `imageTo3MF` and `filamentDB`, commit them together from the repo root so the two apps stay in sync.
+- Before starting work on another computer, always `git pull` first.
