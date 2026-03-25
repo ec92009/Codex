@@ -39,11 +39,12 @@
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle color theme">Theme</button>
     </header>
 
+    <!-- ===== HERO — 50/50 photo | copy ===== -->
     <section class="deck-slide hero-slide">
-      <div class="slide-visual warm-photo">
+      <div class="slide-half visual-half warm-photo">
         <img src="assets/kelly-portrait.jpg" alt="Kelly Olea, CPA" loading="eager" />
       </div>
-      <section class="slide-copy dark-copy">
+      <div class="slide-half copy-half dark-half">
         <p class="slide-label">Olea Tax Co.</p>
         <h1>Strategic tax planning built for clients whose decisions cannot wait until filing season.</h1>
         <p class="slide-body">
@@ -60,14 +61,15 @@
           <a class="button" href="#book-call">Book a Strategy Call</a>
           <a class="button alt" href="#services">Review Services</a>
         </div>
-      </section>
+      </div>
     </section>
 
-    <section class="deck-slide reverse-slide">
-      <section class="slide-copy light-copy">
-        <p class="slide-label dark-label">Who This Is For</p>
+    <!-- ===== WHO THIS IS FOR — 50/50 copy | logo ===== -->
+    <section class="deck-slide">
+      <div class="slide-half copy-half light-half">
+        <p class="slide-label">Who This Is For</p>
         <h2>Designed for clients who need thinking, not just processing.</h2>
-        <p class="slide-body dark-body">
+        <p class="slide-body">
           The firm is best suited to people whose tax profile has become more complex: growing businesses,
           multi-entity structures, active real estate investors, and households making decisions with
           meaningful tax consequences.
@@ -86,39 +88,52 @@
             <span>Advisory support integrated into real decisions</span>
           </div>
         </div>
-      </section>
-      <div class="slide-visual dark-visual logo-visual">
+      </div>
+      <div class="slide-half visual-half logo-half">
         <div class="logo-stage" aria-hidden="true">
           <img src="../assets/logos/oleatax-logo.png" alt="" />
         </div>
       </div>
     </section>
 
-    <section id="services" class="deck-panel services-panel">
-      <p class="slide-label dark-label">Service Model</p>
-      <h2>Three levels of support, each one increasing the strategic involvement.</h2>
-
-      <article class="service-line">
-        <div class="service-meta">
-          <span class="service-no">01</span>
-          <h3>Tax Filing</h3>
+    <!-- ===== SERVICES — 50/50 heading | packages ===== -->
+    <section id="services" class="deck-slide">
+      <div class="slide-half copy-half dark-half">
+        <p class="slide-label">Service Model</p>
+        <h2>Three levels of support, each one increasing the strategic involvement.</h2>
+        <div class="stat-grid">
+          <div class="stat-block">
+            <span class="stat-number">3</span>
+            <span class="stat-desc">Service tiers</span>
+          </div>
+          <div class="stat-block">
+            <span class="stat-number">4</span>
+            <span class="stat-desc">Quarterly checkpoints</span>
+          </div>
+          <div class="stat-block">
+            <span class="stat-number">12</span>
+            <span class="stat-desc">Months of coverage</span>
+          </div>
         </div>
-        <div class="service-copy">
+      </div>
+      <div class="slide-half copy-half light-half service-list-half">
+        <article class="service-card">
+          <div class="service-head">
+            <span class="service-no">01</span>
+            <h3>Tax Filing</h3>
+          </div>
           <p>Reliable annual preparation with a clean, guided process.</p>
           <ul>
             <li>Annual tax return preparation</li>
             <li>Personalized document checklist</li>
             <li>Email support for tax-related questions</li>
           </ul>
-        </div>
-      </article>
-
-      <article class="service-line">
-        <div class="service-meta">
-          <span class="service-no">02</span>
-          <h3>Tax Filing + Estimates</h3>
-        </div>
-        <div class="service-copy">
+        </article>
+        <article class="service-card">
+          <div class="service-head">
+            <span class="service-no">02</span>
+            <h3>Tax Filing + Estimates</h3>
+          </div>
           <p>For business owners who need steadier quarterly management, not just year-end cleanup.</p>
           <ul>
             <li>Annual tax return preparation</li>
@@ -126,15 +141,13 @@
             <li>Personalized document checklist</li>
             <li>Email support for tax-related questions</li>
           </ul>
-        </div>
-      </article>
-
-      <article class="service-line emphasis">
-        <div class="service-meta">
-          <span class="service-no">03</span>
-          <h3>Tax Planning &amp; Filing</h3>
-        </div>
-        <div class="service-copy">
+        </article>
+        <article class="service-card emphasis">
+          <span class="rec-badge">RECOMMENDED</span>
+          <div class="service-head">
+            <span class="service-no">03</span>
+            <h3>Tax Planning &amp; Filing</h3>
+          </div>
           <p>For clients who want proactive tax strategy integrated into the year, not bolted on at the end.</p>
           <ul>
             <li>Annual tax return preparation</li>
@@ -143,12 +156,13 @@
             <li>Year-end strategy session</li>
             <li>Email advisory support</li>
           </ul>
-        </div>
-      </article>
+        </article>
+      </div>
     </section>
 
-    <section id="who" class="deck-slide bio-slide">
-      <section class="slide-copy dark-copy">
+    <!-- ===== FOUNDER — 50/50 copy | photo ===== -->
+    <section id="who" class="deck-slide">
+      <div class="slide-half copy-half dark-half">
         <p class="slide-label">Founder Perspective</p>
         <h2>Kelly built the firm to replace reactive tax work with a more deliberate advisory relationship.</h2>
         <p class="slide-body">
@@ -157,53 +171,67 @@
           to work differently: fewer handoffs, tighter structure, and a more direct strategic partnership.
         </p>
         <blockquote class="deck-quote">
-          “I believe tax strategy should be intentional, integrated, and tailored to each client.”
+          "I believe tax strategy should be intentional, integrated, and tailored to each client."
         </blockquote>
-      </section>
-      <div class="slide-visual warm-portrait">
+      </div>
+      <div class="slide-half visual-half warm-photo">
         <img src="assets/kelly-portrait.jpg" alt="Kelly Olea, CPA" loading="lazy" />
       </div>
     </section>
 
-    <section id="process" class="deck-panel process-panel">
-      <div class="section-head">
-        <p class="slide-label dark-label">Process</p>
+    <!-- ===== PROCESS — 50/50 heading | steps ===== -->
+    <section id="process" class="deck-slide">
+      <div class="slide-half copy-half dark-half">
+        <p class="slide-label">Process</p>
         <h2>A simple operating rhythm from first call to ongoing planning.</h2>
+        <div class="stat-grid">
+          <div class="stat-block">
+            <span class="stat-number">4</span>
+            <span class="stat-desc">Clear steps</span>
+          </div>
+          <div class="stat-block">
+            <span class="stat-number">1</span>
+            <span class="stat-desc">Point of contact</span>
+          </div>
+        </div>
       </div>
-      <ol class="process-list">
-        <li>
-          <strong>01</strong>
-          <div>
-            <h3>Discovery</h3>
-            <p>We review goals, current setup, and what is creating tax friction today.</p>
-          </div>
-        </li>
-        <li>
-          <strong>02</strong>
-          <div>
-            <h3>Strategy Plan</h3>
-            <p>You get a roadmap with priority actions, planning windows, and decision points.</p>
-          </div>
-        </li>
-        <li>
-          <strong>03</strong>
-          <div>
-            <h3>Implementation</h3>
-            <p>Filings, estimates, and structure updates are executed with clarity and follow-through.</p>
-          </div>
-        </li>
-        <li>
-          <strong>04</strong>
-          <div>
-            <h3>Ongoing Advisory</h3>
-            <p>Regular checkpoints keep tax strategy aligned as business, investments, and life evolve.</p>
-          </div>
-        </li>
-      </ol>
+      <div class="slide-half copy-half light-half steps-half">
+        <ol class="process-list">
+          <li>
+            <strong>01</strong>
+            <div>
+              <h3>Discovery</h3>
+              <p>We review goals, current setup, and what is creating tax friction today.</p>
+            </div>
+          </li>
+          <li>
+            <strong>02</strong>
+            <div>
+              <h3>Strategy Plan</h3>
+              <p>You get a roadmap with priority actions, planning windows, and decision points.</p>
+            </div>
+          </li>
+          <li>
+            <strong>03</strong>
+            <div>
+              <h3>Implementation</h3>
+              <p>Filings, estimates, and structure updates are executed with clarity and follow-through.</p>
+            </div>
+          </li>
+          <li>
+            <strong>04</strong>
+            <div>
+              <h3>Ongoing Advisory</h3>
+              <p>Regular checkpoints keep tax strategy aligned as business, investments, and life evolve.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
     </section>
 
-    <section id="book-call" class="deck-slide booking-slide">
-      <section class="slide-copy dark-copy">
+    <!-- ===== BOOKING — 50/50 copy | form ===== -->
+    <section id="book-call" class="deck-slide">
+      <div class="slide-half copy-half dark-half">
         <p class="slide-label">Next Step</p>
         <h2>Book a 20-minute strategy call.</h2>
         <p class="slide-body">
@@ -215,8 +243,8 @@
           <span>Clear next steps afterward</span>
           <span>No obligation to proceed</span>
         </div>
-      </section>
-      <section class="slide-copy light-copy booking-copy">
+      </div>
+      <div class="slide-half copy-half light-half">
         <form class="booking-form" action="#" method="post" onsubmit="return false;">
           <div class="booking-row">
             <label for="call-date">Pick a date</label>
@@ -233,22 +261,25 @@
           </div>
           <p class="booking-note">Placeholder scheduler only for internal review. Final flow can later connect to SquareSpace Scheduling, Calendly, or another provider.</p>
         </form>
-      </section>
+      </div>
     </section>
 
-    <section id="faqs" class="deck-panel faq-panel">
-      <p class="slide-label dark-label">FAQs</p>
-      <h2>Questions clients typically ask before they reach out.</h2>
-      <div class="faq-list">
-        <article>
+    <!-- ===== FAQ — 50/50 heading | questions ===== -->
+    <section id="faqs" class="deck-slide">
+      <div class="slide-half copy-half dark-half">
+        <p class="slide-label">FAQs</p>
+        <h2>Questions clients typically ask before they reach out.</h2>
+      </div>
+      <div class="slide-half copy-half light-half faq-half">
+        <article class="faq-card">
           <h3>Do you only work locally?</h3>
           <p>No. Olea Tax Co. works remotely with secure document sharing and video meetings, in addition to local client support.</p>
         </article>
-        <article>
+        <article class="faq-card">
           <h3>Can you help if my books are behind?</h3>
           <p>Yes. A catch-up phase can be scoped first, then transitioned into more structured ongoing support.</p>
         </article>
-        <article>
+        <article class="faq-card">
           <h3>Do you offer one-time tax services?</h3>
           <p>Yes, but clients with ongoing planning needs may be a better fit for an advisory package.</p>
         </article>

@@ -1,5 +1,5 @@
 /* ============================================================
-   Olea Tax Co — Executive Deck Style
+   Olea Tax Co — Executive Deck Style (50/50 Split Layout)
    Aligned with Scalable Pod Model / Workload Justification PDFs
    ============================================================ */
 
@@ -303,54 +303,73 @@ select:focus-visible {
   transform: none;
 }
 
-/* ---- Deck Slides & Panels ---- */
-.deck-slide,
-.deck-panel {
+/* ============================================================
+   50/50 DECK SLIDE SYSTEM
+   Every section is a two-column split — like a presentation deck
+   ============================================================ */
+
+.deck-slide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   margin-bottom: 24px;
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: var(--shadow);
   border: 1px solid var(--line);
+  min-height: 560px;
 }
 
-.deck-slide {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-}
-
-.reverse-slide {
-  grid-template-columns: 1fr 1fr;
-}
-
-/* ---- Slide Visuals ---- */
-.slide-visual {
+/* ---- Slide Halves ---- */
+.slide-half {
   position: relative;
-  min-height: 720px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.slide-visual img {
+.copy-half {
+  padding: clamp(32px, 4vw, 56px);
+}
+
+.visual-half {
+  overflow: hidden;
+}
+
+.visual-half img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.warm-photo img,
-.warm-portrait img {
+/* ---- Half Backgrounds ---- */
+.dark-half {
+  background: var(--panel-dark);
+  color: var(--ink);
+}
+
+.light-half {
+  background: var(--bg-card);
+  color: var(--ink);
+}
+
+/* ---- Photo Overlays ---- */
+.warm-photo img {
   filter: saturate(0.8) contrast(1.05);
 }
 
-.warm-photo::after,
-.warm-portrait::after {
+.warm-photo::after {
   content: "";
   position: absolute;
   inset: 0;
   background:
     linear-gradient(180deg, rgba(15, 15, 20, 0.05), rgba(15, 15, 20, 0.25)),
     linear-gradient(90deg, rgba(15, 15, 20, 0) 48%, rgba(15, 15, 20, 0.12) 100%);
+  pointer-events: none;
 }
 
-.logo-visual {
+/* ---- Logo Half ---- */
+.logo-half {
   background:
     radial-gradient(circle at 34% 40%, rgba(201, 168, 76, 0.04), transparent 36%),
     linear-gradient(180deg, var(--panel-dark), var(--panel-darker));
@@ -364,28 +383,10 @@ select:focus-visible {
 }
 
 .logo-stage img {
-  width: min(56%, 320px);
+  width: min(56%, 280px);
   height: auto;
   opacity: 0.12;
   filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
-}
-
-/* ---- Slide Copy ---- */
-.slide-copy {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: clamp(32px, 4vw, 56px);
-}
-
-.dark-copy {
-  background: var(--panel-dark);
-  color: var(--ink);
-}
-
-.light-copy {
-  background: var(--bg-card);
-  color: var(--ink);
 }
 
 /* ---- Labels ---- */
@@ -398,15 +399,10 @@ select:focus-visible {
   font-weight: 700;
 }
 
-.dark-label {
-  color: var(--accent);
-}
-
 /* ---- Headings ---- */
 .hero-slide h1,
 .deck-slide h2,
-.deck-panel h2,
-.service-meta h3 {
+.service-head h3 {
   margin: 0;
   font-family: "Manrope", system-ui, sans-serif;
   font-weight: 800;
@@ -415,32 +411,22 @@ select:focus-visible {
 }
 
 .hero-slide h1 {
-  font-size: clamp(2.8rem, 5.5vw, 5rem);
+  font-size: clamp(2.6rem, 5vw, 4.6rem);
   color: var(--ink);
-  max-width: 12ch;
+  max-width: 14ch;
 }
 
-.deck-slide h2,
-.deck-panel h2 {
-  font-size: clamp(2.2rem, 3.8vw, 3.6rem);
+.deck-slide h2 {
+  font-size: clamp(2rem, 3.6vw, 3.2rem);
   margin-bottom: 18px;
 }
 
 /* ---- Body Text ---- */
-.slide-body,
-.service-copy p,
-.service-copy li,
-.booking-note,
-.faq-list p,
-.process-list p,
-.mini-stat-list span {
+.slide-body {
   color: var(--muted);
   font-size: 1rem;
   line-height: 1.65;
-}
-
-.dark-body {
-  color: var(--muted);
+  max-width: 48ch;
 }
 
 /* ---- Chips & CTAs ---- */
@@ -468,17 +454,40 @@ select:focus-visible {
   letter-spacing: 0.04em;
 }
 
-.light-copy .chip-row span {
-  border-color: var(--line-strong);
-  background: var(--accent-dim);
-  color: var(--accent);
-}
-
 .cta-row {
   margin-top: 22px;
 }
 
-/* ---- Mini Stats (Who This Is For) ---- */
+/* ---- Stat Grid (large numbers like PDFs) ---- */
+.stat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-number {
+  font-size: 3.6rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--accent);
+}
+
+.stat-desc {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+/* ---- Mini Stats (numbered list) ---- */
 .mini-stat-list {
   display: grid;
   gap: 14px;
@@ -502,96 +511,101 @@ select:focus-visible {
 
 .mini-stat-list span {
   color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
-/* ---- Services Panel ---- */
-.services-panel,
-.process-panel,
-.faq-panel {
-  padding: 36px;
+/* ============================================================
+   SERVICE CARDS (right half of services slide)
+   ============================================================ */
+
+.service-list-half {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: clamp(24px, 3vw, 40px);
+}
+
+.service-card {
+  padding: 22px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--line);
-  background: var(--bg-card);
-}
-
-.service-line {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.62fr) minmax(0, 1.38fr);
-  gap: 20px;
-  padding: 24px 0;
-  border-top: 1px solid var(--line);
-}
-
-.service-line:first-of-type {
-  padding-top: 6px;
-  border-top: 0;
-}
-
-.service-line.emphasis {
-  border-top-color: var(--accent);
+  background: var(--panel-light);
+  transition: border-color 200ms ease, background 200ms ease;
   position: relative;
 }
 
-.service-line.emphasis::before {
-  content: "RECOMMENDED";
-  position: absolute;
-  top: -1px;
-  left: 0;
-  transform: translateY(-50%);
+.service-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.service-card.emphasis {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.rec-badge {
+  display: inline-block;
+  margin-bottom: 10px;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   background: var(--accent);
   color: #0f0f14;
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.1em;
 }
 
+.service-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
 .service-no {
-  display: inline-block;
-  margin-bottom: 10px;
   color: var(--accent);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.16em;
 }
 
-.service-meta h3 {
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
+.service-head h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.service-copy p,
-.service-copy li {
+.service-card p {
+  margin: 0 0 10px;
   color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
 }
 
-.service-copy ul {
-  margin: 14px 0 0;
-  padding-left: 1.2rem;
+.service-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
-/* ---- Blockquote ---- */
-.deck-quote {
-  margin: 24px 0 0;
-  padding-top: 20px;
-  border-top: 1px solid var(--line);
-  font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: 1.8rem;
-  font-weight: 500;
-  font-style: italic;
-  line-height: 1.15;
-  color: var(--accent);
+.service-card li {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
-/* ---- Bio Slide ---- */
-.bio-slide .slide-visual {
-  min-height: 640px;
-}
+/* ============================================================
+   PROCESS LIST (right half of process slide)
+   ============================================================ */
 
-/* ---- Process Panel ---- */
-.section-head {
-  margin-bottom: 24px;
+.steps-half {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: clamp(24px, 3vw, 40px);
 }
 
 .process-list {
@@ -599,7 +613,6 @@ select:focus-visible {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -627,21 +640,74 @@ select:focus-visible {
 }
 
 .process-list h3 {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-size: 1rem;
   font-weight: 700;
 }
 
 .process-list p {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--muted);
+  line-height: 1.5;
 }
 
-/* ---- Booking Slide ---- */
-.booking-slide .slide-copy {
-  min-height: 560px;
+/* ============================================================
+   FAQ CARDS (right half of FAQ slide)
+   ============================================================ */
+
+.faq-half {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: clamp(24px, 3vw, 40px);
 }
+
+.faq-card {
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: var(--panel-light);
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.faq-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.faq-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.faq-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+/* ============================================================
+   BLOCKQUOTE
+   ============================================================ */
+
+.deck-quote {
+  margin: 24px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.7rem;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.15;
+  color: var(--accent);
+}
+
+/* ============================================================
+   BOOKING FORM
+   ============================================================ */
 
 .booking-form {
   display: grid;
@@ -683,40 +749,8 @@ select:focus-visible {
   color: var(--muted);
 }
 
-/* ---- FAQ Panel ---- */
-.faq-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.faq-list article {
-  padding: 22px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--line);
-  background: var(--panel-light);
-  transition: border-color 200ms ease, background 200ms ease;
-}
-
-.faq-list article:hover {
-  border-color: var(--accent);
-  background: var(--accent-glow);
-}
-
-.faq-list h3 {
-  margin: 0 0 8px;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.faq-list p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
 /* ============================================================
-   Responsive
+   RESPONSIVE — Stack to single column on narrow screens
    ============================================================ */
 
 @media (max-width: 1080px) {
@@ -732,25 +766,21 @@ select:focus-visible {
     justify-self: start;
   }
 
-  .deck-slide,
-  .reverse-slide {
+  .deck-slide {
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 
-  .slide-visual {
-    min-height: 400px;
+  .visual-half {
+    min-height: 380px;
   }
 
-  .process-list {
-    grid-template-columns: repeat(2, 1fr);
+  .stat-grid {
+    gap: 18px;
   }
 
-  .faq-list {
-    grid-template-columns: 1fr;
-  }
-
-  .service-line {
-    grid-template-columns: 1fr;
+  .stat-number {
+    font-size: 2.8rem;
   }
 }
 
@@ -764,29 +794,24 @@ select:focus-visible {
     margin-top: 10px;
   }
 
-  .topbar,
-  .services-panel,
-  .process-panel,
-  .faq-panel {
-    padding: 20px;
+  .topbar {
+    padding: 16px;
   }
 
-  .slide-copy {
+  .copy-half {
     padding: 24px 20px;
   }
 
   .hero-slide h1 {
-    font-size: clamp(2.2rem, 10vw, 3.6rem);
+    font-size: clamp(2rem, 9vw, 3.2rem);
   }
 
-  .deck-slide h2,
-  .deck-panel h2,
-  .service-meta h3 {
-    font-size: clamp(1.8rem, 8vw, 2.6rem);
+  .deck-slide h2 {
+    font-size: clamp(1.7rem, 7vw, 2.4rem);
   }
 
-  .process-list {
-    grid-template-columns: 1fr;
+  .visual-half {
+    min-height: 300px;
   }
 
   .build-version {
@@ -794,7 +819,13 @@ select:focus-visible {
     margin-top: 6px;
   }
 
-  .slide-visual {
-    min-height: 320px;
+  .stat-number {
+    font-size: 2.4rem;
+  }
+
+  .service-list-half,
+  .steps-half,
+  .faq-half {
+    padding: 20px;
   }
 }
