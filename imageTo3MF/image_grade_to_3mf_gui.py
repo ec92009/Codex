@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -857,6 +858,20 @@ class MainWindow(QMainWindow):
                 args.extend(["--material", row.to_argument()])
         return args
 
+    def _export_launcher(self, script_args: list[str]) -> tuple[str, list[str]]:
+        if getattr(sys, "frozen", False):
+            uv_path = shutil.which("uv") or "/opt/homebrew/bin/uv"
+            if Path(uv_path).exists():
+                return (
+                    uv_path,
+                    ["run", "--project", str(RUNTIME_PROJECT_DIR), "python", "-u", str(SCRIPT_PATH), *script_args],
+                )
+            python_path = shutil.which("python3")
+            if python_path:
+                return python_path, ["-u", str(SCRIPT_PATH), *script_args]
+            raise RuntimeError("Could not find uv or python3 to launch the exporter from the app bundle.")
+        return sys.executable, ["-u", str(SCRIPT_PATH), *script_args]
+
     def run_export(self) -> None:
         image_path = self._effective_image_path()
         if image_path is None:
@@ -880,8 +895,7 @@ class MainWindow(QMainWindow):
         self.stage_counter_label.setText("0 / 0")
         self._update_stage_controls()
 
-        args = [
-            str(SCRIPT_PATH),
+        script_args = [
             str(image_path),
             "--size",
             self.size_edit.text().strip() or self._suggest_model_size(image_path, long_side_mm=float(self.size_slider.value())),
@@ -916,18 +930,26 @@ class MainWindow(QMainWindow):
             args.extend(["--output", output_path])
 
         if not self.open_orca_checkbox.isChecked():
-            args.append("--no-open")
+            script_args.append("--no-open")
 
-        args.extend(self._material_args())
+        script_args.extend(self._material_args())
 
         self.log_view.clear()
         self.summary_label.setText("Generating 3MF...")
         self.progress_label.setText("Generating 3MF...")
         self.generate_button.setEnabled(False)
 
+        try:
+            program, process_args = self._export_launcher(script_args)
+        except RuntimeError as exc:
+            self.generate_button.setEnabled(True)
+            self.summary_label.setText(str(exc))
+            QMessageBox.critical(self, "Export launcher error", str(exc))
+            return
+
         process = QProcess(self)
-        process.setProgram(sys.executable)
-        process.setArguments(["-u", *args])
+        process.setProgram(program)
+        process.setArguments(process_args)
         process.setWorkingDirectory(str(RUNTIME_PROJECT_DIR))
         process.setProcessChannelMode(QProcess.MergedChannels)
         process.readyReadStandardOutput.connect(self._append_process_output)
