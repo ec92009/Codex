@@ -1,0 +1,32 @@
+[
+  {
+    "slot": "1",
+    "name": "cyan",
+    "hex_color": "#295CFF",
+    "td": 2.2
+  },
+  {
+    "slot": "2",
+    "name": "magenta",
+    "hex_color": "#B6102D",
+    "td": 3.0
+  },
+  {
+    "slot": "3",
+    "name": "yellow",
+    "hex_color": "#FF583C",
+    "td": 4.9
+  },
+  {
+    "slot": "4",
+    "name": "white",
+    "hex_color": "#FFD6D8",
+    "td": 2.5
+  },
+  {
+    "slot": "5",
+    "name": "black",
+    "hex_color": "#000000",
+    "td": 0.15
+  }
+]
