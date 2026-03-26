@@ -41,6 +41,15 @@ def parse_args() -> argparse.Namespace:
         default=Path.home() / "Desktop" / "lead_detect_steps_1_2_sheet.png",
         help="Output PNG path. (default: ~/Desktop/lead_detect_steps_1_2_sheet.png)",
     )
+    parser.add_argument("--strong-luma-cap", type=float, default=72.0, help="Cap for strong dark-pixel threshold.")
+    parser.add_argument("--weak-luma-cap", type=float, default=92.0, help="Cap for weak dark-pixel threshold.")
+    parser.add_argument("--strong-percentile", type=float, default=10.0, help="Image luma percentile used for strong seed pixels.")
+    parser.add_argument("--weak-percentile", type=float, default=18.0, help="Image luma percentile used for weak expansion pixels.")
+    parser.add_argument("--strong-contrast", type=float, default=18.0, help="Minimum local contrast for strong seed pixels.")
+    parser.add_argument("--weak-contrast", type=float, default=12.0, help="Minimum local contrast for weak expansion pixels.")
+    parser.add_argument("--strong-color-range", type=float, default=80.0, help="Maximum RGB range allowed for strong seed pixels.")
+    parser.add_argument("--weak-color-range", type=float, default=110.0, help="Maximum RGB range allowed for weak expansion pixels.")
+    parser.add_argument("--grow-passes", type=int, default=3, help="How many 1-pixel growth passes extend strong lead into weak lead.")
     return parser.parse_args()
 
 
@@ -62,6 +71,7 @@ def build_tile(
     image_path: Path,
     long_side_mm: float,
     resolution_mm: float,
+    config: engine.LeadDetectionConfig,
     font: ImageFont.ImageFont,
 ) -> Image.Image:
     width_mm, height_mm = compute_model_size(image_path, long_side_mm)
@@ -69,7 +79,7 @@ def build_tile(
     grid_height = max(1, math.ceil(height_mm / resolution_mm))
 
     rgb_image = engine.load_image_to_grid(image_path, grid_width, grid_height, blur_pixels=0.0)
-    detected = engine.detect_image_lead_mask(rgb_image)
+    detected = engine.detect_image_lead_mask(rgb_image, config=config)
     stage_1 = Image.fromarray(rgb_image).convert("RGB")
     stage_2 = engine.mask_preview(detected).convert("RGB")
 
@@ -107,8 +117,20 @@ def main() -> int:
         missing_text = "\n".join(str(path) for path in missing)
         raise SystemExit(f"Missing images:\n{missing_text}")
 
+    config = engine.LeadDetectionConfig(
+        strong_luma_cap=args.strong_luma_cap,
+        weak_luma_cap=args.weak_luma_cap,
+        strong_percentile=args.strong_percentile,
+        weak_percentile=args.weak_percentile,
+        strong_contrast_min=args.strong_contrast,
+        weak_contrast_min=args.weak_contrast,
+        strong_color_range_max=args.strong_color_range,
+        weak_color_range_max=args.weak_color_range,
+        grow_passes=args.grow_passes,
+    )
+
     font = ImageFont.load_default()
-    tiles = [build_tile(path, args.long_side_mm, args.resolution, font) for path in images]
+    tiles = [build_tile(path, args.long_side_mm, args.resolution, config, font) for path in images]
     columns = 2
     rows = math.ceil(len(tiles) / columns)
     gutter = 18
@@ -124,6 +146,14 @@ def main() -> int:
         x = gutter + column * (tile_width + gutter)
         y = gutter + row * (tile_height + gutter)
         sheet.paste(tile, (x, y))
+
+    draw = ImageDraw.Draw(sheet)
+    summary = (
+        f"strong p{args.strong_percentile:g}/l{args.strong_luma_cap:g}/c{args.strong_contrast:g}/r{args.strong_color_range:g}   "
+        f"weak p{args.weak_percentile:g}/l{args.weak_luma_cap:g}/c{args.weak_contrast:g}/r{args.weak_color_range:g}   "
+        f"grow {args.grow_passes}"
+    )
+    draw.text((gutter, sheet_height - gutter + 2 - 18), summary, font=font, fill="#6f5b46")
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(args.output)
