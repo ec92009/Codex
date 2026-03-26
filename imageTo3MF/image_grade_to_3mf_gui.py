@@ -54,6 +54,7 @@ RUNTIME_PROJECT_DIR = SOURCE_PROJECT_DIR if not (PROJECT_DIR / "image_grade_to_3
 SCRIPT_PATH = RUNTIME_PROJECT_DIR / "image_grade_to_3mf.py"
 PRESET_PATH = RUNTIME_PROJECT_DIR / "material_presets.json"
 DEFAULT_FILAMENT_DB_PATH = RUNTIME_PROJECT_DIR.parent / "filamentDB" / "data" / "filaments.tsv"
+PROJECT_PYTHON = RUNTIME_PROJECT_DIR / ".venv" / "bin" / "python"
 DEFAULT_LONG_SIDE_MM = 100.0
 DEFAULT_LONG_SIDE_MM = 100.0
 
@@ -938,10 +939,9 @@ class MainWindow(QMainWindow):
         return args
 
     def _export_launcher(self, script_args: list[str]) -> tuple[str, list[str]]:
+        if PROJECT_PYTHON.exists():
+            return str(PROJECT_PYTHON), ["-u", str(SCRIPT_PATH), *script_args]
         if getattr(sys, "frozen", False):
-            project_python = SOURCE_PROJECT_DIR / ".venv" / "bin" / "python"
-            if project_python.exists():
-                return str(project_python), ["-u", str(SCRIPT_PATH), *script_args]
             uv_path = shutil.which("uv") or "/opt/homebrew/bin/uv"
             if Path(uv_path).exists():
                 return (
@@ -952,7 +952,12 @@ class MainWindow(QMainWindow):
             if python_path:
                 return python_path, ["-u", str(SCRIPT_PATH), *script_args]
             raise RuntimeError("Could not find uv or python3 to launch the exporter from the app bundle.")
-        return sys.executable, ["-u", str(SCRIPT_PATH), *script_args]
+        if shutil.which(sys.executable):
+            return sys.executable, ["-u", str(SCRIPT_PATH), *script_args]
+        uv_path = shutil.which("uv") or "/opt/homebrew/bin/uv"
+        if Path(uv_path).exists():
+            return uv_path, ["run", "--project", str(RUNTIME_PROJECT_DIR), "python", "-u", str(SCRIPT_PATH), *script_args]
+        raise RuntimeError("Could not find a working Python launcher for the exporter.")
 
     def run_export(self) -> None:
         image_path = self._effective_image_path()
@@ -1035,9 +1040,12 @@ class MainWindow(QMainWindow):
         process.setWorkingDirectory(str(RUNTIME_PROJECT_DIR))
         process.setProcessChannelMode(QProcess.MergedChannels)
         process.readyReadStandardOutput.connect(self._append_process_output)
+        process.errorOccurred.connect(self._process_error)
         process.finished.connect(self._process_finished)
         self.process = process
         process.start()
+        if not process.waitForStarted(3000):
+            self._process_error(process.error())
 
     def _append_process_output(self) -> None:
         if self.process is None:
@@ -1049,6 +1057,21 @@ class MainWindow(QMainWindow):
         self.log_view.insertPlainText(chunk)
         self.log_view.moveCursor(QTextCursor.End)
         self._ingest_stage_lines(chunk)
+
+    def _process_error(self, error) -> None:
+        if self.process is None:
+            return
+        message = f"Could not start export process ({error})."
+        stderr_text = bytes(self.process.readAllStandardOutput()).decode("utf-8", errors="replace")
+        if stderr_text:
+            self.log_view.moveCursor(QTextCursor.End)
+            self.log_view.insertPlainText(stderr_text)
+            self.log_view.moveCursor(QTextCursor.End)
+        self.generate_button.setEnabled(True)
+        self.summary_label.setText(message)
+        self.progress_label.setText("Failed")
+        self.process = None
+        QMessageBox.critical(self, "Export launcher error", message)
 
     def _process_finished(self, exit_code: int, _status) -> None:
         self.generate_button.setEnabled(True)
