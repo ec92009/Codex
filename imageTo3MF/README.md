@@ -14,6 +14,8 @@ For detector tuning without disturbing the main app, run `uv run python lead_det
 
 For a more robust alternate experiment, run `uv run python glass_interior_growth_lab.py /path/to/image.png`. That lab uses a smoothed analysis image to grow likely glass interiors first, then derives lead from the leftover boundaries. The current promising settings for the `F.png` stained-glass test are around `--analysis-blur-px 1.4 --lead-luma-threshold 30 --hard-lead-chroma-max 26 --neutral-chroma-max 18 --neutral-edge-threshold 14`.
 
+There is also a hybrid experiment at `uv run python glass_hybrid_anchor_lab.py /path/to/image.png`. That one detects only confident lead anchors, generates the remaining pane regions from color clustering, then merges them into larger glass pieces. The current baseline that generalized surprisingly well across `A.png` through `F.png` is the default parameter set in that script.
+
 There are also launcher scripts at `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.sh` and `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.command`. On macOS, the `.command` version is the one to keep on the Desktop or in the Dock for reliable double-click launching in Terminal.
 
 For a no-Terminal macOS launcher, build the local app bundle with `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh`. That creates `/Users/ecohen/Codex/imageTo3MF/dist/LeadLight.app` and also refreshes the Desktop copy at `/Users/ecohen/Desktop/LeadLight.app` automatically.
