@@ -6,7 +6,7 @@ Central workspace repository for ongoing projects under `/Users/ecohen/Codex`.
 
 - `MacControl`: Local macOS control/verification scripts, including pointer checks and Desktop screen snapshots.
 - `web/github.io`: Canonical local website workspace for GitHub Pages.
-- `gmail_idealista_app`: Python app for Gmail + Idealista automation.
+- `gmail_idealista_app`: Python app for Gmail + Idealista automation, including listing report extraction from Idealista alert emails.
 
 ## Website Structure
 
