@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Olea Tax Co. | Tax Strategy Pods</title>
+  <link rel="icon" type="image/png" sizes="512x512" href="../assets/logos/oleatax-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f2ec;
+      --paper: rgba(255,255,255,0.78);
+      --panel: rgba(255,255,255,0.88);
+      --ink: #1f1a17;
+      --muted: #6e6258;
+      --line: rgba(72, 54, 38, 0.12);
+      --accent: #2f7a55;
+      --accent-2: #d8b786;
+      --shadow: 0 20px 60px rgba(51, 34, 18, 0.10);
+      --radius: 24px;
+      --max: 1180px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Manrope", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(216,183,134,0.26), transparent 36%),
+        radial-gradient(circle at top right, rgba(47,122,85,0.12), transparent 28%),
+        linear-gradient(180deg, #f8f5ef 0%, #f1ede6 100%);
+    }
+    .bg-brand {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background: url('../assets/logos/oleatax-logo.png') right 8vw top 110px / min(36vw, 420px) no-repeat;
+      opacity: .08;
+      filter: drop-shadow(0 24px 60px rgba(0,0,0,.18));
+    }
+    body > * { position: relative; z-index: 1; }
+    a { color: inherit; }
+    .shell { width: min(var(--max), calc(100% - 28px)); margin-inline: auto; }
+    .skip-link { position: absolute; left: -9999px; }
+    .skip-link:focus { left: 16px; top: 16px; background: #fff; padding: 10px 14px; z-index: 100; }
+
+    .draft-banner {
+      background: #1f1a17;
+      color: #f6efe7;
+      padding: 10px 16px;
+      text-align: center;
+      font-size: .92rem;
+      letter-spacing: .01em;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 0;
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(14px);
+      background: rgba(245,242,236,.78);
+      z-index: 20;
+      border-bottom: 1px solid rgba(72,54,38,.08);
+    }
+    .brand-wrap { display:flex; align-items:center; gap:14px; }
+    .site-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 1px solid rgba(72,54,38,.12);
+      background: rgba(255,255,255,.86);
+      box-shadow: var(--shadow);
+    }
+    .brand { font-family: "Space Grotesk", sans-serif; font-size: 1.15rem; font-weight: 700; }
+    .brand-meta { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
+    nav { display:flex; gap:18px; flex-wrap:wrap; align-items:center; }
+    nav a { text-decoration:none; color: var(--muted); font-weight: 700; }
+    .button {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      text-decoration:none;
+      border:none;
+      border-radius: 999px;
+      padding: 14px 20px;
+      font-weight: 800;
+      cursor:pointer;
+      background: var(--accent);
+      color: #eff9f2;
+      box-shadow: 0 14px 30px rgba(47,122,85,.18);
+    }
+    .button.alt { background: transparent; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+
+    .hero {
+      display:grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap: 22px;
+      padding: 34px 0 18px;
+      align-items: stretch;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .hero-copy { padding: 34px; }
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-size: .78rem;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(2.4rem, 5vw, 4.8rem);
+      line-height: .98;
+      max-width: 12ch;
+    }
+    .hero-lead, .section-intro, .small, p, li { color: var(--muted); }
+    .hero-lead {
+      font-size: 1.08rem;
+      line-height: 1.7;
+      max-width: 64ch;
+      margin: 18px 0 0;
+    }
+    .trust-strip, .cta-row, .hero-metrics, .proof-grid, .value-grid, .pod-grid, .process-grid, .cards, .faq-grid, .footer-grid {
+      display:grid;
+      gap: 14px;
+    }
+    .trust-strip {
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      margin: 22px 0 0;
+    }
+    .trust-strip span, .metric, .mini-card, .faq, .quote-card, .process-step, .pod-card, .proof-card, .value-card {
+      background: rgba(255,255,255,.62);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .cta-row {
+      grid-auto-flow: column;
+      justify-content: start;
+      margin-top: 22px;
+    }
+    .hero-metrics {
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      margin-top: 22px;
+    }
+    .metric strong { display:block; font-size: 1.55rem; color: var(--ink); }
+    .metric span { color: var(--muted); font-size: .9rem; }
+    .hero-side {
+      padding: 22px;
+      display:grid;
+      gap: 16px;
+      align-content: start;
+    }
+    .quote-card blockquote {
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.65;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .section {
+      padding: 18px 0;
+    }
+    .section-card { padding: 28px; }
+    h2 {
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(1.7rem, 3vw, 2.6rem);
+      line-height: 1.05;
+    }
+    h3 { margin: 0 0 8px; font-size: 1.05rem; color: var(--ink); }
+    .value-grid, .proof-grid, .faq-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .pod-grid { grid-template-columns: repeat(5, minmax(0,1fr)); margin-top: 18px; }
+    .pod-card .role-num {
+      display:inline-flex;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      align-items:center;
+      justify-content:center;
+      background: rgba(47,122,85,.12);
+      color: var(--accent);
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .process-grid { grid-template-columns: repeat(4, minmax(0,1fr)); margin-top: 18px; }
+    .process-step strong { display:block; color: var(--accent); margin-bottom: 8px; }
+    .section-split {
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 20px;
+    }
+    .proof-card strong, .value-card strong, .mini-card strong { color: var(--ink); display:block; margin-bottom: 8px; }
+    .big-number {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 2.3rem;
+      line-height: 1;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .cards.two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .faq h3 { font-size: 1rem; }
+    .footer-cta {
+      margin: 24px 0 48px;
+      padding: 28px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 20px;
+      align-items:center;
+    }
+    .footer-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .version-pill {
+      display:inline-flex;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(47,122,85,.10);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: .82rem;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 1080px) {
+      .hero, .section-split, .footer-cta { grid-template-columns: 1fr; }
+      .pod-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .process-grid, .value-grid, .proof-grid, .faq-grid, .hero-metrics, .trust-strip { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 720px) {
+      .topbar { position: static; }
+      nav { display:none; }
+      .hero-copy, .hero-side, .section-card, .footer-cta { padding: 22px; }
+      .process-grid, .value-grid, .proof-grid, .faq-grid, .hero-metrics, .trust-strip, .pod-grid, .cards.two, .footer-grid { grid-template-columns: 1fr; }
+      .cta-row { grid-auto-flow: row; }
+      h1 { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-brand" aria-hidden="true"></div>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <section class="draft-banner" aria-label="Draft disclaimer">
+    <strong>NEW DIRECTION · POD MODEL</strong>
+    <span> Built from the Scalable Tax Planning Pod Model and Workload & Task Justification Model PDFs.</span>
+  </section>
+
+  <header class="topbar shell">
+    <div class="brand-wrap">
+      <img class="site-logo" src="../assets/logos/oleatax-logo.png" alt="Olea Tax logo" />
+      <div>
+        <div class="brand">Olea Tax Co.</div>
+        <p class="brand-meta">Tax strategy pods for predictable outcomes · Version v25.0</p>
+      </div>
+    </div>
+    <nav aria-label="Primary">
+      <a href="#model">Pod Model</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#proof">Proof</a>
+      <a href="#faqs">FAQs</a>
+      <a class="button" href="#book-call">Book a Strategy Call</a>
+    </nav>
+  </header>
+
+  <main id="main-content" class="shell">
+    <section class="hero">
+      <div class="hero-copy panel">
+        <span class="version-pill">v25.0 · New homepage concept</span>
+        <p class="eyebrow">Predictable tax advisory, built to scale</p>
+        <h1>A tax strategy team designed so nothing falls through the cracks.</h1>
+        <p class="hero-lead">Olea Tax Co. is moving beyond the solo-advisor model. This concept positions the firm around a premium pod system: strategist-led planning, dedicated implementation support, clear workflow ownership, and a workload design that protects quality instead of burning out the team.</p>
+        <div class="trust-strip" aria-label="Trust highlights">
+          <span>Proactive tax planning</span>
+          <span>Implementation actually gets done</span>
+          <span>Capacity capped to protect quality</span>
+        </div>
+        <div class="cta-row">
+          <a class="button" href="#book-call">Book a Strategy Call</a>
+          <a class="button alt" href="#model">See the Pod Model</a>
+        </div>
+        <div class="hero-metrics">
+          <div class="metric"><strong>5</strong><span>specialized roles per standard pod</span></div>
+          <div class="metric"><strong>≤ 40h</strong><span>workload target per role, by design</span></div>
+          <div class="metric"><strong>1 system</strong><span>build → cap → maintain → duplicate</span></div>
+        </div>
+      </div>
+      <aside class="hero-side panel">
+        <div class="quote-card">
+          <blockquote>“You get a dedicated system — not one overextended person trying to do everything.”</blockquote>
+          <p class="small">That is the core promise behind the new Olea Tax direction.</p>
+        </div>
+        <div class="mini-card">
+          <strong>Who this is for</strong>
+          <p>Business owners, real estate investors, and high-income households who want year-round tax leadership — not reactive filing support only.</p>
+        </div>
+        <div class="mini-card">
+          <strong>Why it converts</strong>
+          <p>It frames Olea Tax as a premium operating system: structured, repeatable, implementation-focused, and designed for durable recurring advisory revenue.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section">
+      <div class="section-card panel">
+        <p class="eyebrow">The value proposition</p>
+        <h2>What changes when service is engineered — not improvised.</h2>
+        <p class="section-intro">The PDFs point toward a stronger website story: clients are not buying isolated advice. They are buying continuity, execution, and a team structure that preserves quality as the firm grows.</p>
+        <div class="value-grid">
+          <div class="value-card">
+            <strong>Scale without burnout</strong>
+            <p>Specialized roles distribute workload intentionally so the service can grow without making quality fragile.</p>
+          </div>
+          <div class="value-card">
+            <strong>Execution is built in</strong>
+            <p>Dedicated EAs handle implementation workflows so strategies do not die in a PDF or after a planning call.</p>
+          </div>
+          <div class="value-card">
+            <strong>Recurring by design</strong>
+            <p>Maintenance cycles create a clear annual rhythm for retention, advisory touchpoints, and predictable cash flow.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="model" class="section">
+      <div class="section-card panel">
+        <p class="eyebrow">The pod model</p>
+        <h2>Five roles. One client experience. Clear ownership at every stage.</h2>
+        <p class="section-intro">Instead of hiding the operating model, this concept turns it into proof. The structure itself becomes part of the premium story.</p>
+        <div class="pod-grid">
+          <article class="pod-card">
+            <div class="role-num">01</div>
+            <h3>Sales</h3>
+            <p>Runs discovery, qualifies fit, and closes new advisory relationships.</p>
+          </article>
+          <article class="pod-card">
+            <div class="role-num">02</div>
+            <h3>Strategist</h3>
+            <p>Builds the tax strategy, leads delivery calls, and owns the advisory relationship.</p>
+          </article>
+          <article class="pod-card">
+            <div class="role-num">03</div>
+            <h3>EA #1</h3>
+            <p>Executes implementation items like entity changes, Augusta Rule workflows, and accountable plans.</p>
+          </article>
+          <article class="pod-card">
+            <div class="role-num">04</div>
+            <h3>EA #2</h3>
+            <p>Extends execution capacity so strategy can move fast without overwhelming one support lane.</p>
+          </article>
+          <article class="pod-card">
+            <div class="role-num">05</div>
+            <h3>Admin / Workflow</h3>
+            <p>Assigns tasks, tracks client status, schedules touchpoints, and prevents bottlenecks.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow" class="section section-split">
+      <div class="section-card panel">
+        <p class="eyebrow">Client workflow</p>
+        <h2>A cleaner four-step journey for every new client.</h2>
+        <div class="process-grid">
+          <div class="process-step">
+            <strong>01 · Discovery</strong>
+            <p>Sales call clarifies fit, goals, entity setup, urgency, and current tax posture.</p>
+          </div>
+          <div class="process-step">
+            <strong>02 · Strategy Build</strong>
+            <p>The strategist builds the plan and pressure-tests decisions before they are presented.</p>
+          </div>
+          <div class="process-step">
+            <strong>03 · Plan Delivery</strong>
+            <p>The client receives a clear roadmap, next actions, and logic behind every move.</p>
+          </div>
+          <div class="process-step">
+            <strong>04 · Implementation</strong>
+            <p>EAs and workflow support drive the details so execution happens, not just discussion.</p>
+          </div>
+        </div>
+      </div>
+      <div class="section-card panel">
+        <p class="eyebrow">Maintenance cycle</p>
+        <h2>Build → cap → maintain → duplicate.</h2>
+        <p class="section-intro">The site should make this rhythm feel simple and inevitable: build the first pod, cap workload, maintain recurring client value, then duplicate the system for growth.</p>
+        <div class="cards two">
+          <div class="mini-card">
+            <strong>Mid-year review</strong>
+            <p>Adjust strategy before deadlines create pressure.</p>
+          </div>
+          <div class="mini-card">
+            <strong>Year-end review</strong>
+            <p>Lock in decisions while there is still time to act.</p>
+          </div>
+          <div class="mini-card">
+            <strong>Capacity discipline</strong>
+            <p>Client load stays capped so service quality remains premium.</p>
+          </div>
+          <div class="mini-card">
+            <strong>Operational repeatability</strong>
+            <p>Every pod can be trained, measured, and duplicated with less chaos.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="proof" class="section">
+      <div class="section-card panel">
+        <p class="eyebrow">Operational proof</p>
+        <h2>The 40-hour workload model becomes a client trust signal.</h2>
+        <p class="section-intro">Instead of treating team workload as backstage information, this concept translates it into a service-quality promise: better focus, fewer dropped balls, and a calmer delivery engine.</p>
+        <div class="proof-grid">
+          <div class="proof-card">
+            <div class="big-number">40h</div>
+            <strong>Weekly cap per role</strong>
+            <p>Work is scoped intentionally so no one has to hold the whole system on their back.</p>
+          </div>
+          <div class="proof-card">
+            <div class="big-number">9</div>
+            <strong>Discovery calls/week</strong>
+            <p>The sales lane is structured, measured, and sustainable — not chaos-driven.</p>
+          </div>
+          <div class="proof-card">
+            <div class="big-number">6</div>
+            <strong>New strategies/week</strong>
+            <p>The strategist workload is calibrated to preserve judgment, responsiveness, and quality.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-split">
+      <div class="section-card panel">
+        <p class="eyebrow">Messaging angle</p>
+        <h2>What this new direction says without saying it.</h2>
+        <div class="cards two">
+          <div class="mini-card">
+            <strong>No reactive scrambling</strong>
+            <p>The website should feel calm, operational, and quietly premium — not panicked, loud, or generic.</p>
+          </div>
+          <div class="mini-card">
+            <strong>No solo-hero bottleneck</strong>
+            <p>The structure signals reliability beyond one person’s calendar, mood, or available bandwidth.</p>
+          </div>
+          <div class="mini-card">
+            <strong>No advice left sitting</strong>
+            <p>Implementation support becomes a visible product differentiator, not a hidden back-office note.</p>
+          </div>
+          <div class="mini-card">
+            <strong>No quality dilution</strong>
+            <p>Client capacity caps are framed as a quality promise, not a scarcity gimmick.</p>
+          </div>
+        </div>
+      </div>
+      <div class="section-card panel" id="book-call">
+        <p class="eyebrow">Conversion</p>
+        <h2>Book a strategy call</h2>
+        <p class="section-intro">This concept should convert around clarity: who the model is for, what happens next, and why the operating system is better for the client.</p>
+        <div class="mini-card">
+          <strong>What happens on the call</strong>
+          <p>We review your current tax posture, entity structure, planning opportunities, and whether a strategist-led pod is the right fit for your situation.</p>
+          <p class="small">Draft CTA only — still a concept, not a connected booking flow.</p>
+          <p><a class="button" href="mailto:hello@oleataxco.com">Request a Strategy Call</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faqs" class="section">
+      <div class="section-card panel">
+        <p class="eyebrow">FAQs</p>
+        <h2>Client-friendly answers for a more operational offer.</h2>
+        <div class="faq-grid">
+          <article class="faq">
+            <h3>Why talk about the team model on the homepage?</h3>
+            <p>Because the team structure is the product advantage. It explains why service is more consistent, proactive, and implementation-focused.</p>
+          </article>
+          <article class="faq">
+            <h3>Does this replace one-on-one advisory?</h3>
+            <p>No. The strategist still owns the relationship. The pod simply makes execution and communication more reliable.</p>
+          </article>
+          <article class="faq">
+            <h3>Why mention workload caps?</h3>
+            <p>Because sane workload design leads to better response quality, stronger attention, and less risk of important details being missed.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="footer-cta panel">
+      <div>
+        <p class="eyebrow">Website direction summary</p>
+        <h2>Premium tax strategy, now framed as a durable operating system.</h2>
+        <p class="section-intro">This v25.0 look pivots Olea Tax away from a generic CPA site and toward a more differentiated advisory brand: operationally credible, premium in tone, and built around execution.</p>
+      </div>
+      <div class="footer-grid">
+        <div class="mini-card">
+          <strong>Source docs</strong>
+          <p>Scalable Tax Planning Pod Model</p>
+          <p>Workload & Task Justification Model</p>
+        </div>
+        <div class="mini-card">
+          <strong>Recommended next step</strong>
+          <p>If you like this direction, I’d next build a sharper booking section + a more visual pod diagram.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
