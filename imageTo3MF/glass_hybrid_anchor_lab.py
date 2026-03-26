@@ -242,10 +242,10 @@ def reduce_pane_palette(
     original_rgb: np.ndarray,
     palette_colors: int,
     seed: int,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     valid_ids = sorted(int(v) for v in np.unique(labels[labels >= 0]))
     if not valid_ids:
-        return np.zeros((0, 3), dtype=np.uint8)
+        return np.zeros((0, 3), dtype=np.uint8), np.zeros((0,), dtype=np.int32)
 
     lab_means, rgb_means, counts = engine.component_color_means(labels, engine.srgb_to_lab(original_rgb), original_rgb)
     active_lab = lab_means[valid_ids].astype(np.float32)
@@ -254,13 +254,16 @@ def reduce_pane_palette(
     clusters = max(1, min(int(palette_colors), len(valid_ids)))
     if clusters >= len(valid_ids):
         reduced = np.zeros((max(valid_ids) + 1, 3), dtype=np.uint8)
+        assignments = np.full((max(valid_ids) + 1,), -1, dtype=np.int32)
         for region_id, color in zip(valid_ids, active_rgb):
             reduced[region_id] = color
-        return reduced
+            assignments[region_id] = region_id
+        return reduced, assignments
 
     grouped_labels, grouped_centers = engine.weighted_kmeans(active_lab, active_counts, clusters=clusters, seed=seed)
     grouped_labels = grouped_labels.astype(np.int32)
     reduced_active = np.zeros((len(valid_ids), 3), dtype=np.uint8)
+    assignment_ids = np.full((len(valid_ids),), -1, dtype=np.int32)
     for cluster_index in range(clusters):
         member_indices = np.where(grouped_labels == cluster_index)[0]
         if len(member_indices) == 0:
@@ -268,18 +271,46 @@ def reduce_pane_palette(
         weights = active_counts[member_indices][:, None]
         cluster_rgb = np.clip(np.round((active_rgb[member_indices].astype(np.float32) * weights).sum(axis=0) / max(weights.sum(), 1.0)), 0, 255).astype(np.uint8)
         reduced_active[member_indices] = cluster_rgb
+        assignment_ids[member_indices] = cluster_index
 
     reduced = np.zeros((max(valid_ids) + 1, 3), dtype=np.uint8)
-    for region_id, color in zip(valid_ids, reduced_active):
+    assignments = np.full((max(valid_ids) + 1,), -1, dtype=np.int32)
+    for region_id, color, cluster_id in zip(valid_ids, reduced_active, assignment_ids):
         reduced[region_id] = color
-    return reduced
+        assignments[region_id] = cluster_id
+    return reduced, assignments
+
+
+def reduced_boundary_from_labels(labels: np.ndarray, anchor_mask: np.ndarray, reduced_assignments: np.ndarray) -> np.ndarray:
+    lead = anchor_mask.copy()
+    height, width = labels.shape
+    for y in range(height):
+        for x in range(width):
+            here = labels[y, x]
+            if here < 0:
+                continue
+            here_group = reduced_assignments[here] if here < len(reduced_assignments) else -1
+            if x + 1 < width and labels[y, x + 1] >= 0:
+                right = labels[y, x + 1]
+                right_group = reduced_assignments[right] if right < len(reduced_assignments) else -1
+                if right != here and right_group != here_group:
+                    lead[y, x] = True
+                    lead[y, x + 1] = True
+            if y + 1 < height and labels[y + 1, x] >= 0:
+                down = labels[y + 1, x]
+                down_group = reduced_assignments[down] if down < len(reduced_assignments) else -1
+                if down != here and down_group != here_group:
+                    lead[y, x] = True
+                    lead[y + 1, x] = True
+    return lead
 
 
 def build_sheet(
     image_path: Path,
     original_rgb: np.ndarray,
-    lead_mask: np.ndarray,
     labels: np.ndarray,
+    lead_mask_before: np.ndarray,
+    lead_mask_after: np.ndarray,
     mean_colors_before: np.ndarray,
     mean_colors_after: np.ndarray,
     resolution_mm: float,
@@ -287,8 +318,8 @@ def build_sheet(
 ) -> Image.Image:
     font = ImageFont.load_default()
     original = Image.fromarray(original_rgb).convert("RGB")
-    before_preview = engine.build_preview(labels, mean_colors_before, lead_mask).convert("RGB")
-    after_preview = engine.build_preview(labels, mean_colors_after, lead_mask).convert("RGB")
+    before_preview = engine.build_preview(labels, mean_colors_before, lead_mask_before).convert("RGB")
+    after_preview = engine.build_preview(labels, mean_colors_after, lead_mask_after).convert("RGB")
     preview_height = 260
     for image in (original, before_preview, after_preview):
         image.thumbnail((260, preview_height), Image.Resampling.NEAREST if image is not original else Image.Resampling.LANCZOS)
@@ -326,10 +357,21 @@ def main() -> int:
     labels = initial_cluster_labels(analysis_rgb, anchor_mask, args)
     component_labels, _sizes, _cluster_map = componentize(labels, anchor_mask)
     merged_labels = merge_small_and_similar_regions(component_labels, anchor_mask, analysis_rgb, args)
-    lead_mask = boundary_from_labels(merged_labels, anchor_mask)
+    lead_mask_before = boundary_from_labels(merged_labels, anchor_mask)
     mean_colors_before = engine.component_color_means(merged_labels, engine.srgb_to_lab(original_rgb), original_rgb)[1]
-    mean_colors_after = reduce_pane_palette(merged_labels, original_rgb, args.palette_colors, args.seed)
-    sheet = build_sheet(image_path, original_rgb, lead_mask, merged_labels, mean_colors_before, mean_colors_after, args.resolution, args)
+    mean_colors_after, reduced_assignments = reduce_pane_palette(merged_labels, original_rgb, args.palette_colors, args.seed)
+    lead_mask_after = reduced_boundary_from_labels(merged_labels, anchor_mask, reduced_assignments)
+    sheet = build_sheet(
+        image_path,
+        original_rgb,
+        merged_labels,
+        lead_mask_before,
+        lead_mask_after,
+        mean_colors_before,
+        mean_colors_after,
+        args.resolution,
+        args,
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(args.output)
     print(args.output)
