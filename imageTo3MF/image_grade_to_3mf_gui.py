@@ -16,7 +16,6 @@ from PySide6.QtCore import Qt, QProcess, QSize, QTimer, QSettings
 from PySide6.QtGui import QColor, QPixmap, QTextCursor, QIcon
 from PySide6.QtWidgets import (
     QApplication,
-    QCheckBox,
     QColorDialog,
     QComboBox,
     QFileDialog,
@@ -514,24 +513,23 @@ class MainWindow(QMainWindow):
         settings_grid.addWidget(QLabel("Seed"), 9, 0)
         settings_grid.addWidget(self.seed_spin, 9, 1)
 
-        self.open_orca_checkbox = QCheckBox("Open result in Snapmaker Orca")
-        self.open_orca_checkbox.setChecked(True)
-        settings_grid.addWidget(self.open_orca_checkbox, 10, 0, 1, 2)
-
         layout.addWidget(settings_group)
 
         run_buttons = QWidget()
         run_buttons_layout = QHBoxLayout(run_buttons)
         run_buttons_layout.setContentsMargins(0, 0, 0, 0)
         run_buttons_layout.setSpacing(12)
-        self.generate_button = QPushButton("Generate 3MF")
+        self.generate_button = QPushButton("Generate")
         self.generate_button.setObjectName("primaryButton")
         self.generate_button.clicked.connect(self.run_export)
         self.generate_button.setMinimumHeight(40)
-        reveal_button = QPushButton("Reveal Output")
+        reveal_button = QPushButton("Reveal")
         reveal_button.clicked.connect(self.reveal_output)
+        open_button = QPushButton("Open")
+        open_button.clicked.connect(self.open_output_in_orca)
         run_buttons_layout.addWidget(self.generate_button, 1)
         run_buttons_layout.addWidget(reveal_button)
+        run_buttons_layout.addWidget(open_button)
         layout.addWidget(run_buttons)
 
         layout.addStretch(1)
@@ -1016,8 +1014,7 @@ class MainWindow(QMainWindow):
         if output_path:
             script_args.extend(["--output", output_path])
 
-        if not self.open_orca_checkbox.isChecked():
-            script_args.append("--no-open")
+        script_args.append("--no-open")
 
         script_args.extend(self._material_args())
 
@@ -1142,6 +1139,20 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "No output yet", "Generate something first.")
             return
         subprocess.run(["open", "-R", str(target)], check=False)
+
+    def open_output_in_orca(self) -> None:
+        if self.output_path is None:
+            QMessageBox.information(self, "No output yet", "Generate a 3MF first.")
+            return
+        if not self.output_path.exists():
+            QMessageBox.warning(self, "Missing output", f"Output not found:\n{self.output_path}")
+            return
+        if not engine.open_in_orca_slicer(self.output_path):
+            QMessageBox.warning(
+                self,
+                "Could not open Snapmaker Orca",
+                f"LeadLight could not open {self.output_path.name} in Snapmaker Orca automatically.",
+            )
 
 
 def main() -> int:

@@ -129,6 +129,19 @@ class MaterialProfile:
     td: float
 
 
+@dataclass(frozen=True)
+class LeadDetectionConfig:
+    strong_luma_cap: float = 72.0
+    weak_luma_cap: float = 92.0
+    strong_percentile: float = 10.0
+    weak_percentile: float = 18.0
+    strong_contrast_min: float = 18.0
+    weak_contrast_min: float = 12.0
+    strong_color_range_max: float = 80.0
+    weak_color_range_max: float = 110.0
+    grow_passes: int = 3
+
+
 def parse_mm_value(raw: str) -> float:
     value = raw.strip().lower()
     if value.endswith("mm"):
@@ -889,11 +902,16 @@ def dilate_mask(mask: np.ndarray, radius_pixels: int) -> np.ndarray:
     return dilated
 
 
-def detect_image_lead_mask(rgb_image: np.ndarray) -> np.ndarray:
+def detect_image_lead_mask(
+    rgb_image: np.ndarray,
+    config: Optional[LeadDetectionConfig] = None,
+) -> np.ndarray:
+    if config is None:
+        config = LeadDetectionConfig()
     rgb = rgb_image.astype(np.float32)
     luma = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
-    strong_threshold = min(72.0, float(np.percentile(luma, 10)))
-    weak_threshold = min(92.0, float(np.percentile(luma, 18)))
+    strong_threshold = min(config.strong_luma_cap, float(np.percentile(luma, config.strong_percentile)))
+    weak_threshold = min(config.weak_luma_cap, float(np.percentile(luma, config.weak_percentile)))
 
     contrast = np.zeros_like(luma)
     contrast[:-1, :] = np.maximum(contrast[:-1, :], np.abs(luma[:-1, :] - luma[1:, :]))
@@ -902,11 +920,19 @@ def detect_image_lead_mask(rgb_image: np.ndarray) -> np.ndarray:
     contrast[:, 1:] = np.maximum(contrast[:, 1:], np.abs(luma[:, 1:] - luma[:, :-1]))
 
     color_range = np.max(rgb, axis=2) - np.min(rgb, axis=2)
-    strong_mask = (luma <= strong_threshold) & (contrast >= 18.0) & (color_range <= 80.0)
-    weak_mask = (luma <= weak_threshold) & (contrast >= 12.0) & (color_range <= 110.0)
+    strong_mask = (
+        (luma <= strong_threshold)
+        & (contrast >= config.strong_contrast_min)
+        & (color_range <= config.strong_color_range_max)
+    )
+    weak_mask = (
+        (luma <= weak_threshold)
+        & (contrast >= config.weak_contrast_min)
+        & (color_range <= config.weak_color_range_max)
+    )
 
     grown = strong_mask.copy()
-    for _ in range(3):
+    for _ in range(max(0, config.grow_passes)):
         grown = dilate_mask(grown, radius_pixels=1) & weak_mask
     return grown
 
