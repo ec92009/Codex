@@ -72,6 +72,11 @@ Rebuild local macOS app bundles after pulling when needed:
 /Users/ecohen/Codex/filamentDB/build_filamentdb_app.sh
 ```
 
+Each build now also refreshes the Desktop launcher copy automatically:
+
+- `/Users/ecohen/Desktop/LeadLight.app`
+- `/Users/ecohen/Desktop/filamentDB.app`
+
 Notes:
 
 - Commit source changes, docs, scripts, icons, and launcher changes.
@@ -86,5 +91,5 @@ Use this when settling a machine after pulling fresh changes:
 1. `git pull --ff-only origin main`
 2. Verify `filamentDB/data/filaments.tsv` looks current.
 3. If an old local `filaments.db` is still present and the TSV is confirmed good, archive it to `filaments.db.bak` or remove it.
-4. Rebuild local app bundles if launcher, icon, or app-wrapper code changed.
+4. Rebuild local app bundles if launcher, icon, or app-wrapper code changed. This also refreshes the Desktop copies.
 5. Start work only after the repo and local wrappers are current.

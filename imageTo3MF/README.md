@@ -12,9 +12,9 @@ The GUI stage viewer now shows intermediate refinement states instead of a gener
 
 There are also launcher scripts at `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.sh` and `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.command`. On macOS, the `.command` version is the one to keep on the Desktop or in the Dock for reliable double-click launching in Terminal.
 
-For a no-Terminal macOS launcher, build the local app bundle with `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh`. That creates `/Users/ecohen/Codex/imageTo3MF/dist/LeadLight.app`, which you can keep on the Desktop, in the Dock, or in `/Applications`.
+For a no-Terminal macOS launcher, build the local app bundle with `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh`. That creates `/Users/ecohen/Codex/imageTo3MF/dist/LeadLight.app` and also refreshes the Desktop copy at `/Users/ecohen/Desktop/LeadLight.app` automatically.
 
-If you switch computers, `git pull` in `/Users/ecohen/Codex` first, then rerun `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh` on that machine so the local `.app` wrapper matches the latest code.
+If you switch computers, `git pull` in `/Users/ecohen/Codex` first, then rerun `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh` on that machine so both the local bundle and the Desktop launcher match the latest code.
 
 If no image path is passed, the script opens a file picker on macOS.
 
