@@ -31,8 +31,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--neutral-darkness-delta", type=float, default=3.0)
     parser.add_argument("--neutral-support-min", type=int, default=2)
     parser.add_argument("--neutral-support-max", type=int, default=6)
+    parser.add_argument(
+        "--max-anchor-pixels",
+        type=int,
+        default=2600,
+        help="Largest connected anchor region allowed to remain lead; larger regions are demoted to glass. (default: 2600)",
+    )
     parser.add_argument("--min-piece-pixels", type=int, default=18)
     parser.add_argument("--merge-distance", type=float, default=12.0)
+    parser.add_argument(
+        "--palette-colors",
+        type=int,
+        default=10,
+        help="Number of final pane colors after palette reduction. (default: 10)",
+    )
     parser.add_argument("--output", type=Path, default=Path("/tmp/glass_hybrid_anchor_lab.png"))
     return parser.parse_args()
 
@@ -82,7 +94,14 @@ def build_anchor_mask(original_rgb: np.ndarray, analysis_rgb: np.ndarray, args: 
     )
     support = engine.sum_filter_3x3(neutral_candidates.astype(np.uint8))
     neutral_anchor = neutral_candidates & (support >= args.neutral_support_min) & (support <= args.neutral_support_max)
-    return dark_anchor | neutral_anchor
+    anchor_mask = dark_anchor | neutral_anchor
+    components, sizes = engine.connected_components(anchor_mask)
+    if len(sizes):
+        oversized = sizes > args.max_anchor_pixels
+        if np.any(oversized):
+            valid = components >= 0
+            anchor_mask[valid] = ~oversized[components[valid]] & anchor_mask[valid]
+    return anchor_mask
 
 
 def initial_cluster_labels(analysis_rgb: np.ndarray, anchor_mask: np.ndarray, args: argparse.Namespace) -> np.ndarray:
@@ -135,6 +154,14 @@ def adjacency_pairs(labels: np.ndarray) -> set[tuple[int, int]]:
     return pairs
 
 
+def adjacency_map(labels: np.ndarray) -> dict[int, set[int]]:
+    neighbors: dict[int, set[int]] = {}
+    for a, b in adjacency_pairs(labels):
+        neighbors.setdefault(a, set()).add(b)
+        neighbors.setdefault(b, set()).add(a)
+    return neighbors
+
+
 def merge_small_and_similar_regions(
     labels: np.ndarray,
     anchor_mask: np.ndarray,
@@ -148,15 +175,36 @@ def merge_small_and_similar_regions(
         valid = result >= 0
         if not np.any(valid):
             break
-        _lab_means, _rgb_means, counts = engine.component_color_means(result, lab, analysis_rgb)
+        lab_means, _rgb_means, counts = engine.component_color_means(result, lab, analysis_rgb)
+        neighbors = adjacency_map(result)
+
+        # First, let very small panes merge into the touching neighbor with the closest color.
+        small_ids = [idx for idx, size in enumerate(counts) if 0 < size < args.min_piece_pixels]
+        for region_id in sorted(small_ids, key=lambda idx: int(counts[idx])):
+            touching = [n for n in neighbors.get(region_id, set()) if n < len(counts) and counts[n] > 0]
+            if not touching:
+                continue
+            best_neighbor = min(
+                touching,
+                key=lambda n: float(np.linalg.norm(lab_means[region_id].astype(np.float32) - lab_means[n].astype(np.float32))),
+            )
+            result[result == region_id] = best_neighbor
+            changed = True
+
+        if changed:
+            unique = sorted(int(v) for v in np.unique(result[result >= 0]))
+            remap = {old: new for new, old in enumerate(unique)}
+            for old, new in remap.items():
+                if old != new:
+                    result[result == old] = new
+            continue
+
+        # Then merge larger neighboring panes only when their colors are genuinely very close.
         for a, b in sorted(adjacency_pairs(result)):
-            if a >= len(counts) or b >= len(counts):
+            if a >= len(counts) or b >= len(counts) or counts[a] == 0 or counts[b] == 0:
                 continue
-            if counts[a] == 0 or counts[b] == 0:
-                continue
-            distance = float(np.linalg.norm(_lab_means[a].astype(np.float32) - _lab_means[b].astype(np.float32)))
-            small_pair = counts[a] < args.min_piece_pixels or counts[b] < args.min_piece_pixels
-            if small_pair or distance <= args.merge_distance:
+            distance = float(np.linalg.norm(lab_means[a].astype(np.float32) - lab_means[b].astype(np.float32)))
+            if distance <= args.merge_distance:
                 keep, replace = (a, b) if counts[a] >= counts[b] else (b, a)
                 result[result == replace] = keep
                 changed = True
@@ -189,40 +237,78 @@ def boundary_from_labels(labels: np.ndarray, anchor_mask: np.ndarray) -> np.ndar
     return lead
 
 
+def reduce_pane_palette(
+    labels: np.ndarray,
+    original_rgb: np.ndarray,
+    palette_colors: int,
+    seed: int,
+) -> np.ndarray:
+    valid_ids = sorted(int(v) for v in np.unique(labels[labels >= 0]))
+    if not valid_ids:
+        return np.zeros((0, 3), dtype=np.uint8)
+
+    lab_means, rgb_means, counts = engine.component_color_means(labels, engine.srgb_to_lab(original_rgb), original_rgb)
+    active_lab = lab_means[valid_ids].astype(np.float32)
+    active_rgb = rgb_means[valid_ids].astype(np.uint8)
+    active_counts = counts[valid_ids].astype(np.float32)
+    clusters = max(1, min(int(palette_colors), len(valid_ids)))
+    if clusters >= len(valid_ids):
+        reduced = np.zeros((max(valid_ids) + 1, 3), dtype=np.uint8)
+        for region_id, color in zip(valid_ids, active_rgb):
+            reduced[region_id] = color
+        return reduced
+
+    grouped_labels, grouped_centers = engine.weighted_kmeans(active_lab, active_counts, clusters=clusters, seed=seed)
+    grouped_labels = grouped_labels.astype(np.int32)
+    reduced_active = np.zeros((len(valid_ids), 3), dtype=np.uint8)
+    for cluster_index in range(clusters):
+        member_indices = np.where(grouped_labels == cluster_index)[0]
+        if len(member_indices) == 0:
+            continue
+        weights = active_counts[member_indices][:, None]
+        cluster_rgb = np.clip(np.round((active_rgb[member_indices].astype(np.float32) * weights).sum(axis=0) / max(weights.sum(), 1.0)), 0, 255).astype(np.uint8)
+        reduced_active[member_indices] = cluster_rgb
+
+    reduced = np.zeros((max(valid_ids) + 1, 3), dtype=np.uint8)
+    for region_id, color in zip(valid_ids, reduced_active):
+        reduced[region_id] = color
+    return reduced
+
+
 def build_sheet(
     image_path: Path,
     original_rgb: np.ndarray,
-    anchor_mask: np.ndarray,
     lead_mask: np.ndarray,
     labels: np.ndarray,
-    mean_colors: np.ndarray,
+    mean_colors_before: np.ndarray,
+    mean_colors_after: np.ndarray,
     resolution_mm: float,
     args: argparse.Namespace,
 ) -> Image.Image:
     font = ImageFont.load_default()
     original = Image.fromarray(original_rgb).convert("RGB")
-    anchor_preview = engine.mask_preview(anchor_mask).convert("RGB")
-    final_preview = engine.build_preview(labels, mean_colors, lead_mask).convert("RGB")
+    before_preview = engine.build_preview(labels, mean_colors_before, lead_mask).convert("RGB")
+    after_preview = engine.build_preview(labels, mean_colors_after, lead_mask).convert("RGB")
     preview_height = 260
-    for image in (original, anchor_preview, final_preview):
+    for image in (original, before_preview, after_preview):
         image.thumbnail((260, preview_height), Image.Resampling.NEAREST if image is not original else Image.Resampling.LANCZOS)
 
     padding = 16
     header_h = 72
     footer_h = 30
     gap = 12
-    tile_width = original.width + anchor_preview.width + final_preview.width + gap * 2 + padding * 2
-    tile_height = max(original.height, anchor_preview.height, final_preview.height) + header_h + footer_h + padding * 2
+    tile_width = original.width + before_preview.width + after_preview.width + gap * 2 + padding * 2
+    tile_height = max(original.height, before_preview.height, after_preview.height) + header_h + footer_h + padding * 2
     sheet = Image.new("RGB", (tile_width, tile_height), "#fbf7f0")
     draw = ImageDraw.Draw(sheet)
     draw.rounded_rectangle((0, 0, tile_width - 1, tile_height - 1), radius=18, outline="#d0c3ae", width=2, fill="#fbf7f0")
     draw.text((padding, padding - 2), image_path.name, font=font, fill="#3f2d1d")
     draw.text((padding, padding + 22), f"anchors l<={args.anchor_luma:g} chroma<={args.anchor_chroma:g} neutral c<={args.neutral_chroma:g}@l<={args.neutral_luma:g}", font=font, fill="#745f49")
-    draw.text((padding, padding + 44), f"clusters {args.clusters} smooth {args.smooth_passes} merge<={args.merge_distance:g} blur {args.analysis_blur_px:g}px min piece {args.min_piece_pixels}", font=font, fill="#745f49")
-    draw.text((padding, padding + 62), f"Original    Confident lead anchors    Hybrid merged panes    grid {original_rgb.shape[1]}x{original_rgb.shape[0]} @ {engine.format_number(resolution_mm)} mm", font=font, fill="#745f49")
+    draw.text((padding, padding + 44), f"clusters {args.clusters} smooth {args.smooth_passes} merge<={args.merge_distance:g} blur {args.analysis_blur_px:g}px max anchor {args.max_anchor_pixels} min piece {args.min_piece_pixels}", font=font, fill="#745f49")
+    draw.text((padding, padding + 62), f"Original    Before reduction    After reduction ({args.palette_colors} colors)    grid {original_rgb.shape[1]}x{original_rgb.shape[0]} @ {engine.format_number(resolution_mm)} mm", font=font, fill="#745f49")
     y = padding + header_h
     x = padding
-    for image in (original, anchor_preview, final_preview):
+    for image in (original, before_preview, after_preview):
         sheet.paste(image, (x, y))
         x += image.width + gap
     return sheet
@@ -241,8 +327,9 @@ def main() -> int:
     component_labels, _sizes, _cluster_map = componentize(labels, anchor_mask)
     merged_labels = merge_small_and_similar_regions(component_labels, anchor_mask, analysis_rgb, args)
     lead_mask = boundary_from_labels(merged_labels, anchor_mask)
-    mean_colors = engine.component_color_means(merged_labels, engine.srgb_to_lab(original_rgb), original_rgb)[1]
-    sheet = build_sheet(image_path, original_rgb, anchor_mask, lead_mask, merged_labels, mean_colors, args.resolution, args)
+    mean_colors_before = engine.component_color_means(merged_labels, engine.srgb_to_lab(original_rgb), original_rgb)[1]
+    mean_colors_after = reduce_pane_palette(merged_labels, original_rgb, args.palette_colors, args.seed)
+    sheet = build_sheet(image_path, original_rgb, lead_mask, merged_labels, mean_colors_before, mean_colors_after, args.resolution, args)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(args.output)
     print(args.output)
