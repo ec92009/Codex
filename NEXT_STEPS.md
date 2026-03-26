@@ -5,9 +5,7 @@ Use this file as a quick checkpoint before stopping work.
 ## Current Task
 
 - Keep LeadLight and filamentDB in sync across machines, with Desktop app bundles refreshing automatically after rebuilds.
-- Continue the `glass_interior_growth_lab.py` experiment for detect mode if we want to replace the current direct lead detector.
-- Compare the new `glass_hybrid_anchor_lab.py` baseline against the interior-growth lab before deciding whether to bring a hybrid detect/generate mode into LeadLight.
-- Compare the tighter hybrid anchor baseline and its 10-color palette reduction against the old detect mode before deciding whether to bring it into LeadLight.
+- Validate the integrated hybrid `detect` mode on a wider real-image set and decide whether the old direct-detect helpers can be retired.
 
 ## Last Completed
 
@@ -17,24 +15,20 @@ Use this file as a quick checkpoint before stopping work.
 - Built a hybrid anchor-detect + generated-pane lab that looks strong on most of `A.png` through `F.png`.
 - Added a before/after palette reduction view to the hybrid lab so it can be judged against the real `8..10 color` print constraint.
 - Updated the reduced hybrid preview so generated lead between panes of the same reduced color is removed automatically.
+- Integrated the hybrid anchor-detect + generated-pane pipeline into LeadLight's `detect` mode while leaving `generate` untouched.
 
 ## Next Command To Run
 
 - `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh`
 - `/Users/ecohen/Codex/filamentDB/build_filamentdb_app.sh`
-- `uv run --project /Users/ecohen/Codex/imageTo3MF python /Users/ecohen/Codex/imageTo3MF/glass_interior_growth_lab.py /Users/ecohen/Desktop/F.png --analysis-blur-px 1.4 --lead-luma-threshold 30 --hard-lead-chroma-max 26 --neutral-chroma-max 18 --neutral-edge-threshold 14 --output /tmp/glass_interior_growth_F.png`
-- `uv run --project /Users/ecohen/Codex/imageTo3MF python /Users/ecohen/Codex/imageTo3MF/glass_hybrid_anchor_lab.py /Users/ecohen/Desktop/F.png --output /tmp/glass_hybrid_F.png`
-- `uv run --project /Users/ecohen/Codex/imageTo3MF python /Users/ecohen/Codex/imageTo3MF/glass_hybrid_anchor_lab.py /Users/ecohen/Desktop/F.png --anchor-luma 36 --anchor-chroma 24 --neutral-chroma 13 --neutral-contrast 22 --neutral-support-max 5 --palette-colors 10 --output /tmp/glass_hybrid_F_palette.png`
-- `uv run --project /Users/ecohen/Codex/imageTo3MF python /Users/ecohen/Codex/imageTo3MF/glass_hybrid_anchor_lab.py /Users/ecohen/Desktop/F.png --anchor-luma 36 --anchor-chroma 24 --neutral-chroma 13 --neutral-contrast 22 --neutral-support-max 5 --palette-colors 10 --output /tmp/glass_hybrid_F_palette2.png`
+- `uv run --project /Users/ecohen/Codex/imageTo3MF python /Users/ecohen/Codex/imageTo3MF/image_grade_to_3mf.py /Users/ecohen/Desktop/F.png --lead-source detect --no-open --preview /tmp/leadlight_detect_preview.png --output /tmp/leadlight_detect_test.3mf`
 
 ## Open Questions
 
 - Should the Desktop app refresh also open Finder to the updated app automatically, or is silent replacement better?
 - Should the same Desktop-refresh behavior be added to any future local app bundles under `/Users/ecohen/Codex`?
-- Is the `glass_interior_growth_lab.py` approach strong enough to replace detect mode, or should it remain a side experiment?
-- Is the hybrid lab good enough to become the new direction for detect mode, or should it stay as a separate “detected-anchor” option?
-- Does the 10-color reduced hybrid output still look strong enough across `A..F` to justify integrating it into LeadLight?
-- Should the reduced hybrid output become the new `detect` mode, or should LeadLight expose it as a separate `hybrid` lead mode?
+- Should the old direct-detect helper code and tuning lab be cleaned out now that hybrid detect is integrated?
+- Do we want a user-facing control for hybrid detect sensitivity, or keep the defaults fixed for now?
 
 ## Blockers
 

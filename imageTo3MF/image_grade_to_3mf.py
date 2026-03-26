@@ -140,6 +140,39 @@ class LeadDetectionConfig:
     strong_color_range_max: float = 80.0
     weak_color_range_max: float = 110.0
     grow_passes: int = 3
+    blue_dominance_max: float = 999.0
+    red_dominance_max: float = 999.0
+    neutral_edge_luma_cap: float = 255.0
+    neutral_edge_contrast_min: float = 999.0
+    neutral_edge_color_range_max: float = 999.0
+    separator_luma_cap: float = 255.0
+    separator_contrast_min: float = 999.0
+    separator_darkness_delta_min: float = 999.0
+    separator_color_range_max: float = 999.0
+    ridge_luma_cap: float = 255.0
+    ridge_darkness_delta_min: float = 999.0
+    ridge_side_color_diff_min: float = 999.0
+    ridge_color_range_max: float = 999.0
+    auxiliary_support_min: int = 0
+    auxiliary_support_max: int = 9
+
+
+@dataclass(frozen=True)
+class HybridLeadConfig:
+    analysis_blur_px: float = 1.2
+    clusters: int = 14
+    smooth_passes: int = 2
+    anchor_luma: float = 36.0
+    anchor_chroma: float = 24.0
+    neutral_chroma: float = 13.0
+    neutral_luma: float = 238.0
+    neutral_contrast: float = 22.0
+    neutral_darkness_delta: float = 3.0
+    neutral_support_min: int = 2
+    neutral_support_max: int = 5
+    max_anchor_pixels: int = 2600
+    min_piece_pixels: int = 18
+    merge_distance: float = 12.0
 
 
 def parse_mm_value(raw: str) -> float:
@@ -865,6 +898,35 @@ def fill_unassigned_labels(labels: np.ndarray) -> np.ndarray:
     return result
 
 
+def local_contrast_map(rgb_image: np.ndarray) -> np.ndarray:
+    rgb = rgb_image.astype(np.float32)
+    luma = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
+    contrast = np.zeros_like(luma)
+    contrast[:-1, :] = np.maximum(contrast[:-1, :], np.abs(luma[:-1, :] - luma[1:, :]))
+    contrast[1:, :] = np.maximum(contrast[1:, :], np.abs(luma[1:, :] - luma[:-1, :]))
+    contrast[:, :-1] = np.maximum(contrast[:, :-1], np.abs(luma[:, :-1] - luma[:, 1:]))
+    contrast[:, 1:] = np.maximum(contrast[:, 1:], np.abs(luma[:, 1:] - luma[:, :-1]))
+    return contrast
+
+
+def adjacency_pairs(labels: np.ndarray) -> set[Tuple[int, int]]:
+    pairs: set[Tuple[int, int]] = set()
+    height, width = labels.shape
+    for y in range(height):
+        for x in range(width - 1):
+            a = int(labels[y, x])
+            b = int(labels[y, x + 1])
+            if a >= 0 and b >= 0 and a != b:
+                pairs.add((min(a, b), max(a, b)))
+    for y in range(height - 1):
+        for x in range(width):
+            a = int(labels[y, x])
+            b = int(labels[y + 1, x])
+            if a >= 0 and b >= 0 and a != b:
+                pairs.add((min(a, b), max(a, b)))
+    return pairs
+
+
 def boundary_mask(labels: np.ndarray, radius_pixels: int) -> np.ndarray:
     diff = np.zeros_like(labels, dtype=bool)
     diff[:-1, :] |= labels[:-1, :] != labels[1:, :]
@@ -902,6 +964,39 @@ def dilate_mask(mask: np.ndarray, radius_pixels: int) -> np.ndarray:
     return dilated
 
 
+def mean_filter_3x3(values: np.ndarray) -> np.ndarray:
+    padded = np.pad(values, 1, mode="edge").astype(np.float32)
+    total = np.zeros_like(values, dtype=np.float32)
+    for dy in range(3):
+        for dx in range(3):
+            total += padded[dy : dy + values.shape[0], dx : dx + values.shape[1]]
+    return total / 9.0
+
+
+def sum_filter_3x3(values: np.ndarray) -> np.ndarray:
+    padded = np.pad(values, 1, mode="edge").astype(np.float32)
+    total = np.zeros_like(values, dtype=np.float32)
+    for dy in range(3):
+        for dx in range(3):
+            total += padded[dy : dy + values.shape[0], dx : dx + values.shape[1]]
+    return total
+
+
+def neighbor_axis_arrays(values: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    if values.ndim == 2:
+        pad_width = ((1, 1), (1, 1))
+    elif values.ndim == 3:
+        pad_width = ((1, 1), (1, 1), (0, 0))
+    else:
+        raise ValueError(f"Unsupported array rank for neighbor_axis_arrays: {values.ndim}")
+    padded = np.pad(values, pad_width, mode="edge")
+    left = padded[1:-1, :-2]
+    right = padded[1:-1, 2:]
+    up = padded[:-2, 1:-1]
+    down = padded[2:, 1:-1]
+    return left, right, up, down
+
+
 def detect_image_lead_mask(
     rgb_image: np.ndarray,
     config: Optional[LeadDetectionConfig] = None,
@@ -920,15 +1015,66 @@ def detect_image_lead_mask(
     contrast[:, 1:] = np.maximum(contrast[:, 1:], np.abs(luma[:, 1:] - luma[:, :-1]))
 
     color_range = np.max(rgb, axis=2) - np.min(rgb, axis=2)
+    blue_dominance = rgb[..., 2] - np.maximum(rgb[..., 0], rgb[..., 1])
+    red_dominance = rgb[..., 0] - np.maximum(rgb[..., 1], rgb[..., 2])
+    local_mean_luma = mean_filter_3x3(luma)
+    local_darkness_delta = local_mean_luma - luma
+    left_luma, right_luma, up_luma, down_luma = neighbor_axis_arrays(luma)
+    horizontal_ridge_darkness = np.minimum(left_luma, right_luma) - luma
+    vertical_ridge_darkness = np.minimum(up_luma, down_luma) - luma
+    left_rgb, right_rgb, up_rgb, down_rgb = neighbor_axis_arrays(rgb)
+    horizontal_side_color_diff = np.max(np.abs(left_rgb - right_rgb), axis=2)
+    vertical_side_color_diff = np.max(np.abs(up_rgb - down_rgb), axis=2)
+    ridge_mask = (
+        (luma <= config.ridge_luma_cap)
+        & (color_range <= config.ridge_color_range_max)
+        & (blue_dominance <= config.blue_dominance_max)
+        & (red_dominance <= config.red_dominance_max)
+        & (
+            (
+                (horizontal_ridge_darkness >= config.ridge_darkness_delta_min)
+                & (horizontal_side_color_diff >= config.ridge_side_color_diff_min)
+            )
+            | (
+                (vertical_ridge_darkness >= config.ridge_darkness_delta_min)
+                & (vertical_side_color_diff >= config.ridge_side_color_diff_min)
+            )
+        )
+    )
+    neutral_edge_mask = (
+        (luma <= config.neutral_edge_luma_cap)
+        & (contrast >= config.neutral_edge_contrast_min)
+        & (color_range <= config.neutral_edge_color_range_max)
+    )
+    separator_edge_mask = (
+        (luma <= config.separator_luma_cap)
+        & (contrast >= config.separator_contrast_min)
+        & (local_darkness_delta >= config.separator_darkness_delta_min)
+        & (color_range <= config.separator_color_range_max)
+        & (blue_dominance <= config.blue_dominance_max)
+        & (red_dominance <= config.red_dominance_max)
+    )
+    auxiliary_mask = neutral_edge_mask | separator_edge_mask | ridge_mask
+    if config.auxiliary_support_min > 0 or config.auxiliary_support_max < 9:
+        auxiliary_support = sum_filter_3x3(auxiliary_mask.astype(np.float32))
+        auxiliary_mask &= (
+            (auxiliary_support >= config.auxiliary_support_min)
+            & (auxiliary_support <= config.auxiliary_support_max)
+        )
     strong_mask = (
         (luma <= strong_threshold)
         & (contrast >= config.strong_contrast_min)
         & (color_range <= config.strong_color_range_max)
+        & (blue_dominance <= config.blue_dominance_max)
+        & (red_dominance <= config.red_dominance_max)
     )
+    strong_mask |= auxiliary_mask
     weak_mask = (
         (luma <= weak_threshold)
         & (contrast >= config.weak_contrast_min)
         & (color_range <= config.weak_color_range_max)
+        & (blue_dominance <= config.blue_dominance_max)
+        & (red_dominance <= config.red_dominance_max)
     )
 
     grown = strong_mask.copy()
@@ -1220,6 +1366,231 @@ def detect_lead_partition_labels(
     valid = component_labels >= 0
     labels[valid] = sorted_component_labels[component_labels[valid]]
     return labels, region_colors
+
+
+def build_hybrid_anchor_mask(
+    original_rgb: np.ndarray,
+    analysis_rgb: np.ndarray,
+    config: HybridLeadConfig,
+) -> np.ndarray:
+    original_lab = srgb_to_lab(original_rgb)
+    analysis_lab = srgb_to_lab(analysis_rgb)
+    original_luma = 0.2126 * original_rgb[..., 0] + 0.7152 * original_rgb[..., 1] + 0.0722 * original_rgb[..., 2]
+    analysis_luma = 0.2126 * analysis_rgb[..., 0] + 0.7152 * analysis_rgb[..., 1] + 0.0722 * analysis_rgb[..., 2]
+    original_chroma = np.sqrt(np.square(original_lab[..., 1]) + np.square(original_lab[..., 2]))
+    analysis_chroma = np.sqrt(np.square(analysis_lab[..., 1]) + np.square(analysis_lab[..., 2]))
+    contrast = np.maximum(local_contrast_map(original_rgb), local_contrast_map(analysis_rgb))
+    local_darkness_delta = np.maximum(
+        mean_filter_3x3(original_luma) - original_luma,
+        mean_filter_3x3(analysis_luma) - analysis_luma,
+    )
+
+    dark_anchor = (original_luma <= config.anchor_luma) & (original_chroma <= config.anchor_chroma)
+    neutral_candidates = (
+        (np.minimum(original_chroma, analysis_chroma) <= config.neutral_chroma)
+        & (analysis_luma <= config.neutral_luma)
+        & (contrast >= config.neutral_contrast)
+        & (local_darkness_delta >= config.neutral_darkness_delta)
+    )
+    support = sum_filter_3x3(neutral_candidates.astype(np.uint8))
+    neutral_anchor = neutral_candidates & (support >= config.neutral_support_min) & (support <= config.neutral_support_max)
+    anchor_mask = dark_anchor | neutral_anchor
+
+    component_labels, component_sizes = connected_components(anchor_mask)
+    if len(component_sizes):
+        oversized = component_sizes > config.max_anchor_pixels
+        if np.any(oversized):
+            valid = component_labels >= 0
+            anchor_mask[valid] = (~oversized[component_labels[valid]]) & anchor_mask[valid]
+    return anchor_mask
+
+
+def hybrid_initial_cluster_labels(
+    analysis_rgb: np.ndarray,
+    anchor_mask: np.ndarray,
+    config: HybridLeadConfig,
+    seed: int,
+) -> np.ndarray:
+    lab = srgb_to_lab(analysis_rgb)
+    valid_mask = ~anchor_mask
+    flat_lab = lab[valid_mask]
+    if flat_lab.size == 0:
+        return np.full(anchor_mask.shape, -1, dtype=np.int32)
+    cluster_count = max(2, min(config.clusters, len(flat_lab)))
+    flat_labels, _centers = kmeans(flat_lab.astype(np.float32), clusters=cluster_count, seed=seed)
+    labels = np.full(anchor_mask.shape, -1, dtype=np.int32)
+    labels[valid_mask] = flat_labels.astype(np.int32)
+    labels = majority_smooth_masked(labels, valid_mask, cluster_count, config.smooth_passes)
+    return labels
+
+
+def componentize_cluster_labels(labels: np.ndarray, anchor_mask: np.ndarray) -> np.ndarray:
+    height, width = labels.shape
+    componentized = np.full((height, width), -1, dtype=np.int32)
+    next_id = 0
+    for cluster_id in sorted(int(v) for v in np.unique(labels[labels >= 0])):
+        mask = (labels == cluster_id) & (~anchor_mask)
+        components, sizes = connected_components(mask)
+        if len(sizes) == 0:
+            continue
+        for local_id in range(len(sizes)):
+            componentized[components == local_id] = next_id
+            next_id += 1
+    return componentized
+
+
+def adjacency_map(labels: np.ndarray) -> Dict[int, set[int]]:
+    neighbors: Dict[int, set[int]] = {}
+    for a, b in adjacency_pairs(labels):
+        neighbors.setdefault(a, set()).add(b)
+        neighbors.setdefault(b, set()).add(a)
+    return neighbors
+
+
+def merge_small_and_similar_regions(
+    labels: np.ndarray,
+    analysis_rgb: np.ndarray,
+    config: HybridLeadConfig,
+) -> np.ndarray:
+    result = labels.copy()
+    lab = srgb_to_lab(analysis_rgb)
+    for _ in range(24):
+        changed = False
+        valid = result >= 0
+        if not np.any(valid):
+            break
+        lab_means, _rgb_means, counts = component_color_means(result, lab, analysis_rgb)
+        neighbors = adjacency_map(result)
+
+        small_ids = [idx for idx, size in enumerate(counts) if 0 < size < config.min_piece_pixels]
+        for region_id in sorted(small_ids, key=lambda idx: int(counts[idx])):
+            touching = [n for n in neighbors.get(region_id, set()) if n < len(counts) and counts[n] > 0]
+            if not touching:
+                continue
+            best_neighbor = min(
+                touching,
+                key=lambda n: float(np.linalg.norm(lab_means[region_id].astype(np.float32) - lab_means[n].astype(np.float32))),
+            )
+            result[result == region_id] = best_neighbor
+            changed = True
+
+        if changed:
+            unique = sorted(int(v) for v in np.unique(result[result >= 0]))
+            remap = {old: new for new, old in enumerate(unique)}
+            for old, new in remap.items():
+                if old != new:
+                    result[result == old] = new
+            continue
+
+        for a, b in sorted(adjacency_pairs(result)):
+            if a >= len(counts) or b >= len(counts) or counts[a] == 0 or counts[b] == 0:
+                continue
+            distance = float(np.linalg.norm(lab_means[a].astype(np.float32) - lab_means[b].astype(np.float32)))
+            if distance <= config.merge_distance:
+                keep, replace = (a, b) if counts[a] >= counts[b] else (b, a)
+                result[result == replace] = keep
+                changed = True
+        if not changed:
+            break
+
+        unique = sorted(int(v) for v in np.unique(result[result >= 0]))
+        remap = {old: new for new, old in enumerate(unique)}
+        for old, new in remap.items():
+            if old != new:
+                result[result == old] = new
+    return result
+
+
+def reduce_region_palette(
+    labels: np.ndarray,
+    rgb_image: np.ndarray,
+    palette_colors: int,
+    seed: int,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    valid_ids = sorted(int(v) for v in np.unique(labels[labels >= 0]))
+    if not valid_ids:
+        return np.full(labels.shape, -1, dtype=np.int32), np.zeros((0, 3), dtype=np.uint8), np.zeros((0,), dtype=np.int32)
+
+    lab_means, rgb_means, counts = component_color_means(labels, srgb_to_lab(rgb_image), rgb_image)
+    active_lab = lab_means[valid_ids].astype(np.float32)
+    active_rgb = rgb_means[valid_ids].astype(np.uint8)
+    active_counts = counts[valid_ids].astype(np.float32)
+    cluster_count = max(1, min(int(palette_colors), len(valid_ids)))
+    if cluster_count >= len(valid_ids):
+        reduced_labels = np.full(labels.shape, -1, dtype=np.int32)
+        assignments = np.full((max(valid_ids) + 1,), -1, dtype=np.int32)
+        for region_id in valid_ids:
+            reduced_labels[labels == region_id] = region_id
+            assignments[region_id] = region_id
+        return reduced_labels, active_rgb, assignments
+
+    grouped_labels, _grouped_centers = weighted_kmeans(active_lab, active_counts, clusters=cluster_count, seed=seed)
+    grouped_labels = grouped_labels.astype(np.int32)
+    reduced_colors = np.zeros((cluster_count, 3), dtype=np.uint8)
+    assignments = np.full((max(valid_ids) + 1,), -1, dtype=np.int32)
+    for cluster_index in range(cluster_count):
+        member_indices = np.where(grouped_labels == cluster_index)[0]
+        if len(member_indices) == 0:
+            continue
+        weights = active_counts[member_indices][:, None]
+        cluster_rgb = np.clip(
+            np.round((active_rgb[member_indices].astype(np.float32) * weights).sum(axis=0) / max(weights.sum(), 1.0)),
+            0,
+            255,
+        ).astype(np.uint8)
+        reduced_colors[cluster_index] = cluster_rgb
+        for member_index in member_indices:
+            assignments[valid_ids[member_index]] = cluster_index
+
+    reduced_labels = np.full(labels.shape, -1, dtype=np.int32)
+    valid = labels >= 0
+    reduced_labels[valid] = assignments[labels[valid]]
+    return reduced_labels, reduced_colors, assignments
+
+
+def reduced_boundary_mask(
+    original_region_labels: np.ndarray,
+    anchor_mask: np.ndarray,
+    reduced_assignments: np.ndarray,
+) -> np.ndarray:
+    lead = anchor_mask.copy()
+    height, width = original_region_labels.shape
+    for y in range(height):
+        for x in range(width):
+            here = original_region_labels[y, x]
+            if here < 0:
+                continue
+            here_group = reduced_assignments[here] if here < len(reduced_assignments) else -1
+            if x + 1 < width and original_region_labels[y, x + 1] >= 0:
+                right = original_region_labels[y, x + 1]
+                right_group = reduced_assignments[right] if right < len(reduced_assignments) else -1
+                if right != here and right_group != here_group:
+                    lead[y, x] = True
+                    lead[y, x + 1] = True
+            if y + 1 < height and original_region_labels[y + 1, x] >= 0:
+                down = original_region_labels[y + 1, x]
+                down_group = reduced_assignments[down] if down < len(reduced_assignments) else -1
+                if down != here and down_group != here_group:
+                    lead[y, x] = True
+                    lead[y + 1, x] = True
+    return lead
+
+
+def boundary_from_labels(labels: np.ndarray, anchor_mask: np.ndarray) -> np.ndarray:
+    lead = anchor_mask.copy()
+    height, width = labels.shape
+    for y in range(height):
+        for x in range(width):
+            here = labels[y, x]
+            if here < 0:
+                continue
+            if x + 1 < width and labels[y, x + 1] >= 0 and labels[y, x + 1] != here:
+                lead[y, x] = True
+                lead[y, x + 1] = True
+            if y + 1 < height and labels[y + 1, x] >= 0 and labels[y + 1, x] != here:
+                lead[y, x] = True
+                lead[y + 1, x] = True
+    return lead
 
 
 def extract_boundary_segments(labels: np.ndarray) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
@@ -2588,24 +2959,39 @@ def main() -> int:
     cell_size_for_lines = min(actual_resolution_x, actual_resolution_y)
     line_radius_pixels = max(0, math.ceil(args.lead_thickness / cell_size_for_lines) - 1)
     if args.lead_source == "detect":
-        raw_detected_lines = detect_image_lead_mask(rgb_image)
-        save_stage_preview(args.stage_dir, 2, "detected_lead_raw", mask_preview(raw_detected_lines))
-        smoothed_detected_lines = smooth_detected_lead_mask(raw_detected_lines)
-        save_stage_preview(args.stage_dir, 3, "detected_lead_smoothed", mask_preview(smoothed_detected_lines))
-        lines = filter_detected_lead_components(smoothed_detected_lines)
-        save_stage_preview(args.stage_dir, 4, "detected_lead_filtered", mask_preview(lines))
-        labels, region_colors = detect_lead_partition_labels(
-            lines_mask=lines,
-            lab_image=flat_lab.reshape(grid_height, grid_width, 3),
-            rgb_image=flat_rgb.reshape(grid_height, grid_width, 3),
-            target_nuances=args.num_nuances,
-            seed=args.seed,
+        hybrid_config = HybridLeadConfig()
+        analysis_rgb = load_image_to_grid(
+            input_path,
+            grid_width,
+            grid_height,
+            blur_pixels=max(hybrid_config.analysis_blur_px, 0.0),
         )
+        anchor_lines = build_hybrid_anchor_mask(rgb_image, analysis_rgb, hybrid_config)
+        save_stage_preview(args.stage_dir, 2, "detected_lead_anchors", mask_preview(anchor_lines))
+
+        initial_region_labels = hybrid_initial_cluster_labels(analysis_rgb, anchor_lines, hybrid_config, args.seed)
+        component_region_labels = componentize_cluster_labels(initial_region_labels, anchor_lines)
+        merged_region_labels = merge_small_and_similar_regions(component_region_labels, analysis_rgb, hybrid_config)
+        before_region_colors = component_color_means(merged_region_labels, srgb_to_lab(rgb_image), rgb_image)[1]
+        before_lines = boundary_from_labels(merged_region_labels, anchor_lines)
+        save_stage_preview(
+            args.stage_dir,
+            3,
+            "hybrid_panes_before_reduction",
+            build_preview(merged_region_labels, before_region_colors, before_lines),
+        )
+        labels, region_colors, reduced_assignments = reduce_region_palette(
+            merged_region_labels,
+            rgb_image,
+            args.num_nuances,
+            args.seed,
+        )
+        lines = reduced_boundary_mask(merged_region_labels, anchor_lines, reduced_assignments)
         region_labels_for_masks = labels
         save_stage_preview(
             args.stage_dir,
-            5,
-            "glass_cells_clustered",
+            4,
+            "hybrid_panes_after_reduction",
             build_preview(labels, region_colors, lines),
         )
     else:
@@ -2636,7 +3022,7 @@ def main() -> int:
     )
     preview_colors = np.asarray([recipe.mixed_color for recipe in palette_recipes], dtype=np.uint8)
     preview = build_preview(labels, preview_colors, lines)
-    save_stage_preview(args.stage_dir, 6 if args.lead_source == "detect" else 4, "final_preview", preview)
+    save_stage_preview(args.stage_dir, 5 if args.lead_source == "detect" else 4, "final_preview", preview)
     preview.save(preview_path)
 
     mesh_objects = build_mesh_objects(
