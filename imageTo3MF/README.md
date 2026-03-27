@@ -16,6 +16,8 @@ For a more robust alternate experiment, run `uv run python glass_interior_growth
 
 There is also a hybrid experiment at `uv run python glass_hybrid_anchor_lab.py /path/to/image.png`. That one detects only confident lead anchors, generates the remaining pane regions from color clustering, merges tiny panes into the closest-color touching neighbor, then shows a before/after palette reduction preview so the final result can be evaluated against the `8..10` color constraint. In the reduced preview, generated lead between panes that collapse to the same reduced color is removed automatically, while the detected anchor lead stays intact. The current promising baseline uses the script defaults, or a slightly tighter anchor set such as `--anchor-luma 36 --anchor-chroma 24 --neutral-chroma 13 --neutral-contrast 22 --neutral-support-max 5`.
 
+For Snorca Full Spectrum debugging, `uv run python snorca_mixed_filament_diagnostic.py --open` creates a tiny test `3mf` with a few large panes assigned to explicit recipe slots such as `6`, `8`, and `12`. That is useful for checking whether the object list badges match the actual mixed-filament definitions or whether SnorcaFS is only miscoloring the UI.
+
 There are also launcher scripts at `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.sh` and `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.command`. On macOS, the `.command` version is the one to keep on the Desktop or in the Dock for reliable double-click launching in Terminal.
 
 For a no-Terminal macOS launcher, build the local app bundle with `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh`. That creates `/Users/ecohen/Codex/imageTo3MF/dist/LeadLight.app` and also refreshes the Desktop copy at `/Users/ecohen/Desktop/LeadLight.app` automatically.
