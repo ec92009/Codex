@@ -2,7 +2,9 @@
 
 set -euo pipefail
 
-cd "/Users/ecohen/Codex/imageTo3MF"
+SCRIPT_DIR="${0:A:h}"
+
+cd "$SCRIPT_DIR"
 UV_BIN="${UV_BIN:-$(command -v uv || true)}"
 if [[ -z "$UV_BIN" ]]; then
   echo "uv was not found on PATH." >&2

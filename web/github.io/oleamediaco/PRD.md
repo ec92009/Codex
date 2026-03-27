@@ -6,7 +6,7 @@
 - Product: Olea Media Co website
 - Platform: Static marketing site on GitHub Pages, with a future path to production CMS or custom site
 - Current preview: `https://ec92009.github.io/Codex/oleamediaco/`
-- Local workspace: `/Users/ecohen/Codex/web/github.io/oleamediaco`
+- Local workspace: `~/Codex/web/github.io/oleamediaco`
 
 ## 1. Product Summary
 
@@ -241,4 +241,3 @@ Open content dependencies:
 3. Add at least one real proof asset: case study, testimonial, or pilot result.
 4. Define the final conversion path: email only, form, or booking.
 5. Cut the concept-gallery framing from the public-facing production page.
-

@@ -12,9 +12,9 @@ After taking the screenshot, it writes a best-effort Accessibility-based descrip
 ### Usage
 
 - Pointer check flow (includes screenshot at the end):
-  - `uv run python /Users/ecohen/Codex/MacControl/mac_pointer_check.py`
+  - `uv run python ~/Codex/MacControl/mac_pointer_check.py`
 - Screenshot only (full screen, saved to Desktop):
-  - `uv run python /Users/ecohen/Codex/MacControl/mac_pointer_check.py --screenshot-only`
+  - `uv run python ~/Codex/MacControl/mac_pointer_check.py --screenshot-only`
 
 ### Output
 

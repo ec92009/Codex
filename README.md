@@ -82,8 +82,8 @@ Rebuild local macOS app bundles after pulling when needed:
 
 Each build refreshes the canonical local app bundles in `dist/`:
 
-- `/Users/ecohen/Codex/imageTo3MF/dist/LeadLight.app`
-- `/Users/ecohen/Codex/filamentDB/dist/filamentDB.app`
+- `~/Codex/imageTo3MF/dist/LeadLight.app`
+- `~/Codex/filamentDB/dist/filamentDB.app`
 
 Notes:
 

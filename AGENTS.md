@@ -1,12 +1,12 @@
 # AGENTS.md
 
-Repo-level working preferences for `/Users/ecohen/Codex`.
+Repo-level working preferences for `~/Codex`.
 
 ## Response Protocol
 
 - If a request may take more than ~5 seconds, send a quick acknowledgment first (e.g., "got it"), then follow with results.
 - If results are immediate, respond directly with results.
-- When working anywhere under `/Users/ecohen/Codex`, read and follow the nearest applicable `AGENTS.md` at the start of the task unless the user explicitly says otherwise.
+- When working anywhere under `~/Codex`, read and follow the nearest applicable `AGENTS.md` at the start of the task unless the user explicitly says otherwise.
 - For website changes meant to be viewed externally, always push to GitHub immediately after each change.
 
 ## Defaults
@@ -19,14 +19,14 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 
 ## Repo Workflow
 
-- Run commands from repo root: `/Users/ecohen/Codex` unless a project requires otherwise.
+- Run commands from repo root: `~/Codex` unless a project requires otherwise.
 - Make small, clear commits; use `WIP:` commits if stopping mid-task.
 - Default to committing each completed change and pushing it to GitHub unless the user asks not to.
 - Keep `main` pushable; use branches for larger changes (branch prefix: `codex/`).
 - After modifying a project, update relevant `README.md` files and other necessary docs/config, then push to GitHub.
 - For each modification cycle in Codex, increment the version number, push updates, and report: local URL, GitHub Pages URL, and the new version to expect on refresh.
 - By Elie (and Codex projects) versioning scheme: use `vX.Y` where `X` is the number of days since `2026-02-28` and `Y` increments for each new iteration that day-index (example: `2026-03-10` => `X=10` => `v10.0`, `v10.1`, `v10.2`).
-- Before pausing, update `/Users/ecohen/Codex/NEXT_STEPS.md` with current status and next command.
+- Before pausing, update `~/Codex/NEXT_STEPS.md` with current status and next command.
 
 ## Skills
 
@@ -39,10 +39,10 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 
 ## Website Workspace Structure
 
-- Canonical website workspace root: `/Users/ecohen/Codex/web/github.io`
-- Olea Media Co project: `/Users/ecohen/Codex/web/github.io/oleamediaco`
-- Olea Tax Co project: `/Users/ecohen/Codex/web/github.io/oleataxco`
-- GitHub Pages workflow: `/Users/ecohen/Codex/.github/workflows/deploy-oleamediaco-site.yml`
+- Canonical website workspace root: `~/Codex/web/github.io`
+- Olea Media Co project: `~/Codex/web/github.io/oleamediaco`
+- Olea Tax Co project: `~/Codex/web/github.io/oleataxco`
+- GitHub Pages workflow: `~/Codex/.github/workflows/deploy-oleamediaco-site.yml`
 
 ## Project Boundaries (Separate Threads)
 
@@ -53,7 +53,7 @@ Repo-level working preferences for `/Users/ecohen/Codex`.
 
 ## Local Preview Commands
 
-- Top-level site index: `cd /Users/ecohen/Codex/web/github.io && python3 -m http.server 8000`
+- Top-level site index: `cd ~/Codex/web/github.io && python3 -m http.server 8000`
 - Olea Media Co: `http://localhost:8000/oleamediaco/`
 - Olea Tax Co: `http://localhost:8000/oleataxco/`
 

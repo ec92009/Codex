@@ -48,7 +48,7 @@ import image_grade_to_3mf as engine
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
-SOURCE_PROJECT_DIR = Path("/Users/ecohen/Codex/imageTo3MF")
+SOURCE_PROJECT_DIR = Path.home() / "Codex" / "imageTo3MF"
 RUNTIME_PROJECT_DIR = SOURCE_PROJECT_DIR if not (PROJECT_DIR / "image_grade_to_3mf.py").exists() and SOURCE_PROJECT_DIR.exists() else PROJECT_DIR
 SCRIPT_PATH = RUNTIME_PROJECT_DIR / "image_grade_to_3mf.py"
 PRESET_PATH = RUNTIME_PROJECT_DIR / "material_presets.json"
@@ -444,7 +444,7 @@ class MainWindow(QMainWindow):
         image_form.setContentsMargins(18, 18, 18, 18)
         image_form.setLabelAlignment(Qt.AlignRight)
         self.image_path_edit = QLineEdit()
-        self.image_path_edit.setPlaceholderText("/Users/ecohen/Desktop/image.png")
+        self.image_path_edit.setPlaceholderText(str(Path.home() / "Desktop" / "image.png"))
         browse_button = QPushButton("Choose Image")
         browse_button.clicked.connect(self.choose_image)
         image_row = QWidget()

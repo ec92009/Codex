@@ -17,7 +17,7 @@ from typing import Iterable, Optional
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
-SOURCE_PROJECT_DIR = Path("/Users/ecohen/Codex/filamentDB")
+SOURCE_PROJECT_DIR = Path.home() / "Codex" / "filamentDB"
 RUNTIME_PROJECT_DIR = SOURCE_PROJECT_DIR if not (PROJECT_DIR / "data").exists() and SOURCE_PROJECT_DIR.exists() else PROJECT_DIR
 DEFAULT_DB_PATH = RUNTIME_PROJECT_DIR / "data" / "filaments.tsv"
 LEGACY_DB_PATH = RUNTIME_PROJECT_DIR / "data" / "filaments.db"

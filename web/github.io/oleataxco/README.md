@@ -16,7 +16,7 @@ Do not edit Olea Media Co files from this project thread.
 ## Local Preview
 
 ```bash
-cd /Users/ecohen/Codex/web/github.io
+cd ~/Codex/web/github.io
 python3 -m http.server 8000
 ```
 
@@ -49,7 +49,7 @@ All versions include the same top banner text:
 
 GitHub Pages deploy is handled by:
 
-- `/Users/ecohen/Codex/.github/workflows/deploy-oleamediaco-site.yml`
+- `~/Codex/.github/workflows/deploy-oleamediaco-site.yml`
 
 This workflow publishes this folder to:
 

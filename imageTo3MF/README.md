@@ -18,11 +18,11 @@ There is also a hybrid experiment at `uv run python glass_hybrid_anchor_lab.py /
 
 For Snorca Full Spectrum debugging, `uv run python snorca_mixed_filament_diagnostic.py --open` creates a tiny test `3mf` with a few large panes assigned to explicit recipe slots such as `6`, `8`, and `12`. That is useful for checking whether the object list badges match the actual mixed-filament definitions or whether SnorcaFS is only miscoloring the UI.
 
-There are also launcher scripts at `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.sh` and `/Users/ecohen/Codex/imageTo3MF/launch_leadlight_gui.command`.
+There are also launcher scripts at `~/Codex/imageTo3MF/launch_leadlight_gui.sh` and `~/Codex/imageTo3MF/launch_leadlight_gui.command`.
 
-For a no-Terminal macOS launcher, build the local app bundle with `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh`. That creates `/Users/ecohen/Codex/imageTo3MF/dist/LeadLight.app`.
+For a no-Terminal macOS launcher, build the local app bundle with `~/Codex/imageTo3MF/build_leadlight_app.sh`. That creates `~/Codex/imageTo3MF/dist/LeadLight.app`.
 
-If you switch computers, `git pull` in `/Users/ecohen/Codex` first, then rerun `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh` on that machine so the local bundle matches the latest code.
+If you switch computers, `git pull` in `~/Codex` first, then rerun `~/Codex/imageTo3MF/build_leadlight_app.sh` on that machine so the local bundle matches the latest code.
 
 If no image path is passed, the script opens a file picker on macOS.
 

@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-PROJECT_DIR="/Users/ecohen/Codex/imageTo3MF"
+PROJECT_DIR="${0:A:h}"
 LOG_FILE="${TMPDIR:-/tmp}/imageTo3MF_gui.log"
 
 cd "$PROJECT_DIR"

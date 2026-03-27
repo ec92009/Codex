@@ -1,4 +1,4 @@
-set projectDir to "/Users/ecohen/Codex/filamentDB"
+set projectDir to POSIX path of ((path to home folder as text) & "Codex:filamentDB")
 set uvPath to "/opt/homebrew/bin/uv"
 set logFile to POSIX path of ((path to temporary items folder as text) & "filamentdb_gui.log")
 

@@ -6,7 +6,7 @@
 - Product: Olea Tax Co website
 - Product type: Marketing and lead-generation site
 - Current preview: `https://ec92009.github.io/Codex/oleataxco/`
-- Local workspace: `/Users/ecohen/Codex/web/github.io/oleataxco`
+- Local workspace: `~/Codex/web/github.io/oleataxco`
 
 ## 1. Product Summary
 
@@ -255,4 +255,3 @@ Future optional pages:
 3. Decide whether the primary conversion should be booking, contact form, phone, or email.
 4. Add final trust builders such as credentials, service area details, and response expectations.
 5. Prepare a launch checklist for content QA, mobile QA, and contact-flow testing.
-

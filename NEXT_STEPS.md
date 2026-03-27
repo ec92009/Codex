@@ -39,6 +39,10 @@ Use this file as a quick checkpoint before stopping work.
 
 ## Last Completed
 
+- Pushed a portability pass so instructions now use `~/Codex` and the LeadLight / filamentDB launcher-build scripts resolve paths from the current home directory instead of `/Users/ecohen`
+- Verified both documented rebuild commands succeed on `Par_Rook6`:
+  `~/Codex/imageTo3MF/build_leadlight_app.sh`
+  `~/Codex/filamentDB/build_filamentdb_app.sh`
 - Pushed `423c193` - `leadlight: add shared material preset`
 - Updated both macOS app builders to refresh only the canonical `dist/` app bundles
 - Built a more promising detect-mode lab around glass-interior growth instead of direct lead detection.

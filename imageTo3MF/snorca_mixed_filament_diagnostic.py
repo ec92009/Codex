@@ -15,13 +15,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("/Users/ecohen/Codex/imageTo3MF/out/snorca_mixed_filament_diagnostic.3mf"),
+        default=Path.home() / "Codex" / "imageTo3MF" / "out" / "snorca_mixed_filament_diagnostic.3mf",
         help="Output 3MF path.",
     )
     parser.add_argument(
         "--template",
         type=Path,
-        default=Path("/Users/ecohen/Codex/imageTo3MF/out/270sample_input_graded.3mf"),
+        default=Path.home() / "Codex" / "imageTo3MF" / "out" / "270sample_input_graded.3mf",
         help="Snapmaker/Snorca template 3MF to wrap the model in.",
     )
     parser.add_argument(
