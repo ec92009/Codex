@@ -100,6 +100,31 @@ class ImagePreview(QLabel):
         self.setPixmap(scaled)
 
 
+class NaturalScrollTextEdit(QTextEdit):
+    def wheelEvent(self, event) -> None:  # type: ignore[override]  # pragma: no cover - UI path
+        if sys.platform != "darwin":
+            super().wheelEvent(event)
+            return
+
+        pixel_delta = event.pixelDelta()
+        angle_delta = event.angleDelta()
+        handled = False
+
+        if not pixel_delta.isNull():
+            self.verticalScrollBar().setValue(self.verticalScrollBar().value() + pixel_delta.y())
+            handled = True
+        elif angle_delta.y():
+            step = self.verticalScrollBar().singleStep() * 3
+            direction = -1 if angle_delta.y() > 0 else 1
+            self.verticalScrollBar().setValue(self.verticalScrollBar().value() + direction * step)
+            handled = True
+
+        if handled:
+            event.accept()
+            return
+        super().wheelEvent(event)
+
+
 class MaterialRow(QWidget):
     def __init__(self, slot: str, profile: engine.MaterialProfile) -> None:
         super().__init__()
@@ -649,7 +674,7 @@ class MainWindow(QMainWindow):
         log_group = QGroupBox("Run Log")
         log_layout = QVBoxLayout(log_group)
         log_layout.setContentsMargins(18, 18, 18, 18)
-        self.log_view = QTextEdit()
+        self.log_view = NaturalScrollTextEdit()
         self.log_view.setReadOnly(True)
         log_layout.addWidget(self.log_view)
 
