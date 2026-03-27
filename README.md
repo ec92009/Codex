@@ -80,10 +80,10 @@ Rebuild local macOS app bundles after pulling when needed:
 ~/Codex/filamentDB/build_filamentdb_app.sh
 ```
 
-Each build now also refreshes the Desktop launcher copy automatically:
+Each build refreshes the canonical local app bundles in `dist/`:
 
-- `/Users/ecohen/Desktop/LeadLight.app`
-- `/Users/ecohen/Desktop/filamentDB.app`
+- `/Users/ecohen/Codex/imageTo3MF/dist/LeadLight.app`
+- `/Users/ecohen/Codex/filamentDB/dist/filamentDB.app`
 
 Notes:
 
@@ -99,5 +99,5 @@ Use this when settling a machine after pulling fresh changes:
 1. `git pull --ff-only origin main`
 2. Verify `filamentDB/data/filaments.tsv` looks current.
 3. Ignore legacy `filaments.db` state; SQLite is no longer part of the intended `filamentDB` workflow.
-4. Rebuild local app bundles if launcher, icon, or app-wrapper code changed. This also refreshes the Desktop copies.
+4. Rebuild local app bundles if launcher, icon, or app-wrapper code changed.
 5. Start work only after the repo and local wrappers are current.

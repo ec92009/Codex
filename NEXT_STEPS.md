@@ -32,7 +32,7 @@ Use this file as a quick checkpoint before stopping work.
 
 ## Current Task
 
-- Keep LeadLight and filamentDB in sync across machines, with Desktop app bundles refreshing automatically after rebuilds.
+- Keep LeadLight and filamentDB in sync across machines via their canonical `dist/` app bundles.
 - Keep `~/Codex/filamentDB/data/filaments.tsv` on `David` as the canonical filament dataset and sync changes outward through Git.
 - Validate the integrated hybrid `detect` mode on a wider real-image set and decide whether the old direct-detect helpers can be retired.
 - `gmail_idealista_app`: added `report` mode to extract listing URLs from Idealista alert emails and `enrich` mode to visit only those email-derived property URLs for public advertiser details.
@@ -40,7 +40,7 @@ Use this file as a quick checkpoint before stopping work.
 ## Last Completed
 
 - Pushed `423c193` - `leadlight: add shared material preset`
-- Updated both macOS app builders so rebuilding also refreshes `~/Desktop/LeadLight.app` and `~/Desktop/filamentDB.app`
+- Updated both macOS app builders to refresh only the canonical `dist/` app bundles
 - Built a more promising detect-mode lab around glass-interior growth instead of direct lead detection.
 - Built a hybrid anchor-detect + generated-pane lab that looks strong on most of `A.png` through `F.png`.
 - Added a before/after palette reduction view to the hybrid lab so it can be judged against the real `8..10 color` print constraint.
@@ -60,8 +60,7 @@ Use this file as a quick checkpoint before stopping work.
 
 ## Open Questions
 
-- Should the Desktop app refresh also open Finder to the updated app automatically, or is silent replacement better?
-- Should the same Desktop-refresh behavior be added to any future local app bundles under `~/Codex`?
+- Should future local app bundles under `~/Codex` follow the same `dist/`-only pattern?
 - Should the old direct-detect helper code and tuning lab be cleaned out now that hybrid detect is integrated?
 - Do we want a user-facing control for hybrid detect sensitivity, or keep the defaults fixed for now?
 - Does the existing `.playwright-profile` already contain a trusted Idealista session, or does it need one manual browser pass to clear DataDome?
@@ -70,7 +69,7 @@ Use this file as a quick checkpoint before stopping work.
 ## Blockers
 
 - No technical blockers currently for LeadLight / filamentDB.
-- Desktop app copies now refresh on rebuild; main remaining question is whether to extend the same pattern to other local apps.
+- App rebuilds now target only the canonical `dist/` bundles.
 - Idealista currently returns a challenge page in headless enrichment runs, so advertiser data is not yet being extracted until the browser profile clears that challenge.
 - Gmail `report` mode requires one fresh Google OAuth browser login because the previous token was revoked.
 

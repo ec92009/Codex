@@ -51,7 +51,7 @@ Build the local macOS app bundle:
 /Users/ecohen/Codex/filamentDB/build_filamentdb_app.sh
 ```
 
-That creates `/Users/ecohen/Codex/filamentDB/dist/filamentDB.app` and also refreshes `/Users/ecohen/Desktop/filamentDB.app` automatically. If you switch computers, `git pull` in `/Users/ecohen/Codex` first, then rerun that build script on the other machine.
+That creates `/Users/ecohen/Codex/filamentDB/dist/filamentDB.app`. If you switch computers, `git pull` in `/Users/ecohen/Codex` first, then rerun that build script on the other machine.
 
 Seed a small starter sample set:
 

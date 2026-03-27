@@ -24,7 +24,6 @@ BUILD_DIR = PROJECT_DIR / "build"
 ICONSET_DIR = BUILD_DIR / f"{APP_NAME}.iconset"
 ICNS_PATH = BUILD_DIR / f"{APP_NAME}.icns"
 APP_PATH = DIST_DIR / f"{APP_NAME}.app"
-DESKTOP_APP_PATH = Path.home() / "Desktop" / f"{APP_NAME}.app"
 
 
 def render_icon(source_svg: Path, iconset_dir: Path) -> None:
@@ -124,12 +123,6 @@ def build_app() -> None:
     (APP_PATH / "Contents" / "PkgInfo").write_text("APPL????", encoding="ascii")
 
 
-def install_on_desktop() -> None:
-    if DESKTOP_APP_PATH.exists():
-        shutil.rmtree(DESKTOP_APP_PATH)
-    shutil.copytree(APP_PATH, DESKTOP_APP_PATH, symlinks=True)
-
-
 def main() -> int:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication([])
@@ -139,10 +132,8 @@ def main() -> int:
     render_icon(ICON_SVG, ICONSET_DIR)
     build_icns(ICONSET_DIR, ICNS_PATH)
     build_app()
-    install_on_desktop()
 
     print(APP_PATH)
-    print(DESKTOP_APP_PATH)
     app.quit()
     return 0
 
