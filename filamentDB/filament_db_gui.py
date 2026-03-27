@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 from PySide6.QtCore import QThread, Qt, Signal
 from PySide6.QtGui import QColor, QIcon
@@ -93,6 +94,31 @@ class ClickableColorSwatch(QFrame):
     def mouseDoubleClickEvent(self, event) -> None:  # pragma: no cover - UI path
         self.clicked.emit()
         super().mouseDoubleClickEvent(event)
+
+
+class FilamentTableWidget(QTableWidget):
+    def wheelEvent(self, event) -> None:  # pragma: no cover - UI path
+        if sys.platform != "darwin":
+            super().wheelEvent(event)
+            return
+
+        pixel_delta = event.pixelDelta()
+        angle_delta = event.angleDelta()
+        handled = False
+
+        if not pixel_delta.isNull():
+            self.verticalScrollBar().setValue(self.verticalScrollBar().value() + pixel_delta.y())
+            handled = True
+        elif angle_delta.y():
+            step = self.verticalScrollBar().singleStep() * 3
+            direction = -1 if angle_delta.y() > 0 else 1
+            self.verticalScrollBar().setValue(self.verticalScrollBar().value() + direction * step)
+            handled = True
+
+        if handled:
+            event.accept()
+            return
+        super().wheelEvent(event)
 
 
 class FilamentDbWindow(QMainWindow):
@@ -240,7 +266,7 @@ class FilamentDbWindow(QMainWindow):
         controls.addWidget(self.search_edit)
         layout.addLayout(controls)
 
-        self.table = QTableWidget(0, 8)
+        self.table = FilamentTableWidget(0, 8)
         self.table.setHorizontalHeaderLabels(["ID", "Brand", "Type", "Name", "Color", "HEX", "TD", "Source"])
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
