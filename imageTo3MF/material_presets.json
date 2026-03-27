@@ -2,26 +2,26 @@
   {
     "slot": "1",
     "name": "cyan",
-    "hex_color": "#295CFF",
-    "td": 2.2
+    "hex_color": "#17307F",
+    "td": 13.6
   },
   {
     "slot": "2",
     "name": "magenta",
-    "hex_color": "#B6102D",
-    "td": 3.0
+    "hex_color": "#A72840",
+    "td": 29.5
   },
   {
     "slot": "3",
     "name": "yellow",
-    "hex_color": "#FF583C",
-    "td": 4.9
+    "hex_color": "#56A397",
+    "td": 100.0
   },
   {
     "slot": "4",
     "name": "white",
-    "hex_color": "#FFD6D8",
-    "td": 2.5
+    "hex_color": "#FFFFFF",
+    "td": 10.0
   },
   {
     "slot": "5",

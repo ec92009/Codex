@@ -50,6 +50,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--strong-color-range", type=float, default=80.0, help="Maximum RGB range allowed for strong seed pixels.")
     parser.add_argument("--weak-color-range", type=float, default=110.0, help="Maximum RGB range allowed for weak expansion pixels.")
     parser.add_argument("--grow-passes", type=int, default=3, help="How many 1-pixel growth passes extend strong lead into weak lead.")
+    parser.add_argument("--blue-dominance-max", type=float, default=999.0, help="Reject dark pixels whose blue channel exceeds red/green by more than this amount.")
+    parser.add_argument("--red-dominance-max", type=float, default=999.0, help="Reject dark pixels whose red channel exceeds green/blue by more than this amount.")
+    parser.add_argument("--neutral-edge-luma-cap", type=float, default=255.0, help="Optional lighter luma cap for neutral edge seeds.")
+    parser.add_argument("--neutral-edge-contrast", type=float, default=999.0, help="Minimum contrast for neutral edge seeds.")
+    parser.add_argument("--neutral-edge-color-range", type=float, default=999.0, help="Maximum color range for neutral edge seeds.")
+    parser.add_argument("--separator-luma-cap", type=float, default=255.0, help="Luma cap for thin separator-edge seeds.")
+    parser.add_argument("--separator-contrast", type=float, default=999.0, help="Minimum contrast for thin separator-edge seeds.")
+    parser.add_argument("--separator-darkness-delta", type=float, default=999.0, help="How much darker than the local 3x3 mean a separator-edge seed must be.")
+    parser.add_argument("--separator-color-range", type=float, default=999.0, help="Maximum color range for thin separator-edge seeds.")
+    parser.add_argument("--ridge-luma-cap", type=float, default=255.0, help="Luma cap for directional ridge seeds.")
+    parser.add_argument("--ridge-darkness-delta", type=float, default=999.0, help="How much darker than both flanks a directional ridge seed must be.")
+    parser.add_argument("--ridge-side-color-diff", type=float, default=999.0, help="Minimum color difference between the two sides of a ridge.")
+    parser.add_argument("--ridge-color-range", type=float, default=999.0, help="Maximum color range for directional ridge seeds.")
+    parser.add_argument("--aux-support-min", type=int, default=0, help="Minimum 3x3 support count for separator/ridge helper pixels.")
+    parser.add_argument("--aux-support-max", type=int, default=9, help="Maximum 3x3 support count for separator/ridge helper pixels.")
     return parser.parse_args()
 
 
@@ -127,6 +142,21 @@ def main() -> int:
         strong_color_range_max=args.strong_color_range,
         weak_color_range_max=args.weak_color_range,
         grow_passes=args.grow_passes,
+        blue_dominance_max=args.blue_dominance_max,
+        red_dominance_max=args.red_dominance_max,
+        neutral_edge_luma_cap=args.neutral_edge_luma_cap,
+        neutral_edge_contrast_min=args.neutral_edge_contrast,
+        neutral_edge_color_range_max=args.neutral_edge_color_range,
+        separator_luma_cap=args.separator_luma_cap,
+        separator_contrast_min=args.separator_contrast,
+        separator_darkness_delta_min=args.separator_darkness_delta,
+        separator_color_range_max=args.separator_color_range,
+        ridge_luma_cap=args.ridge_luma_cap,
+        ridge_darkness_delta_min=args.ridge_darkness_delta,
+        ridge_side_color_diff_min=args.ridge_side_color_diff,
+        ridge_color_range_max=args.ridge_color_range,
+        auxiliary_support_min=args.aux_support_min,
+        auxiliary_support_max=args.aux_support_max,
     )
 
     font = ImageFont.load_default()
@@ -151,7 +181,11 @@ def main() -> int:
     summary = (
         f"strong p{args.strong_percentile:g}/l{args.strong_luma_cap:g}/c{args.strong_contrast:g}/r{args.strong_color_range:g}   "
         f"weak p{args.weak_percentile:g}/l{args.weak_luma_cap:g}/c{args.weak_contrast:g}/r{args.weak_color_range:g}   "
-        f"grow {args.grow_passes}"
+        f"grow {args.grow_passes}   blue<= {args.blue_dominance_max:g}   red<= {args.red_dominance_max:g}   "
+        f"edge l{args.neutral_edge_luma_cap:g}/c{args.neutral_edge_contrast:g}/r{args.neutral_edge_color_range:g}   "
+        f"sep l{args.separator_luma_cap:g}/c{args.separator_contrast:g}/d{args.separator_darkness_delta:g}/r{args.separator_color_range:g}   "
+        f"ridge l{args.ridge_luma_cap:g}/d{args.ridge_darkness_delta:g}/sd{args.ridge_side_color_diff:g}/r{args.ridge_color_range:g}   "
+        f"aux {args.aux_support_min:g}-{args.aux_support_max:g}"
     )
     draw.text((gutter, sheet_height - gutter + 2 - 18), summary, font=font, fill="#6f5b46")
 
