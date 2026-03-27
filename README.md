@@ -1,6 +1,6 @@
 # Codex Workspace
 
-Central workspace repository for ongoing projects under `/Users/ecohen/Codex`.
+Central workspace repository for ongoing projects under `~/Codex`.
 
 ## Projects
 
@@ -32,26 +32,34 @@ When working in separate threads, treat `oleamediaco` and `oleataxco` as separat
 
 GitHub Pages is deployed by `.github/workflows/deploy-oleamediaco-site.yml`, which now publishes both concept sets in a single Pages artifact.
 
+## Machine Conventions
+
+- Use `~/Codex` as the canonical workspace path in shared docs and commands. This keeps instructions portable across `David`, `Max`, and `Par_Rook6` even when the account name differs.
+- `David` is this Mac under `ecohen`.
+- `Max` is the MacBook Pro under `ecohen`.
+- `Par_Rook6` is the VM hosted on `David`, where you operate as `Rook` / `Openclaw`.
+- When a note is machine-specific, name the machine instead of hard-coding a user-specific absolute path when possible.
+
 ## Local Development
 
-- Top-level local preview: `cd /Users/ecohen/Codex/web/github.io && python3 -m http.server 8000`
+- Top-level local preview: `cd ~/Codex/web/github.io && python3 -m http.server 8000`
 - Olea Media Co: `http://localhost:8000/oleamediaco/`
 - Olea Tax Co: `http://localhost:8000/oleataxco/`
 
 ## Repo Workflow
 
-- Work inside project folders under `/Users/ecohen/Codex`.
+- Work inside project folders under `~/Codex`.
 - Commit changes from the repo root with clear messages.
 - Push to `main` to sync with GitHub: [ec92009/Codex](https://github.com/ec92009/Codex).
 
 ## Cross-Computer Workflow
 
-Use GitHub as the source of truth for code and tracked scripts. Local generated artifacts such as `build/` and `dist/` are ignored and should be rebuilt on each machine.
+Use GitHub as the source of truth for code and tracked scripts. For `filamentDB`, treat `~/Codex/filamentDB/data/filaments.tsv` on `David` as the source of truth and sync that file outward through Git. Local generated artifacts such as `build/` and `dist/` are ignored and should be rebuilt on each machine.
 
 Finish on computer A:
 
 ```bash
-cd /Users/ecohen/Codex
+cd ~/Codex
 git status
 git add .
 git commit -m "short clear message"
@@ -61,15 +69,15 @@ git push origin main
 Start on computer B:
 
 ```bash
-cd /Users/ecohen/Codex
+cd ~/Codex
 git pull --ff-only origin main
 ```
 
 Rebuild local macOS app bundles after pulling when needed:
 
 ```bash
-/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh
-/Users/ecohen/Codex/filamentDB/build_filamentdb_app.sh
+~/Codex/imageTo3MF/build_leadlight_app.sh
+~/Codex/filamentDB/build_filamentdb_app.sh
 ```
 
 Each build now also refreshes the Desktop launcher copy automatically:
@@ -90,6 +98,6 @@ Use this when settling a machine after pulling fresh changes:
 
 1. `git pull --ff-only origin main`
 2. Verify `filamentDB/data/filaments.tsv` looks current.
-3. If an old local `filaments.db` is still present and the TSV is confirmed good, archive it to `filaments.db.bak` or remove it.
+3. Ignore legacy `filaments.db` state; SQLite is no longer part of the intended `filamentDB` workflow.
 4. Rebuild local app bundles if launcher, icon, or app-wrapper code changed. This also refreshes the Desktop copies.
 5. Start work only after the repo and local wrappers are current.

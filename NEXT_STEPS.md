@@ -4,20 +4,24 @@ Use this file as a quick checkpoint before stopping work.
 
 ## Session Handoff - 2026-03-27
 
-- Olea Tax work is active and the latest visible design target is the `v25.2` direction under `/Users/ecohen/Codex/web/github.io/oleataxco/`.
+- Shared path convention: use `~/Codex` in cross-machine notes so the same instructions work on `David`, `Max`, and `Par_Rook6`.
+- `David` is this Mac under `ecohen`.
+- `Max` is the MacBook Pro under `ecohen`.
+- `Par_Rook6` is the VM hosted on `David`, where you operate as `Rook` / `Openclaw`.
+- Olea Tax work is active and the latest visible design target is the `v25.2` direction under `~/Codex/web/github.io/oleataxco/`.
 - The two planning PDFs now exist on GitHub on both `main` and `codex/oleataxco-new-look`:
   `web/github.io/oleataxco/assets/Scalable-Tax-Planning-Pod-Model.pdf`
   `web/github.io/oleataxco/assets/Workload-and-Task-Justification-Model.pdf`
 - Before editing Olea Tax again, decide whether to continue on `main` or on `codex/oleataxco-new-look`.
-- The current local checkout on this computer is noisy: tracked `gws-cli/` files and several old web alias files are missing locally, so avoid broad staging commands like `git add -A` until that is cleaned up intentionally.
+- On `David`, treat `~/Codex/filamentDB/data/filaments.tsv` as the source of truth. Legacy SQLite state is no longer relevant for `filamentDB`.
 
 ### Olea Tax Resume Commands
 
-- `git -C /Users/ecohen/Codex fetch origin --prune`
-- `git -C /Users/ecohen/Codex branch -vv`
-- `git -C /Users/ecohen/Codex switch main && git -C /Users/ecohen/Codex pull --ff-only origin main`
-- If you want the Olea Tax branch instead: `git -C /Users/ecohen/Codex switch codex/oleataxco-new-look && git -C /Users/ecohen/Codex pull --ff-only origin codex/oleataxco-new-look`
-- `cd /Users/ecohen/Codex/web/github.io && python3 -m http.server 8000`
+- `git -C ~/Codex fetch origin --prune`
+- `git -C ~/Codex branch -vv`
+- `git -C ~/Codex switch main && git -C ~/Codex pull --ff-only origin main`
+- If you want the Olea Tax branch instead: `git -C ~/Codex switch codex/oleataxco-new-look && git -C ~/Codex pull --ff-only origin codex/oleataxco-new-look`
+- `cd ~/Codex/web/github.io && python3 -m http.server 8000`
 - Open `http://localhost:8000/oleataxco/`
 
 ### Olea Tax Open Questions
@@ -29,34 +33,35 @@ Use this file as a quick checkpoint before stopping work.
 ## Current Task
 
 - Keep LeadLight and filamentDB in sync across machines, with Desktop app bundles refreshing automatically after rebuilds.
+- Keep `~/Codex/filamentDB/data/filaments.tsv` on `David` as the canonical filament dataset and sync changes outward through Git.
 - Validate the integrated hybrid `detect` mode on a wider real-image set and decide whether the old direct-detect helpers can be retired.
 - `gmail_idealista_app`: added `report` mode to extract listing URLs from Idealista alert emails and `enrich` mode to visit only those email-derived property URLs for public advertiser details.
 
 ## Last Completed
 
 - Pushed `423c193` - `leadlight: add shared material preset`
-- Updated both macOS app builders so rebuilding also refreshes `/Users/ecohen/Desktop/LeadLight.app` and `/Users/ecohen/Desktop/filamentDB.app`
+- Updated both macOS app builders so rebuilding also refreshes `~/Desktop/LeadLight.app` and `~/Desktop/filamentDB.app`
 - Built a more promising detect-mode lab around glass-interior growth instead of direct lead detection.
 - Built a hybrid anchor-detect + generated-pane lab that looks strong on most of `A.png` through `F.png`.
 - Added a before/after palette reduction view to the hybrid lab so it can be judged against the real `8..10 color` print constraint.
 - Updated the reduced hybrid preview so generated lead between panes of the same reduced color is removed automatically.
 - Integrated the hybrid anchor-detect + generated-pane pipeline into LeadLight's `detect` mode while leaving `generate` untouched.
-- Added Gmail token refresh fallback in [`/Users/rookcohen/Codex/gmail_idealista_app/app.py`](/Users/rookcohen/Codex/gmail_idealista_app/app.py) so expired OAuth tokens re-enter browser auth instead of crashing.
-- Added `report` and `enrich` flows plus docs in [`/Users/rookcohen/Codex/gmail_idealista_app/README.md`](/Users/rookcohen/Codex/gmail_idealista_app/README.md).
+- Added Gmail token refresh fallback in `~/Codex/gmail_idealista_app/app.py` so expired OAuth tokens re-enter browser auth instead of crashing.
+- Added `report` and `enrich` flows plus docs in `~/Codex/gmail_idealista_app/README.md`.
 - Verified `enrich` writes outputs against the email-derived listing URLs and currently reports `challenge_or_unparsed` when Idealista serves a challenge page.
 
 ## Next Command To Run
 
-- `/Users/ecohen/Codex/imageTo3MF/build_leadlight_app.sh`
-- `/Users/ecohen/Codex/filamentDB/build_filamentdb_app.sh`
-- `uv run --project /Users/ecohen/Codex/imageTo3MF python /Users/ecohen/Codex/imageTo3MF/image_grade_to_3mf.py /Users/ecohen/Desktop/F.png --lead-source detect --no-open --preview /tmp/leadlight_detect_preview.png --output /tmp/leadlight_detect_test.3mf`
-- `cd /Users/rookcohen/Codex/gmail_idealista_app && uv run app.py report --max-results 100`
-- `cd /Users/rookcohen/Codex/gmail_idealista_app && uv run app.py enrich --input-csv listing_report.csv --limit 25 --output-prefix listing_report_enriched`
+- `~/Codex/imageTo3MF/build_leadlight_app.sh`
+- `~/Codex/filamentDB/build_filamentdb_app.sh`
+- `uv run --project ~/Codex/imageTo3MF python ~/Codex/imageTo3MF/image_grade_to_3mf.py ~/Desktop/F.png --lead-source detect --no-open --preview /tmp/leadlight_detect_preview.png --output /tmp/leadlight_detect_test.3mf`
+- `cd ~/Codex/gmail_idealista_app && uv run app.py report --max-results 100`
+- `cd ~/Codex/gmail_idealista_app && uv run app.py enrich --input-csv listing_report.csv --limit 25 --output-prefix listing_report_enriched`
 
 ## Open Questions
 
 - Should the Desktop app refresh also open Finder to the updated app automatically, or is silent replacement better?
-- Should the same Desktop-refresh behavior be added to any future local app bundles under `/Users/ecohen/Codex`?
+- Should the same Desktop-refresh behavior be added to any future local app bundles under `~/Codex`?
 - Should the old direct-detect helper code and tuning lab be cleaned out now that hybrid detect is integrated?
 - Do we want a user-facing control for hybrid detect sensitivity, or keep the defaults fixed for now?
 - Does the existing `.playwright-profile` already contain a trusted Idealista session, or does it need one manual browser pass to clear DataDome?
@@ -71,7 +76,7 @@ Use this file as a quick checkpoint before stopping work.
 
 ## Resume Checklist
 
-- Run `git -C /Users/rookcohen/Codex status --short --branch`
-- Re-auth Gmail if needed with `cd /Users/rookcohen/Codex/gmail_idealista_app && uv run app.py report --max-results 100`
+- Run `git -C ~/Codex status --short --branch`
+- Re-auth Gmail if needed with `cd ~/Codex/gmail_idealista_app && uv run app.py report --max-results 100`
 - Run the constrained enrichment command and inspect `listing_report_enriched.csv`
 - If the challenge persists, rerun `enrich` without `--headless` so the browser session can clear it interactively`
