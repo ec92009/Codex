@@ -15,7 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path.home() / "Codex" / "imageTo3MF" / "out" / "snorca_mixed_filament_diagnostic.3mf",
+        default=Path.home() / "Codex" / "imageTo3MF" / "out" / "snorca_mixed_filament_blatant_diagnostic.3mf",
         help="Output 3MF path.",
     )
     parser.add_argument(
@@ -44,65 +44,97 @@ def main() -> int:
     args = parse_args()
     material_profiles = engine.default_material_profiles()
 
-    width_mm = 120.0
+    width_mm = 168.0
     height_mm = 80.0
     plate_width_mm = 270.0
     plate_height_mm = 270.0
     thickness_mm = 0.8
     base_layer_height_mm = 0.2
 
-    grid_w = 120
+    grid_w = 168
     grid_h = 80
     import numpy as np
 
-    # Three tall panes plus a plain-slot control pane.
+    # Seven tall panes, one for each mixed slot from 6 through 12.
     lines_mask = np.zeros((grid_h, grid_w), dtype=bool)
-    lines_mask[:, 29:31] = True
-    lines_mask[:, 59:61] = True
-    lines_mask[:, 89:91] = True
+    for x in (23, 47, 71, 95, 119, 143):
+        lines_mask[:, x : x + 2] = True
     lines_mask[:2, :] = True
     lines_mask[-2:, :] = True
     lines_mask[:, :2] = True
     lines_mask[:, -2:] = True
 
     masks = [
-        rectangle_mask(grid_w, grid_h, 2, 2, 29, grid_h - 2),
-        rectangle_mask(grid_w, grid_h, 31, 2, 59, grid_h - 2),
-        rectangle_mask(grid_w, grid_h, 61, 2, 89, grid_h - 2),
-        rectangle_mask(grid_w, grid_h, 91, 2, grid_w - 2, grid_h - 2),
+        rectangle_mask(grid_w, grid_h, 2, 2, 23, grid_h - 2),
+        rectangle_mask(grid_w, grid_h, 25, 2, 47, grid_h - 2),
+        rectangle_mask(grid_w, grid_h, 49, 2, 71, grid_h - 2),
+        rectangle_mask(grid_w, grid_h, 73, 2, 95, grid_h - 2),
+        rectangle_mask(grid_w, grid_h, 97, 2, 119, grid_h - 2),
+        rectangle_mask(grid_w, grid_h, 121, 2, 143, grid_h - 2),
+        rectangle_mask(grid_w, grid_h, 145, 2, grid_w - 2, grid_h - 2),
     ]
 
-    # Explicit recipes:
-    # 6 = F1+F2 50/50, 8 = F1+F4 50/50, 12 = F2+F3 50/50, plus control plain F4.
+    # Explicit recipes for every mixed slot from 6 through 12.
     recipes = [
         engine.PaletteRecipe(
             layer_slots=["1", "2", "1", "2"],
-            mixed_color=engine.simulate_stack_rgb(["1", "2", "1", "2"], material_profiles, layer_height_mm=base_layer_height_mm),
+            mixed_color=engine.simulate_stack_rgb(
+                ["1", "2", "1", "2"], material_profiles, layer_height_mm=base_layer_height_mm
+            ),
             display_slot="6",
             definition=engine.build_mixed_filament_definition("1", "2", 50, "6"),
         ),
         engine.PaletteRecipe(
+            layer_slots=["1", "3", "1", "3"],
+            mixed_color=engine.simulate_stack_rgb(
+                ["1", "3", "1", "3"], material_profiles, layer_height_mm=base_layer_height_mm
+            ),
+            display_slot="7",
+            definition=engine.build_mixed_filament_definition("1", "3", 50, "7"),
+        ),
+        engine.PaletteRecipe(
             layer_slots=["1", "4", "1", "4"],
-            mixed_color=engine.simulate_stack_rgb(["1", "4", "1", "4"], material_profiles, layer_height_mm=base_layer_height_mm),
+            mixed_color=engine.simulate_stack_rgb(
+                ["1", "4", "1", "4"], material_profiles, layer_height_mm=base_layer_height_mm
+            ),
             display_slot="8",
             definition=engine.build_mixed_filament_definition("1", "4", 50, "8"),
         ),
         engine.PaletteRecipe(
             layer_slots=["2", "3", "2", "3"],
-            mixed_color=engine.simulate_stack_rgb(["2", "3", "2", "3"], material_profiles, layer_height_mm=base_layer_height_mm),
-            display_slot="12",
-            definition=engine.build_mixed_filament_definition("2", "3", 50, "12"),
+            mixed_color=engine.simulate_stack_rgb(
+                ["2", "3", "2", "3"], material_profiles, layer_height_mm=base_layer_height_mm
+            ),
+            display_slot="9",
+            definition=engine.build_mixed_filament_definition("2", "3", 50, "9"),
         ),
         engine.PaletteRecipe(
-            layer_slots=["4", "4", "4", "4"],
-            mixed_color=material_profiles["4"].rgb,
-            display_slot="4",
-            definition=None,
+            layer_slots=["2", "4", "2", "4"],
+            mixed_color=engine.simulate_stack_rgb(
+                ["2", "4", "2", "4"], material_profiles, layer_height_mm=base_layer_height_mm
+            ),
+            display_slot="10",
+            definition=engine.build_mixed_filament_definition("2", "4", 50, "10"),
+        ),
+        engine.PaletteRecipe(
+            layer_slots=["3", "4", "3", "4"],
+            mixed_color=engine.simulate_stack_rgb(
+                ["3", "4", "3", "4"], material_profiles, layer_height_mm=base_layer_height_mm
+            ),
+            display_slot="11",
+            definition=engine.build_mixed_filament_definition("3", "4", 50, "11"),
+        ),
+        engine.PaletteRecipe(
+            layer_slots=["4", "5", "4", "5"],
+            mixed_color=engine.simulate_stack_rgb(
+                ["4", "5", "4", "5"], material_profiles, layer_height_mm=base_layer_height_mm
+            ),
+            display_slot="12",
+            definition=engine.build_mixed_filament_definition("4", "5", 50, "12"),
         ),
     ]
 
     mesh_objects = []
-    # Lead object
     lead_vertices, lead_triangles = engine.mesh_from_mask(
         lines_mask,
         width_mm=width_mm,
@@ -122,9 +154,12 @@ def main() -> int:
 
     names = [
         "Color 2 - Slot 6 (F1+F2)",
-        "Color 3 - Slot 8 (F1+F4)",
-        "Color 4 - Slot 12 (F2+F3)",
-        "Color 5 - Slot 4 (plain F4)",
+        "Color 3 - Slot 7 (F1+F3)",
+        "Color 4 - Slot 8 (F1+F4)",
+        "Color 5 - Slot 9 (F2+F3)",
+        "Color 6 - Slot 10 (F2+F4)",
+        "Color 7 - Slot 11 (F3+F4)",
+        "Color 8 - Slot 12 (F4+F5)",
     ]
     for name, mask, recipe in zip(names, masks, recipes):
         vertices, triangles = engine.mesh_from_mask(
@@ -145,7 +180,7 @@ def main() -> int:
         )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    built_names = engine.write_snapmaker_project_3mf(
+    engine.write_snapmaker_project_3mf(
         output_path=args.output,
         mesh_objects=mesh_objects,
         template_path=args.template,
