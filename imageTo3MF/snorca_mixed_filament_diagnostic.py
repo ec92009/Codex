@@ -74,65 +74,42 @@ def main() -> int:
         rectangle_mask(grid_w, grid_h, 145, 2, grid_w - 2, grid_h - 2),
     ]
 
-    # Explicit recipes for every mixed slot from 6 through 12.
-    recipes = [
-        engine.PaletteRecipe(
-            layer_slots=["1", "2", "1", "2"],
-            mixed_color=engine.simulate_stack_rgb(
-                ["1", "2", "1", "2"], material_profiles, layer_height_mm=base_layer_height_mm
-            ),
-            display_slot="6",
-            definition=engine.build_mixed_filament_definition("1", "2", 50, "6"),
-        ),
-        engine.PaletteRecipe(
-            layer_slots=["1", "3", "1", "3"],
-            mixed_color=engine.simulate_stack_rgb(
-                ["1", "3", "1", "3"], material_profiles, layer_height_mm=base_layer_height_mm
-            ),
-            display_slot="7",
-            definition=engine.build_mixed_filament_definition("1", "3", 50, "7"),
-        ),
-        engine.PaletteRecipe(
-            layer_slots=["1", "4", "1", "4"],
-            mixed_color=engine.simulate_stack_rgb(
-                ["1", "4", "1", "4"], material_profiles, layer_height_mm=base_layer_height_mm
-            ),
-            display_slot="8",
-            definition=engine.build_mixed_filament_definition("1", "4", 50, "8"),
-        ),
-        engine.PaletteRecipe(
-            layer_slots=["2", "3", "2", "3"],
-            mixed_color=engine.simulate_stack_rgb(
-                ["2", "3", "2", "3"], material_profiles, layer_height_mm=base_layer_height_mm
-            ),
-            display_slot="9",
-            definition=engine.build_mixed_filament_definition("2", "3", 50, "9"),
-        ),
-        engine.PaletteRecipe(
-            layer_slots=["2", "4", "2", "4"],
-            mixed_color=engine.simulate_stack_rgb(
-                ["2", "4", "2", "4"], material_profiles, layer_height_mm=base_layer_height_mm
-            ),
-            display_slot="10",
-            definition=engine.build_mixed_filament_definition("2", "4", 50, "10"),
-        ),
-        engine.PaletteRecipe(
-            layer_slots=["3", "4", "3", "4"],
-            mixed_color=engine.simulate_stack_rgb(
-                ["3", "4", "3", "4"], material_profiles, layer_height_mm=base_layer_height_mm
-            ),
-            display_slot="11",
-            definition=engine.build_mixed_filament_definition("3", "4", 50, "11"),
-        ),
-        engine.PaletteRecipe(
-            layer_slots=["4", "5", "4", "5"],
-            mixed_color=engine.simulate_stack_rgb(
-                ["4", "5", "4", "5"], material_profiles, layer_height_mm=base_layer_height_mm
-            ),
-            display_slot="12",
-            definition=engine.build_mixed_filament_definition("4", "5", 50, "12"),
-        ),
+    pairwise_slots = engine.build_pairwise_virtual_slot_map(sorted(material_profiles.keys(), key=int))
+    recipe_specs = [
+        ("1", "2"),
+        ("1", "3"),
+        ("1", "4"),
+        ("2", "3"),
+        ("2", "4"),
+        ("3", "4"),
+        ("4", "5"),
     ]
+    recipes = []
+    mixed_entries = []
+    for primary_slot, secondary_slot in recipe_specs:
+        assigned_slot = pairwise_slots[(primary_slot, secondary_slot)]
+        layer_slots = [primary_slot, secondary_slot, primary_slot, secondary_slot]
+        recipes.append(
+            engine.PaletteRecipe(
+                layer_slots=layer_slots,
+                mixed_color=engine.simulate_stack_rgb(
+                    layer_slots, material_profiles, layer_height_mm=base_layer_height_mm
+                ),
+                assigned_slot=assigned_slot,
+                stable_id=assigned_slot,
+            )
+        )
+    for pair, assigned_slot in pairwise_slots.items():
+        mixed_entries.append(
+            engine.build_mixed_filament_definition(
+                pair[0],
+                pair[1],
+                50,
+                assigned_slot,
+                custom=False,
+                origin_auto=True,
+            )
+        )
 
     mesh_objects = []
     lead_vertices, lead_triangles = engine.mesh_from_mask(
@@ -152,15 +129,11 @@ def main() -> int:
         )
     )
 
-    names = [
-        "Color 2 - Slot 6 (F1+F2)",
-        "Color 3 - Slot 7 (F1+F3)",
-        "Color 4 - Slot 8 (F1+F4)",
-        "Color 5 - Slot 9 (F2+F3)",
-        "Color 6 - Slot 10 (F2+F4)",
-        "Color 7 - Slot 11 (F3+F4)",
-        "Color 8 - Slot 12 (F4+F5)",
-    ]
+    names = []
+    for index, (recipe, (primary_slot, secondary_slot)) in enumerate(zip(recipes, recipe_specs), start=2):
+        names.append(
+            f"Color {index} - Slot {recipe.assigned_slot} (F{primary_slot}+F{secondary_slot})"
+        )
     for name, mask, recipe in zip(names, masks, recipes):
         vertices, triangles = engine.mesh_from_mask(
             mask,
@@ -175,7 +148,7 @@ def main() -> int:
                 color=recipe.mixed_color,
                 vertices=vertices,
                 triangles=triangles,
-                preferred_slot=recipe.display_slot,
+                preferred_slot=recipe.assigned_slot,
             )
         )
 
@@ -191,12 +164,12 @@ def main() -> int:
         plate_width_mm=plate_width_mm,
         plate_height_mm=plate_height_mm,
         material_profiles=material_profiles,
-        palette_recipes=recipes,
+        mixed_filament_entries=mixed_entries,
     )
 
     print(f"3MF output:  {args.output}")
     for name, recipe in zip(names, recipes):
-        print(f"{name} -> display slot {recipe.display_slot}, color {recipe.mixed_color}, definition {recipe.definition}")
+        print(f"{name} -> assigned slot {recipe.assigned_slot}, color {recipe.mixed_color}")
     if args.open:
         opened = engine.open_in_orca_slicer(args.output)
         print(f"Opened in Snapmaker Orca: {'yes' if opened else 'no'}")

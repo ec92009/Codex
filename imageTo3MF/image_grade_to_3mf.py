@@ -116,8 +116,8 @@ class MeshObjectData:
 class PaletteRecipe:
     layer_slots: List[str]
     mixed_color: Tuple[int, int, int]
-    display_slot: str
-    definition: Optional[str]
+    assigned_slot: str
+    stable_id: Optional[str]
 
 
 @dataclass(frozen=True)
@@ -2019,11 +2019,26 @@ def build_mixed_filament_definition(
     primary_slot: str,
     secondary_slot: str,
     secondary_percent: int,
-    display_slot: str,
+    stable_id: str,
+    *,
+    custom: bool,
+    origin_auto: bool,
 ) -> str:
-    if secondary_percent == 50:
-        return f"{primary_slot},{secondary_slot},1,0,50,0,g,w,m2,d0,o1,u{display_slot}"
-    return f"{primary_slot},{secondary_slot},1,1,{secondary_percent},0,g,w,m2,d0,o0,u{display_slot}"
+    return (
+        f"{primary_slot},{secondary_slot},1,{1 if custom else 0},{secondary_percent},0,"
+        f"g,w,m2,d0,o{1 if origin_auto else 0},u{stable_id}"
+    )
+
+
+def build_pairwise_virtual_slot_map(physical_slots: Sequence[str]) -> Dict[Tuple[str, str], str]:
+    ordered = sorted(physical_slots, key=int)
+    next_virtual_id = len(ordered) + 1
+    pair_map: Dict[Tuple[str, str], str] = {}
+    for index, primary_slot in enumerate(ordered):
+        for secondary_slot in ordered[index + 1 :]:
+            pair_map[(primary_slot, secondary_slot)] = str(next_virtual_id)
+            next_virtual_id += 1
+    return pair_map
 
 
 def build_palette_recipes(
@@ -2031,7 +2046,7 @@ def build_palette_recipes(
     layer_count: int,
     material_profiles: Dict[str, MaterialProfile],
     layer_height_mm: float,
-) -> List[PaletteRecipe]:
+) -> Tuple[List[PaletteRecipe], List[str]]:
     candidates: List[Tuple[List[str], Tuple[int, int, int], np.ndarray, float, Optional[str], Optional[str], Optional[int]]] = []
 
     for slot in BASE_SLOT_SEQUENCE:
@@ -2084,8 +2099,33 @@ def build_palette_recipes(
         used_indices.add(best_index)
         chosen_candidates.append(candidates[best_index])
 
-    display_slot_map: Dict[Tuple[str, str, int], str] = {}
-    next_display_slot = len(material_profiles) + 1
+    pair_usage_counts: Dict[Tuple[str, str], int] = {}
+    pair_single_percent: Dict[Tuple[str, str], int] = {}
+    for _slots, _mixed_rgb, _lab, _penalty, primary_slot, secondary_slot, secondary_percent in chosen_candidates:
+        if primary_slot is None or secondary_slot is None or secondary_percent is None:
+            continue
+        pair = tuple(sorted((primary_slot, secondary_slot), key=int))
+        pair_usage_counts[pair] = pair_usage_counts.get(pair, 0) + 1
+        pair_single_percent[pair] = secondary_percent
+
+    physical_slots = [slot for slot in sorted(material_profiles.keys(), key=int)]
+    pairwise_virtual_slots = build_pairwise_virtual_slot_map(physical_slots)
+    mixed_filament_entries: List[str] = []
+    for pair, assigned_slot in pairwise_virtual_slots.items():
+        secondary_percent = pair_single_percent.get(pair, 50) if pair_usage_counts.get(pair, 0) == 1 else 50
+        mixed_filament_entries.append(
+            build_mixed_filament_definition(
+                pair[0],
+                pair[1],
+                secondary_percent,
+                assigned_slot,
+                custom=False,
+                origin_auto=True,
+            )
+        )
+
+    custom_slot_map: Dict[Tuple[str, str, int], str] = {}
+    next_custom_slot = len(physical_slots) + 1 + len(pairwise_virtual_slots)
     assignments: List[PaletteRecipe] = []
     for slots, mixed_rgb, _lab, _penalty, primary_slot, secondary_slot, secondary_percent in chosen_candidates:
         if primary_slot is None or secondary_slot is None or secondary_percent is None:
@@ -2093,32 +2133,50 @@ def build_palette_recipes(
                 PaletteRecipe(
                     layer_slots=slots,
                     mixed_color=mixed_rgb,
-                    display_slot=slots[0],
-                    definition=None,
+                    assigned_slot=slots[0],
+                    stable_id=None,
                 )
             )
             continue
 
-        key = (primary_slot, secondary_slot, secondary_percent)
-        display_slot = display_slot_map.get(key)
-        if display_slot is None:
-            display_slot = str(next_display_slot)
-            display_slot_map[key] = display_slot
-            next_display_slot += 1
+        pair = tuple(sorted((primary_slot, secondary_slot), key=int))
+        if pair_usage_counts.get(pair, 0) == 1:
+            assigned_slot = pairwise_virtual_slots[pair]
+            assignments.append(
+                PaletteRecipe(
+                    layer_slots=slots,
+                    mixed_color=mixed_rgb,
+                    assigned_slot=assigned_slot,
+                    stable_id=assigned_slot,
+                )
+            )
+            continue
+
+        key = (pair[0], pair[1], secondary_percent)
+        assigned_slot = custom_slot_map.get(key)
+        if assigned_slot is None:
+            assigned_slot = str(next_custom_slot)
+            custom_slot_map[key] = assigned_slot
+            next_custom_slot += 1
+            mixed_filament_entries.append(
+                build_mixed_filament_definition(
+                    pair[0],
+                    pair[1],
+                    secondary_percent,
+                    assigned_slot,
+                    custom=True,
+                    origin_auto=False,
+                )
+            )
         assignments.append(
             PaletteRecipe(
                 layer_slots=slots,
                 mixed_color=mixed_rgb,
-                display_slot=display_slot,
-                definition=build_mixed_filament_definition(
-                    primary_slot=primary_slot,
-                    secondary_slot=secondary_slot,
-                    secondary_percent=secondary_percent,
-                    display_slot=display_slot,
-                ),
+                assigned_slot=assigned_slot,
+                stable_id=assigned_slot,
             )
         )
-    return assignments
+    return assignments, mixed_filament_entries
 
 
 def build_preview(labels: np.ndarray, mean_colors: np.ndarray, lines: np.ndarray) -> Image.Image:
@@ -2362,7 +2420,7 @@ def build_mesh_objects(
                 color=recipe.mixed_color,
                 vertices=vertices,
                 triangles=triangles,
-                preferred_slot=recipe.display_slot,
+                preferred_slot=recipe.assigned_slot,
             )
         )
     return objects
@@ -2519,6 +2577,7 @@ def build_snapmaker_child_model(mesh_object: MeshObjectData, object_id: int = 1)
         for a, b, c in mesh_object.triangles
     )
 
+    component_chunk_xml = "\n".join(component_lines)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<model unit="millimeter" xml:lang="en-US" '
@@ -2570,6 +2629,7 @@ def build_snapmaker_assembly_model(mesh_objects: Sequence[MeshObjectData]) -> st
             '  </object>'
         )
 
+    object_chunk_xml = "\n".join(object_chunks)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<model unit="millimeter" xml:lang="en-US" '
@@ -2579,7 +2639,7 @@ def build_snapmaker_assembly_model(mesh_objects: Sequence[MeshObjectData]) -> st
         'requiredextensions="p">\n'
         ' <metadata name="BambuStudio:3mfVersion">1</metadata>\n'
         ' <resources>\n'
-        f'{"\n".join(object_chunks)}\n'
+        f'{object_chunk_xml}\n'
         ' </resources>\n'
         f' <build p:UUID="{uuid.uuid4()}">\n'
         f'  <item objectid="1" printable="1" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>\n'
@@ -2607,6 +2667,7 @@ def build_snapmaker_root_model(
             f'p:UUID="{uuid.uuid4()}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>'
         )
 
+    component_chunk_xml = "\n".join(component_lines)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<model unit="millimeter" xml:lang="en-US" '
@@ -2620,7 +2681,7 @@ def build_snapmaker_root_model(
         ' <resources>\n'
         f'  <object id="{assembly_object_id}" p:UUID="{uuid.uuid4()}" type="model">\n'
         '   <components>\n'
-        f'{"\n".join(component_lines)}\n'
+        f'{component_chunk_xml}\n'
         '   </components>\n'
         '  </object>\n'
         ' </resources>\n'
@@ -2676,13 +2737,14 @@ def build_model_settings(
             '      <mesh_stat edges_fixed="0" degenerate_facets="0" facets_removed="0" facets_reversed="0" backwards_edges="0"/>\n'
             '    </part>'
         )
+    part_chunks_xml = "\n".join(part_chunks)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<config>\n'
         f'  <object id="{assembly_object_id}">\n'
         f'    <metadata key="name" value={quoteattr(ASSEMBLY_OBJECT_NAME)}/>\n'
         '    <metadata key="extruder" value="1"/>\n'
-        f'{"\n".join(part_chunks)}\n'
+        f'{part_chunks_xml}\n'
         '  </object>\n'
         '  <plate>\n'
         '    <metadata key="plater_id" value="1"/>\n'
@@ -2711,7 +2773,7 @@ def build_project_settings_with_base_colors(
     template_zip: zipfile.ZipFile,
     base_layer_height_mm: float,
     material_profiles: Dict[str, MaterialProfile],
-    palette_recipes: Sequence[PaletteRecipe],
+    mixed_filament_entries: Sequence[str],
     output_name: str,
 ) -> str:
     raw = template_zip.read(SNAPMAKER_PROJECT_SETTINGS).decode("utf-8", errors="ignore")
@@ -2767,17 +2829,6 @@ def build_project_settings_with_base_colors(
         f"Snapmaker U1 (0.4 nozzle)({output_name})",
         f"Snapmaker U1 (0.4 nozzle)({output_name})",
     ]
-    mixed_filament_entries: List[str] = []
-    seen_entries: set[str] = set()
-    for recipe in palette_recipes:
-        if recipe.definition and recipe.definition not in seen_entries:
-            mixed_filament_entries.append(recipe.definition)
-            seen_entries.add(recipe.definition)
-    for base_slot in BASE_SLOT_SEQUENCE:
-        entry = build_mixed_filament_definition(base_slot, LEAD_FILAMENT_SLOT, 50, str(70 + int(base_slot)))
-        if entry not in seen_entries:
-            mixed_filament_entries.append(entry)
-            seen_entries.add(entry)
     settings["mixed_filament_definitions"] = ";".join(mixed_filament_entries)
     return json.dumps(settings, indent=4, ensure_ascii=True) + "\n"
 
@@ -2817,7 +2868,7 @@ def write_snapmaker_project_3mf(
     plate_width_mm: float,
     plate_height_mm: float,
     material_profiles: Dict[str, MaterialProfile],
-    palette_recipes: Sequence[PaletteRecipe],
+    mixed_filament_entries: Sequence[str],
 ) -> List[str]:
     extruder_assignments = build_color_slot_assignments(
         mesh_objects,
@@ -2880,7 +2931,7 @@ def write_snapmaker_project_3mf(
                 template_zip,
                 base_layer_height_mm=base_layer_height_mm,
                 material_profiles=material_profiles,
-                palette_recipes=palette_recipes,
+                mixed_filament_entries=mixed_filament_entries,
                 output_name=output_path.name,
             ),
         )
@@ -3014,7 +3065,7 @@ def main() -> int:
     for nuance_index in range(len(region_colors)):
         region_masks.append(filled_region_labels == nuance_index)
 
-    palette_recipes = build_palette_recipes(
+    palette_recipes, mixed_filament_entries = build_palette_recipes(
         region_colors=region_colors,
         layer_count=args.base_layers,
         material_profiles=material_profiles,
@@ -3052,7 +3103,7 @@ def main() -> int:
             plate_width_mm=args.plate_width,
             plate_height_mm=args.plate_height,
             material_profiles=material_profiles,
-            palette_recipes=palette_recipes,
+            mixed_filament_entries=mixed_filament_entries,
         )
     else:
         built_object_names = write_plain_3mf(output_path=output_path, mesh_objects=mesh_objects)
@@ -3096,7 +3147,7 @@ def main() -> int:
         print(
             f"  Palette {nuance_index:02d}: {slot_label} -> "
             f"rgb({recipe.mixed_color[0]},{recipe.mixed_color[1]},{recipe.mixed_color[2]})"
-            f" via slot {recipe.display_slot}"
+            f" via slot {recipe.assigned_slot}"
         )
 
     if args.num_nuances == 10:
