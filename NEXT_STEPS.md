@@ -2,6 +2,30 @@
 
 Use this file as a quick checkpoint before stopping work.
 
+## Session Handoff - 2026-03-27
+
+- Olea Tax work is active and the latest visible design target is the `v25.2` direction under `/Users/ecohen/Codex/web/github.io/oleataxco/`.
+- The two planning PDFs now exist on GitHub on both `main` and `codex/oleataxco-new-look`:
+  `web/github.io/oleataxco/assets/Scalable-Tax-Planning-Pod-Model.pdf`
+  `web/github.io/oleataxco/assets/Workload-and-Task-Justification-Model.pdf`
+- Before editing Olea Tax again, decide whether to continue on `main` or on `codex/oleataxco-new-look`.
+- The current local checkout on this computer is noisy: tracked `gws-cli/` files and several old web alias files are missing locally, so avoid broad staging commands like `git add -A` until that is cleaned up intentionally.
+
+### Olea Tax Resume Commands
+
+- `git -C /Users/ecohen/Codex fetch origin --prune`
+- `git -C /Users/ecohen/Codex branch -vv`
+- `git -C /Users/ecohen/Codex switch main && git -C /Users/ecohen/Codex pull --ff-only origin main`
+- If you want the Olea Tax branch instead: `git -C /Users/ecohen/Codex switch codex/oleataxco-new-look && git -C /Users/ecohen/Codex pull --ff-only origin codex/oleataxco-new-look`
+- `cd /Users/ecohen/Codex/web/github.io && python3 -m http.server 8000`
+- Open `http://localhost:8000/oleataxco/`
+
+### Olea Tax Open Questions
+
+- Is `v25.2` close enough to the PDF-inspired advisory-deck direction, or should it move even closer?
+- Should the placeholder scheduler area be replaced with a real inquiry CTA?
+- Should future Olea Tax changes land directly on `main`, or stay on `codex/oleataxco-new-look` until merged?
+
 ## Current Task
 
 - Keep LeadLight and filamentDB in sync across machines, with Desktop app bundles refreshing automatically after rebuilds.
