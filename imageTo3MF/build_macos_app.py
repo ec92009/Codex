@@ -25,6 +25,8 @@ BUILD_DIR = PROJECT_DIR / "build"
 ICONSET_DIR = BUILD_DIR / f"{APP_NAME}.iconset"
 ICNS_PATH = BUILD_DIR / f"{APP_NAME}.icns"
 APP_PATH = DIST_DIR / f"{APP_NAME}.app"
+INSTALL_DIR = Path.home() / "Applications"
+INSTALL_APP_PATH = INSTALL_DIR / f"{APP_NAME}.app"
 
 
 def render_icon(source_svg: Path, iconset_dir: Path) -> None:
@@ -124,6 +126,50 @@ def build_app() -> None:
     (APP_PATH / "Contents" / "PkgInfo").write_text("APPL????", encoding="ascii")
 
 
+def install_app() -> Path:
+    INSTALL_DIR.mkdir(parents=True, exist_ok=True)
+    if INSTALL_APP_PATH.exists():
+        shutil.rmtree(INSTALL_APP_PATH)
+    shutil.copytree(APP_PATH, INSTALL_APP_PATH)
+    return INSTALL_APP_PATH
+
+
+def sync_dock_entry() -> None:
+    if os.uname().sysname != "Darwin":
+        return
+
+    dock_plist_path = Path.home() / "Library" / "Preferences" / "com.apple.dock.plist"
+    if not dock_plist_path.exists():
+        return
+
+    with dock_plist_path.open("rb") as handle:
+        dock_data = plistlib.load(handle)
+
+    target_url = INSTALL_APP_PATH.resolve().as_uri() + "/"
+    updated = False
+    for item in dock_data.get("persistent-apps", []):
+        tile_data = item.get("tile-data", {})
+        file_data = tile_data.get("file-data", {})
+        file_url = file_data.get("_CFURLString")
+        if tile_data.get("file-label") != APP_NAME and not (
+            isinstance(file_url, str) and "LeadLight.app" in file_url
+        ):
+            continue
+        file_data["_CFURLString"] = target_url
+        file_data["_CFURLStringType"] = 15
+        tile_data["file-data"] = file_data
+        tile_data["file-label"] = APP_NAME
+        item["tile-data"] = tile_data
+        updated = True
+
+    if not updated:
+        return
+
+    with dock_plist_path.open("wb") as handle:
+        plistlib.dump(dock_data, handle)
+    subprocess.run(["killall", "Dock"], check=False)
+
+
 def main() -> int:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QGuiApplication([])
@@ -133,8 +179,10 @@ def main() -> int:
     render_icon(ICON_SVG, ICONSET_DIR)
     build_icns(ICONSET_DIR, ICNS_PATH)
     build_app()
+    install_app()
+    sync_dock_entry()
 
-    print(APP_PATH)
+    print(INSTALL_APP_PATH)
     app.quit()
     return 0
 

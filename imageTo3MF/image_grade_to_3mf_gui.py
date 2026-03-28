@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QSplitter,
     QSlider,
@@ -42,7 +43,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QHeaderView,
 )
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter, ImageQt
 
 import image_grade_to_3mf as engine
 
@@ -56,6 +57,7 @@ DEFAULT_FILAMENT_DB_PATH = RUNTIME_PROJECT_DIR.parent / "filamentDB" / "data" / 
 PROJECT_PYTHON = RUNTIME_PROJECT_DIR / ".venv" / "bin" / "python"
 DEFAULT_LONG_SIDE_MM = 100.0
 DEFAULT_LONG_SIDE_MM = 100.0
+PREVIEW_RENDER_MAX_SIDE_PX = 900
 
 
 class ImagePreview(QLabel):
@@ -63,7 +65,7 @@ class ImagePreview(QLabel):
         super().__init__()
         self._pixmap: Optional[QPixmap] = None
         self.setAlignment(Qt.AlignCenter)
-        self.setMinimumSize(QSize(220, 220))
+        self.setMinimumSize(QSize(180, 140))
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setFrameShape(QFrame.StyledPanel)
         self.setStyleSheet(
@@ -77,6 +79,19 @@ class ImagePreview(QLabel):
             self.setText(placeholder)
             return
         pixmap = QPixmap(str(path))
+        if pixmap.isNull():
+            self._pixmap = None
+            self.setText(placeholder)
+            return
+        self._pixmap = pixmap
+        self._refresh_pixmap()
+
+    def set_pil_image(self, image: Optional[Image.Image], placeholder: str) -> None:
+        if image is None:
+            self._pixmap = None
+            self.setText(placeholder)
+            return
+        pixmap = QPixmap.fromImage(ImageQt.ImageQt(image.convert("RGBA")))
         if pixmap.isNull():
             self._pixmap = None
             self.setText(placeholder)
@@ -102,26 +117,6 @@ class ImagePreview(QLabel):
 
 class NaturalScrollTextEdit(QTextEdit):
     def wheelEvent(self, event) -> None:  # type: ignore[override]  # pragma: no cover - UI path
-        if sys.platform != "darwin":
-            super().wheelEvent(event)
-            return
-
-        pixel_delta = event.pixelDelta()
-        angle_delta = event.angleDelta()
-        handled = False
-
-        if not pixel_delta.isNull():
-            self.verticalScrollBar().setValue(self.verticalScrollBar().value() + pixel_delta.y())
-            handled = True
-        elif angle_delta.y():
-            step = self.verticalScrollBar().singleStep() * 3
-            direction = -1 if angle_delta.y() > 0 else 1
-            self.verticalScrollBar().setValue(self.verticalScrollBar().value() + direction * step)
-            handled = True
-
-        if handled:
-            event.accept()
-            return
         super().wheelEvent(event)
 
 
@@ -319,10 +314,12 @@ class MainWindow(QMainWindow):
         self.stage_paths: list[tuple[str, Path]] = []
         self.stage_index: int = -1
         self.source_image_size: Optional[tuple[int, int]] = None
+        self.preview_source_image: Optional[Image.Image] = None
         self.default_profiles = engine.default_material_profiles()
         self.material_rows: Dict[str, MaterialRow] = {}
         self.app_icon_path = RUNTIME_PROJECT_DIR / "leadlight_icon.svg"
         self.filament_db_path = self._load_filament_db_path()
+        self._restored_window_state = False
 
         self.setWindowTitle("LeadLight")
         if self.app_icon_path.exists():
@@ -374,13 +371,23 @@ class MainWindow(QMainWindow):
         self.summary_label.setText(f"LeadLight filament library reset to:\n{DEFAULT_FILAMENT_DB_PATH}")
 
     def _apply_initial_geometry(self) -> None:
+        saved_geometry = self.settings.value("window_geometry")
+        if saved_geometry:
+            self.restoreGeometry(saved_geometry)
+            saved_splitter = self.settings.value("main_splitter_state")
+            if saved_splitter and hasattr(self, "main_splitter"):
+                self.main_splitter.restoreState(saved_splitter)
+            self._restored_window_state = True
+            self._fit_window_to_screen()
+            return
+
         screen = QApplication.primaryScreen()
         if screen is None:
-            self.resize(1260, 640)
+            self.resize(1120, 620)
             return
         available = screen.availableGeometry()
-        width = min(1320, max(1080, int(available.width() * 0.88)))
-        height = min(660, max(560, int(available.height() * 0.72)))
+        width = min(max(640, int(available.width() * 0.90)), available.width())
+        height = min(max(420, int(available.height() * 0.90)), available.height())
         self.resize(width, height)
         frame = self.frameGeometry()
         frame.moveCenter(available.center())
@@ -388,17 +395,29 @@ class MainWindow(QMainWindow):
 
     def showEvent(self, event) -> None:  # type: ignore[override]
         super().showEvent(event)
-        QTimer.singleShot(0, self._recenter_on_screen)
+        QTimer.singleShot(0, self._fit_window_to_screen)
 
-    def _recenter_on_screen(self) -> None:
+    def closeEvent(self, event) -> None:  # type: ignore[override]
+        self.settings.setValue("window_geometry", self.saveGeometry())
+        if hasattr(self, "main_splitter"):
+            self.settings.setValue("main_splitter_state", self.main_splitter.saveState())
+        super().closeEvent(event)
+
+    def _fit_window_to_screen(self) -> None:
         screen = self.screen() or QApplication.primaryScreen()
         if screen is None:
             return
         available = screen.availableGeometry()
+        target_width = min(self.width(), available.width())
+        target_height = min(self.height(), available.height())
+        if target_width != self.width() or target_height != self.height():
+            self.resize(target_width, target_height)
         frame = self.frameGeometry()
-        frame.moveCenter(available.center())
         top_left = frame.topLeft()
-        top_left.setY(max(available.top() + 20, top_left.y()))
+        max_x = max(available.left(), available.right() - frame.width() + 1)
+        max_y = max(available.top(), available.bottom() - frame.height() + 1)
+        top_left.setX(min(max(available.left(), top_left.x()), max_x))
+        top_left.setY(min(max(available.top(), top_left.y()), max_y))
         self.move(top_left)
 
     def _build_ui(self) -> None:
@@ -419,11 +438,18 @@ class MainWindow(QMainWindow):
 
         splitter = QSplitter(Qt.Horizontal)
         splitter.setChildrenCollapsible(False)
+        self.main_splitter = splitter
 
-        splitter.addWidget(self._build_left_panel())
-        splitter.addWidget(self._build_preview_panel())
-        splitter.addWidget(self._build_right_panel())
-        splitter.setSizes([420, 560, 420])
+        preview_panel = self._build_preview_panel()
+        controls_panel = self._build_controls_panel()
+        preview_panel.setMinimumHeight(0)
+        controls_panel.setMinimumHeight(0)
+
+        splitter.addWidget(preview_panel)
+        splitter.addWidget(self._wrap_scroll_panel(controls_panel))
+        splitter.setStretchFactor(0, 6)
+        splitter.setStretchFactor(1, 4)
+        splitter.setSizes([720, 480])
 
         root_layout.addWidget(splitter, 1)
         footer = QLabel("Dimensions are in millimeters.")
@@ -432,8 +458,32 @@ class MainWindow(QMainWindow):
         root_layout.addWidget(footer)
         self.setCentralWidget(root)
 
+    def _wrap_scroll_panel(self, panel: QWidget) -> QScrollArea:
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setWidget(panel)
+        return scroll
+
+    def _build_controls_panel(self) -> QWidget:
+        panel = QWidget()
+        panel.setMinimumHeight(0)
+        layout = QVBoxLayout(panel)
+        layout.setSpacing(12)
+
+        left_panel = self._build_left_panel()
+        right_panel = self._build_right_panel()
+        left_panel.setMinimumHeight(0)
+        right_panel.setMinimumHeight(0)
+
+        layout.addWidget(left_panel)
+        layout.addWidget(right_panel)
+        return panel
+
     def _build_left_panel(self) -> QWidget:
         panel = QWidget()
+        panel.setMinimumHeight(0)
         layout = QVBoxLayout(panel)
         layout.setSpacing(12)
 
@@ -498,8 +548,27 @@ class MainWindow(QMainWindow):
         self.seed_spin.setValue(7)
         self.seed_spin.setSingleStep(1)
 
-        self.blur_combo = QComboBox()
-        self.blur_combo.addItems(["none", "low", "medium", "strong"])
+        self.blur_slider, self.blur_value_label = self._make_labeled_slider(
+            minimum=1,
+            maximum=200,
+            value=max(1, int(round(engine.DEFAULT_BLUR_MM * 100))),
+            formatter=lambda current: f"{current / 100.0:.2f} mm",
+        )
+        self.saturation_slider, self.saturation_value_label = self._make_labeled_slider(
+            minimum=50,
+            maximum=200,
+            value=int(round(engine.DEFAULT_SATURATION_FACTOR * 100)),
+            formatter=lambda current: f"{current / 100.0:.2f}x",
+        )
+        self.brightness_slider, self.brightness_value_label = self._make_labeled_slider(
+            minimum=50,
+            maximum=200,
+            value=int(round(engine.DEFAULT_BRIGHTNESS_FACTOR * 100)),
+            formatter=lambda current: f"{current / 100.0:.2f}x",
+        )
+        self.blur_slider.valueChanged.connect(self._update_live_preview)
+        self.saturation_slider.valueChanged.connect(self._update_live_preview)
+        self.brightness_slider.valueChanged.connect(self._update_live_preview)
 
         self.size_slider = QSlider(Qt.Horizontal)
         self.size_slider.setRange(27, 263)
@@ -534,9 +603,16 @@ class MainWindow(QMainWindow):
         settings_grid.addWidget(QLabel("Lead thickness"), 7, 0)
         settings_grid.addWidget(self.lead_thickness_spin, 7, 1)
         settings_grid.addWidget(QLabel("Blur"), 8, 0)
-        settings_grid.addWidget(self.blur_combo, 8, 1)
-        settings_grid.addWidget(QLabel("Seed"), 9, 0)
-        settings_grid.addWidget(self.seed_spin, 9, 1)
+        settings_grid.addWidget(self.blur_slider, 8, 1)
+        settings_grid.addWidget(self.blur_value_label, 8, 2)
+        settings_grid.addWidget(QLabel("Saturation"), 9, 0)
+        settings_grid.addWidget(self.saturation_slider, 9, 1)
+        settings_grid.addWidget(self.saturation_value_label, 9, 2)
+        settings_grid.addWidget(QLabel("Brightness"), 10, 0)
+        settings_grid.addWidget(self.brightness_slider, 10, 1)
+        settings_grid.addWidget(self.brightness_value_label, 10, 2)
+        settings_grid.addWidget(QLabel("Seed"), 11, 0)
+        settings_grid.addWidget(self.seed_spin, 11, 1)
 
         layout.addWidget(settings_group)
 
@@ -557,56 +633,38 @@ class MainWindow(QMainWindow):
         run_buttons_layout.addWidget(open_button)
         layout.addWidget(run_buttons)
 
-        layout.addStretch(1)
         return panel
 
     def _build_preview_panel(self) -> QWidget:
         panel = QWidget()
+        panel.setMinimumHeight(0)
         layout = QVBoxLayout(panel)
         layout.setSpacing(10)
 
-        self.original_preview = ImagePreview("Original image preview")
-        self.stage_preview = ImagePreview("Preview will appear here")
+        preview_group = QGroupBox("Preview")
+        preview_layout = QVBoxLayout(preview_group)
+        preview_layout.setContentsMargins(18, 18, 18, 18)
+        preview_layout.setSpacing(10)
 
-        original_group = QGroupBox("Original")
-        original_layout = QVBoxLayout(original_group)
-        original_layout.setContentsMargins(18, 18, 18, 18)
-        original_layout.addWidget(self.original_preview)
+        self.preview_step_slider = QSlider(Qt.Horizontal)
+        self.preview_step_slider.setRange(0, 0)
+        self.preview_step_slider.setSingleStep(1)
+        self.preview_step_slider.setPageStep(1)
+        self.preview_step_slider.setEnabled(False)
+        self.preview_step_slider.valueChanged.connect(self._set_stage_index)
 
-        stage_group = QGroupBox("Preview")
-        stage_layout = QVBoxLayout(stage_group)
-        stage_layout.setContentsMargins(18, 18, 18, 18)
-        self.progress_label = QLabel("Idle")
-        self.progress_label.setObjectName("statusBanner")
-        self.stage_caption_label = QLabel("No stage yet")
-        self.stage_caption_label.setStyleSheet("color: #715d49;")
-        stage_controls = QWidget()
-        stage_controls_layout = QHBoxLayout(stage_controls)
-        stage_controls_layout.setContentsMargins(0, 0, 0, 0)
-        self.stage_prev_button = QPushButton("-")
-        self.stage_prev_button.setFixedWidth(36)
-        self.stage_prev_button.clicked.connect(lambda: self._step_stage(-1))
-        self.stage_next_button = QPushButton("+")
-        self.stage_next_button.setFixedWidth(36)
-        self.stage_next_button.clicked.connect(lambda: self._step_stage(1))
-        self.stage_counter_label = QLabel("0 / 0")
-        self.stage_counter_label.setStyleSheet("color: #715d49;")
-        stage_controls_layout.addWidget(self.stage_prev_button)
-        stage_controls_layout.addWidget(self.stage_next_button)
-        stage_controls_layout.addWidget(self.stage_counter_label)
-        stage_controls_layout.addStretch(1)
-        stage_layout.addWidget(self.progress_label)
-        stage_layout.addWidget(self.stage_caption_label)
-        stage_layout.addWidget(stage_controls)
-        stage_layout.addWidget(self.stage_preview)
+        self.preview_display = ImagePreview("Preview will appear here")
 
-        layout.addWidget(original_group, 1)
-        layout.addWidget(stage_group, 2)
-        self._update_stage_controls()
+        preview_layout.addWidget(self.preview_step_slider)
+        preview_layout.addWidget(self.preview_display, 1)
+
+        layout.addWidget(preview_group, 1)
+        self._update_preview_slider()
         return panel
 
     def _build_right_panel(self) -> QWidget:
         panel = QWidget()
+        panel.setMinimumHeight(0)
         layout = QVBoxLayout(panel)
         layout.setSpacing(12)
 
@@ -676,6 +734,7 @@ class MainWindow(QMainWindow):
         log_layout.setContentsMargins(18, 18, 18, 18)
         self.log_view = NaturalScrollTextEdit()
         self.log_view.setReadOnly(True)
+        self.log_view.setMinimumHeight(80)
         log_layout.addWidget(self.log_view)
 
         layout.addWidget(materials_group, 0)
@@ -801,9 +860,64 @@ class MainWindow(QMainWindow):
         spin.setSingleStep(step)
         return spin
 
+    def _make_labeled_slider(
+        self,
+        *,
+        minimum: int,
+        maximum: int,
+        value: int,
+        formatter,
+    ) -> tuple[QSlider, QLabel]:
+        slider = QSlider(Qt.Horizontal)
+        slider.setRange(minimum, maximum)
+        slider.setValue(value)
+        label = QLabel(formatter(value))
+        label.setMinimumWidth(72)
+        label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        label.setStyleSheet("color: #715d49; font-size: 12px;")
+        slider.valueChanged.connect(lambda current: label.setText(formatter(current)))
+        return slider, label
+
+    def _current_blur_mm(self) -> float:
+        return max(0.01, self.blur_slider.value() / 100.0)
+
+    def _current_saturation(self) -> float:
+        return self.saturation_slider.value() / 100.0
+
+    def _current_brightness(self) -> float:
+        return self.brightness_slider.value() / 100.0
+
     def _prepare_dialog(self) -> None:
         self.raise_()
         self.activateWindow()
+
+    def _load_preview_source_image(self, image_path: Path) -> None:
+        with Image.open(image_path) as source_image:
+            preview_image = source_image.convert("RGB")
+            preview_image.thumbnail((PREVIEW_RENDER_MAX_SIDE_PX, PREVIEW_RENDER_MAX_SIDE_PX), Image.Resampling.LANCZOS)
+        self.preview_source_image = preview_image.copy()
+
+    def _build_live_preview_image(self) -> Optional[Image.Image]:
+        if self.preview_source_image is None:
+            return None
+        preview_image = self.preview_source_image.copy()
+        saturation = self._current_saturation()
+        brightness = self._current_brightness()
+        blur_mm = self._current_blur_mm()
+        if abs(saturation - 1.0) > 1e-9:
+            preview_image = ImageEnhance.Color(preview_image).enhance(saturation)
+        if abs(brightness - 1.0) > 1e-9:
+            preview_image = ImageEnhance.Brightness(preview_image).enhance(brightness)
+        if blur_mm > 0:
+            preview_image = preview_image.filter(ImageFilter.GaussianBlur(radius=blur_mm * 1.5))
+        return preview_image
+
+    def _update_live_preview(self) -> None:
+        preview_image = self._build_live_preview_image()
+        self._update_preview_slider()
+        if self.stage_index <= 0:
+            self.preview_display.set_pil_image(preview_image, "Preview will appear here")
+            self.preview_step_slider.setToolTip("Step 0: live preview")
 
     def choose_image(self) -> None:
         self._prepare_dialog()
@@ -817,7 +931,9 @@ class MainWindow(QMainWindow):
             return
         self.input_path = Path(path)
         self.image_path_edit.setText(path)
-        self.original_preview.set_image(self.input_path, "Original image preview")
+        self._load_preview_source_image(self.input_path)
+        self._update_live_preview()
+        self._set_stage_index(0)
         self._sync_size_from_image(self.input_path)
 
     def choose_output(self) -> None:
@@ -994,16 +1110,15 @@ class MainWindow(QMainWindow):
         self.input_path = image_path
         if not self.size_edit.text().strip():
             self._sync_size_from_image(image_path)
-        self.original_preview.set_image(image_path, "Original image preview")
-        self.stage_preview.set_image(None, "Preview will appear here")
+        self._load_preview_source_image(image_path)
+        self._update_live_preview()
         self.preview_path = None
         self.output_path = None
         self.stage_paths = []
-        self.stage_index = -1
+        self.stage_index = 0
         self.stage_dir = Path(tempfile.mkdtemp(prefix="leadlight_stages_"))
-        self.stage_caption_label.setText("Waiting for stages...")
-        self.stage_counter_label.setText("0 / 0")
-        self._update_stage_controls()
+        self._update_preview_slider()
+        self._set_stage_index(0)
 
         script_args = [
             str(image_path),
@@ -1024,7 +1139,11 @@ class MainWindow(QMainWindow):
             "--lead-thickness",
             f"{self.lead_thickness_spin.value():.2f}mm",
             "--blur",
-            self.blur_combo.currentText(),
+            f"{self._current_blur_mm():.2f}",
+            "--saturation",
+            f"{self._current_saturation():.2f}",
+            "--brightness",
+            f"{self._current_brightness():.2f}",
             "--seed",
             str(int(self.seed_spin.value())),
             "--stage-dir",
@@ -1045,7 +1164,6 @@ class MainWindow(QMainWindow):
 
         self.log_view.clear()
         self.summary_label.setText("Generating 3MF...")
-        self.progress_label.setText("Generating 3MF...")
         self.generate_button.setEnabled(False)
 
         try:
@@ -1091,7 +1209,6 @@ class MainWindow(QMainWindow):
             self.log_view.moveCursor(QTextCursor.End)
         self.generate_button.setEnabled(True)
         self.summary_label.setText(message)
-        self.progress_label.setText("Failed")
         self.process = None
         QMessageBox.critical(self, "Export launcher error", message)
 
@@ -1107,12 +1224,10 @@ class MainWindow(QMainWindow):
             if self.preview_path is not None:
                 summary += f"\nPreview: {self.preview_path}"
             self.summary_label.setText(summary)
-            self.progress_label.setText("Done")
             if self.stage_paths:
-                self._set_stage_index(len(self.stage_paths) - 1)
+                self._set_stage_index(len(self.stage_paths))
         else:
             self.summary_label.setText("Generation failed. See the run log for details.")
-            self.progress_label.setText("Failed")
             QMessageBox.warning(self, "Generation failed", "The export did not complete successfully. See the run log.")
         self.process = None
 
@@ -1124,32 +1239,43 @@ class MainWindow(QMainWindow):
             if any(existing_path == path for _existing_name, existing_path in self.stage_paths):
                 continue
             self.stage_paths.append((name, path))
-            self._set_stage_index(len(self.stage_paths) - 1)
+            self._update_preview_slider()
+            self._set_stage_index(len(self.stage_paths))
 
     def _set_stage_index(self, index: int) -> None:
-        if not self.stage_paths:
+        total_steps = self._preview_step_count()
+        if total_steps == 0:
             self.stage_index = -1
-            self.stage_preview.set_image(None, "Preview will appear here")
-            self.stage_caption_label.setText("No stage yet")
-            self.stage_counter_label.setText("0 / 0")
-            self._update_stage_controls()
+            self.preview_display.set_image(None, "Preview will appear here")
+            self.preview_step_slider.setToolTip("No preview loaded yet")
             return
-        self.stage_index = max(0, min(index, len(self.stage_paths) - 1))
-        name, path = self.stage_paths[self.stage_index]
-        self.stage_preview.set_image(path, "Preview will appear here")
-        self.stage_caption_label.setText(name.replace("_", " "))
-        self.stage_counter_label.setText(f"{self.stage_index + 1} / {len(self.stage_paths)}")
-        self._update_stage_controls()
-
-    def _step_stage(self, delta: int) -> None:
-        if not self.stage_paths:
+        self.stage_index = max(0, min(index, total_steps - 1))
+        self.preview_step_slider.blockSignals(True)
+        self.preview_step_slider.setValue(self.stage_index)
+        self.preview_step_slider.blockSignals(False)
+        if self.stage_index == 0:
+            self.preview_display.set_pil_image(self._build_live_preview_image(), "Preview will appear here")
+            self.preview_step_slider.setToolTip("Step 0: live preview")
             return
-        self._set_stage_index(self.stage_index + delta)
 
-    def _update_stage_controls(self) -> None:
-        has_stages = bool(self.stage_paths)
-        self.stage_prev_button.setEnabled(has_stages and self.stage_index > 0)
-        self.stage_next_button.setEnabled(has_stages and self.stage_index < len(self.stage_paths) - 1)
+        name, path = self.stage_paths[self.stage_index - 1]
+        self.preview_display.set_image(path, "Preview will appear here")
+        self.preview_step_slider.setToolTip(f"Step {self.stage_index}: {name.replace('_', ' ')}")
+
+    def _preview_step_count(self) -> int:
+        if self.preview_source_image is None:
+            return 0
+        return 1 + len(self.stage_paths)
+
+    def _update_preview_slider(self) -> None:
+        total_steps = self._preview_step_count()
+        maximum = max(0, total_steps - 1)
+        current_index = self.stage_index if self.stage_index >= 0 else 0
+        self.preview_step_slider.blockSignals(True)
+        self.preview_step_slider.setRange(0, maximum)
+        self.preview_step_slider.setEnabled(total_steps > 0)
+        self.preview_step_slider.setValue(min(current_index, maximum))
+        self.preview_step_slider.blockSignals(False)
 
     def _extract_path(self, text: str, prefix: str) -> Optional[Path]:
         pattern = re.compile(rf"^{re.escape(prefix)}\s+(.*)$", re.MULTILINE)

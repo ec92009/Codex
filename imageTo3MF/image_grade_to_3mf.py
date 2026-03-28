@@ -18,7 +18,7 @@ from xml.sax.saxutils import quoteattr
 
 import lib3mf
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps
 
 
 DEFAULT_NUM_NUANCES = 10
@@ -32,6 +32,8 @@ DEFAULT_THICKNESS_MM = DEFAULT_BASE_LAYER_HEIGHT_MM * DEFAULT_BASE_LAYER_COUNT
 DEFAULT_LEAD_CAP_HEIGHT_MM = 0.2
 LEAD_TOP_Z_EPSILON_MM = 0.001
 DEFAULT_BLUR_MM = 0.0
+DEFAULT_SATURATION_FACTOR = 1.15
+DEFAULT_BRIGHTNESS_FACTOR = 1.08
 BLUR_PRESETS_MM = {
     "none": 0.0,
     "low": 0.5,
@@ -198,6 +200,13 @@ def parse_blur_value(raw: str) -> float:
     if value in BLUR_PRESETS_MM:
         return BLUR_PRESETS_MM[value]
     return parse_mm_value(value)
+
+
+def parse_enhancement_factor(raw: str) -> float:
+    parsed = float(raw.strip())
+    if parsed <= 0:
+        raise argparse.ArgumentTypeError("enhancement factor must be positive")
+    return parsed
 
 
 def blur_label(blur_mm: float) -> str:
@@ -404,6 +413,18 @@ def parse_args() -> argparse.Namespace:
         type=parse_blur_value,
         default="none",
         help="Pre-blur before color quantization: none, low, medium, strong, or a custom mm value.",
+    )
+    advanced.add_argument(
+        "--saturation",
+        type=parse_enhancement_factor,
+        default=DEFAULT_SATURATION_FACTOR,
+        help="Saturation multiplier applied before quantization. 1.0 leaves the source unchanged.",
+    )
+    advanced.add_argument(
+        "--brightness",
+        type=parse_enhancement_factor,
+        default=DEFAULT_BRIGHTNESS_FACTOR,
+        help="Brightness multiplier applied before quantization. 1.0 leaves the source unchanged.",
     )
     common.add_argument(
         "--plate-size",
@@ -705,10 +726,16 @@ def load_image_to_grid(
     grid_width: int,
     grid_height: int,
     blur_pixels: float = 0.0,
+    saturation_factor: float = DEFAULT_SATURATION_FACTOR,
+    brightness_factor: float = DEFAULT_BRIGHTNESS_FACTOR,
 ) -> np.ndarray:
     with Image.open(path) as image:
         rgb = image.convert("RGB")
         fitted = rgb.resize((grid_width, grid_height), Image.Resampling.LANCZOS)
+        if not math.isclose(saturation_factor, 1.0, abs_tol=1e-9):
+            fitted = ImageEnhance.Color(fitted).enhance(saturation_factor)
+        if not math.isclose(brightness_factor, 1.0, abs_tol=1e-9):
+            fitted = ImageEnhance.Brightness(fitted).enhance(brightness_factor)
         if blur_pixels > 0:
             fitted = fitted.filter(ImageFilter.GaussianBlur(radius=blur_pixels))
     return np.asarray(fitted, dtype=np.uint8)
@@ -3002,8 +3029,10 @@ def main() -> int:
         grid_width,
         grid_height,
         blur_pixels=blur_pixels,
+        saturation_factor=args.saturation,
+        brightness_factor=args.brightness,
     )
-    save_stage_preview(args.stage_dir, 1, "resized_source", Image.fromarray(rgb_image))
+    save_stage_preview(args.stage_dir, 1, "preprocessed_source", Image.fromarray(rgb_image))
     flat_rgb = rgb_image.reshape(-1, 3)
     flat_lab = srgb_to_lab(rgb_image).reshape(-1, 3)
 
@@ -3016,6 +3045,8 @@ def main() -> int:
             grid_width,
             grid_height,
             blur_pixels=max(hybrid_config.analysis_blur_px, 0.0),
+            saturation_factor=args.saturation,
+            brightness_factor=args.brightness,
         )
         anchor_lines = build_hybrid_anchor_mask(rgb_image, analysis_rgb, hybrid_config)
         save_stage_preview(args.stage_dir, 2, "detected_lead_anchors", mask_preview(anchor_lines))
@@ -3127,6 +3158,8 @@ def main() -> int:
     print(f"Base layers: {args.base_layers} x {args.layer_height:.3f} mm")
     print(f"Seed:        {args.seed}")
     print(f"Blur:        {args.blur:.2f} mm")
+    print(f"Saturation:  {args.saturation:.2f}x")
+    print(f"Brightness:  {args.brightness:.2f}x")
     print(f"Resolution:  {args.resolution:.3f} mm target")
     print(f"Grid size:   {grid_width} x {grid_height}")
     print(f"Cell size:   {actual_resolution_x:.3f} x {actual_resolution_y:.3f} mm")
