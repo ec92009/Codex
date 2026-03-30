@@ -12,6 +12,7 @@ import csv
 from pathlib import Path
 from typing import Dict, Optional
 
+import numpy as np
 from PySide6.QtCore import Qt, QProcess, QSize, QTimer, QSettings
 from PySide6.QtGui import QColor, QPixmap, QTextCursor, QIcon
 from PySide6.QtWidgets import (
@@ -58,6 +59,7 @@ PROJECT_PYTHON = RUNTIME_PROJECT_DIR / ".venv" / "bin" / "python"
 DEFAULT_LONG_SIDE_MM = 100.0
 DEFAULT_LONG_SIDE_MM = 100.0
 PREVIEW_RENDER_MAX_SIDE_PX = 900
+DEFAULT_GUI_NUM_NUANCES = 8
 
 
 class ImagePreview(QLabel):
@@ -120,6 +122,38 @@ class NaturalScrollTextEdit(QTextEdit):
         super().wheelEvent(event)
 
 
+class CollapsibleSection(QWidget):
+    def __init__(self, title: str, content: QWidget, expanded: bool = True, on_toggle=None) -> None:
+        super().__init__()
+        self.content = content
+        self._on_toggle = on_toggle
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+
+        self.toggle_button = QPushButton()
+        self.toggle_button.setCheckable(True)
+        self.toggle_button.setChecked(expanded)
+        self.toggle_button.setStyleSheet(
+            "QPushButton { text-align: left; font-weight: 600; font-size: 18px; padding: 10px 12px; }"
+        )
+        self.toggle_button.clicked.connect(self._update_state)
+
+        layout.addWidget(self.toggle_button)
+        layout.addWidget(self.content)
+        self._title = title
+        self._update_state()
+
+    def _update_state(self) -> None:
+        expanded = self.toggle_button.isChecked()
+        self.content.setVisible(expanded)
+        chevron = "▼" if expanded else "▶"
+        self.toggle_button.setText(f"{chevron} {self._title}")
+        if self._on_toggle is not None:
+            self._on_toggle(expanded)
+
+
 class MaterialRow(QWidget):
     def __init__(self, slot: str, profile: engine.MaterialProfile) -> None:
         super().__init__()
@@ -130,17 +164,18 @@ class MaterialRow(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
 
-        self.slot_label = QLabel(f"Slot {slot}")
-        self.slot_label.setFixedWidth(48)
-        self.name_label = QLabel(profile.name.capitalize())
-        self.name_label.setFixedWidth(72)
+        self.slot_name_label = QLabel(f"{slot}. {profile.name.capitalize()}")
+        self.slot_name_label.setMinimumWidth(78)
+        self.slot_name_label.setMaximumWidth(96)
 
         self.hex_edit = QLineEdit(profile.hex_color)
-        self.hex_edit.setFixedWidth(90)
+        self.hex_edit.setMinimumWidth(108)
+        self.hex_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.hex_edit.textChanged.connect(self._sync_button)
 
-        self.color_button = QPushButton("Color")
-        self.color_button.setFixedWidth(70)
+        self.color_button = QPushButton("")
+        self.color_button.setToolTip("Choose color")
+        self.color_button.setFixedWidth(34)
         self.color_button.clicked.connect(self.pick_color)
 
         self.td_spin = QDoubleSpinBox()
@@ -149,19 +184,17 @@ class MaterialRow(QWidget):
         self.td_spin.setSingleStep(0.1)
         self.td_spin.setValue(profile.td)
         self.td_spin.setSuffix(" TD")
-        self.td_spin.setFixedWidth(96)
+        self.td_spin.setFixedWidth(92)
 
         self.db_button = QPushButton("DB")
-        self.db_button.setFixedWidth(42)
+        self.db_button.setFixedWidth(46)
         self.db_button.setToolTip("Pick a filament from filamentDB")
 
-        layout.addWidget(self.slot_label)
-        layout.addWidget(self.name_label)
-        layout.addWidget(self.hex_edit)
+        layout.addWidget(self.slot_name_label)
+        layout.addWidget(self.hex_edit, 1)
         layout.addWidget(self.color_button)
         layout.addWidget(self.td_spin)
         layout.addWidget(self.db_button)
-        layout.addStretch(1)
         self._sync_button()
 
     def pick_color(self) -> None:
@@ -315,6 +348,7 @@ class MainWindow(QMainWindow):
         self.stage_index: int = -1
         self.source_image_size: Optional[tuple[int, int]] = None
         self.preview_source_image: Optional[Image.Image] = None
+        self.live_nuance_preview_image: Optional[Image.Image] = None
         self.default_profiles = engine.default_material_profiles()
         self.material_rows: Dict[str, MaterialRow] = {}
         self.app_icon_path = RUNTIME_PROJECT_DIR / "leadlight_icon.svg"
@@ -325,6 +359,7 @@ class MainWindow(QMainWindow):
         if self.app_icon_path.exists():
             self.setWindowIcon(QIcon(str(self.app_icon_path)))
         self._build_ui()
+        self._restore_ui_state()
         self._apply_style()
         self.reset_materials()
         self._refresh_filament_db_status()
@@ -442,11 +477,13 @@ class MainWindow(QMainWindow):
 
         preview_panel = self._build_preview_panel()
         controls_panel = self._build_controls_panel()
+        right_pane = self._build_right_pane(controls_panel)
         preview_panel.setMinimumHeight(0)
         controls_panel.setMinimumHeight(0)
+        right_pane.setMinimumHeight(0)
 
         splitter.addWidget(preview_panel)
-        splitter.addWidget(self._wrap_scroll_panel(controls_panel))
+        splitter.addWidget(right_pane)
         splitter.setStretchFactor(0, 6)
         splitter.setStretchFactor(1, 4)
         splitter.setSizes([720, 480])
@@ -466,61 +503,79 @@ class MainWindow(QMainWindow):
         scroll.setWidget(panel)
         return scroll
 
+    def _build_right_pane(self, controls_panel: QWidget) -> QWidget:
+        panel = QWidget()
+        panel.setMinimumHeight(0)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
+        layout.addWidget(self._build_action_bar(), 0)
+        layout.addWidget(self._wrap_scroll_panel(controls_panel), 1)
+        return panel
+
+    def _panel_state_key(self, name: str) -> str:
+        return f"panel_state/{name}"
+
+    def _load_panel_state(self, name: str, default: bool) -> bool:
+        raw_value = self.settings.value(self._panel_state_key(name), default)
+        if isinstance(raw_value, bool):
+            return raw_value
+        return str(raw_value).strip().lower() in {"1", "true", "yes"}
+
+    def _save_panel_state(self, name: str, expanded: bool) -> None:
+        self.settings.setValue(self._panel_state_key(name), expanded)
+
+    def _build_collapsible_section(self, name: str, title: str, content: QWidget, default_expanded: bool = True) -> CollapsibleSection:
+        return CollapsibleSection(
+            title,
+            content,
+            expanded=self._load_panel_state(name, default_expanded),
+            on_toggle=lambda expanded, section_name=name: self._save_panel_state(section_name, expanded),
+        )
+
     def _build_controls_panel(self) -> QWidget:
         panel = QWidget()
         panel.setMinimumHeight(0)
         layout = QVBoxLayout(panel)
         layout.setSpacing(12)
 
-        left_panel = self._build_left_panel()
-        right_panel = self._build_right_panel()
-        left_panel.setMinimumHeight(0)
-        right_panel.setMinimumHeight(0)
-
-        layout.addWidget(left_panel)
-        layout.addWidget(right_panel)
+        layout.addWidget(self._build_collapsible_section("source", "Source", self._build_source_group()))
+        layout.addWidget(self._build_collapsible_section("model", "Model", self._build_model_group()))
+        layout.addWidget(self._build_collapsible_section("materials", "Materials", self._build_materials_group()))
+        layout.addWidget(self._build_collapsible_section("status", "Status", self._build_status_group()))
+        layout.addWidget(self._build_collapsible_section("run_log", "Run Log", self._build_log_group(), default_expanded=False))
+        layout.addStretch(1)
         return panel
 
-    def _build_left_panel(self) -> QWidget:
-        panel = QWidget()
-        panel.setMinimumHeight(0)
-        layout = QVBoxLayout(panel)
-        layout.setSpacing(12)
-
+    def _build_source_group(self) -> QWidget:
         image_group = QGroupBox("Source")
-        image_form = QFormLayout(image_group)
-        image_form.setHorizontalSpacing(10)
-        image_form.setVerticalSpacing(10)
-        image_form.setContentsMargins(18, 18, 18, 18)
-        image_form.setLabelAlignment(Qt.AlignRight)
+        image_grid = QGridLayout(image_group)
+        image_grid.setContentsMargins(18, 18, 18, 18)
+        image_grid.setHorizontalSpacing(12)
+        image_grid.setVerticalSpacing(10)
         self.image_path_edit = QLineEdit()
         self.image_path_edit.setPlaceholderText(str(Path.home() / "Desktop" / "image.png"))
         browse_button = QPushButton("Choose Image")
         browse_button.clicked.connect(self.choose_image)
-        image_row = QWidget()
-        image_row_layout = QHBoxLayout(image_row)
-        image_row_layout.setContentsMargins(0, 0, 0, 0)
-        image_row_layout.addWidget(self.image_path_edit, 1)
-        image_row_layout.addWidget(browse_button)
-        image_form.addRow("Image", image_row)
+        image_grid.addWidget(QLabel("Image"), 0, 0)
+        image_grid.addWidget(self.image_path_edit, 0, 1)
+        image_grid.addWidget(browse_button, 0, 2)
 
         self.description_edit = QLineEdit()
         self.description_edit.setPlaceholderText("Optional short description")
-        image_form.addRow("Description", self.description_edit)
+        image_grid.addWidget(QLabel("Description"), 1, 0)
+        image_grid.addWidget(self.description_edit, 1, 1, 1, 2)
 
         self.output_edit = QLineEdit()
         self.output_edit.setPlaceholderText("Optional custom output 3MF path")
         output_button = QPushButton("Browse")
         output_button.clicked.connect(self.choose_output)
-        output_row = QWidget()
-        output_row_layout = QHBoxLayout(output_row)
-        output_row_layout.setContentsMargins(0, 0, 0, 0)
-        output_row_layout.addWidget(self.output_edit, 1)
-        output_row_layout.addWidget(output_button)
-        image_form.addRow("Output", output_row)
+        image_grid.addWidget(QLabel("Output"), 2, 0)
+        image_grid.addWidget(self.output_edit, 2, 1)
+        image_grid.addWidget(output_button, 2, 2)
+        return image_group
 
-        layout.addWidget(image_group)
-
+    def _build_model_group(self) -> QWidget:
         settings_group = QGroupBox("Model")
         settings_grid = QGridLayout(settings_group)
         settings_grid.setContentsMargins(18, 18, 18, 18)
@@ -538,7 +593,12 @@ class MainWindow(QMainWindow):
         self.base_layers_spin.setDecimals(0)
         self.base_layers_spin.setValue(engine.DEFAULT_BASE_LAYER_COUNT)
         self.base_layers_spin.setSingleStep(1)
-        self.lead_height_spin = self._make_mm_spin(0.0, 10.0, engine.DEFAULT_LEAD_CAP_HEIGHT_MM, 0.05)
+        self.lead_height_spin = self._make_mm_spin(
+            0.01,
+            10.0,
+            max(0.01, engine.DEFAULT_LEAD_CAP_HEIGHT_MM),
+            0.05,
+        )
         self.lead_thickness_spin = self._make_mm_spin(0.01, 10.0, engine.DEFAULT_LEAD_THICKNESS_MM, 0.05)
         self.lead_mode_combo = QComboBox()
         self.lead_mode_combo.addItems(["generate", "detect"])
@@ -554,6 +614,12 @@ class MainWindow(QMainWindow):
             value=max(1, int(round(engine.DEFAULT_BLUR_MM * 100))),
             formatter=lambda current: f"{current / 100.0:.2f} mm",
         )
+        self.nuances_slider, self.nuances_value_label = self._make_labeled_slider(
+            minimum=4,
+            maximum=10,
+            value=DEFAULT_GUI_NUM_NUANCES,
+            formatter=lambda current: f"{current:d}",
+        )
         self.saturation_slider, self.saturation_value_label = self._make_labeled_slider(
             minimum=50,
             maximum=200,
@@ -567,6 +633,7 @@ class MainWindow(QMainWindow):
             formatter=lambda current: f"{current / 100.0:.2f}x",
         )
         self.blur_slider.valueChanged.connect(self._update_live_preview)
+        self.nuances_slider.valueChanged.connect(self._update_live_preview)
         self.saturation_slider.valueChanged.connect(self._update_live_preview)
         self.brightness_slider.valueChanged.connect(self._update_live_preview)
 
@@ -586,36 +653,54 @@ class MainWindow(QMainWindow):
         size_layout.addWidget(self.size_slider)
         size_layout.addWidget(self.size_slider_label)
 
-        settings_grid.addWidget(QLabel("Picture size"), 0, 0)
-        settings_grid.addWidget(size_widget, 0, 1)
-        settings_grid.addWidget(QLabel("Plate size"), 1, 0)
-        settings_grid.addWidget(self.plate_size_edit, 1, 1)
-        settings_grid.addWidget(QLabel("Resolution"), 2, 0)
-        settings_grid.addWidget(self.resolution_spin, 2, 1)
-        settings_grid.addWidget(QLabel("Layer height"), 3, 0)
-        settings_grid.addWidget(self.layer_height_spin, 3, 1)
-        settings_grid.addWidget(QLabel("Base layers"), 4, 0)
-        settings_grid.addWidget(self.base_layers_spin, 4, 1)
-        settings_grid.addWidget(QLabel("Lead layer height"), 5, 0)
-        settings_grid.addWidget(self.lead_height_spin, 5, 1)
-        settings_grid.addWidget(QLabel("Lead"), 6, 0)
-        settings_grid.addWidget(self.lead_mode_combo, 6, 1)
-        settings_grid.addWidget(QLabel("Lead thickness"), 7, 0)
-        settings_grid.addWidget(self.lead_thickness_spin, 7, 1)
-        settings_grid.addWidget(QLabel("Blur"), 8, 0)
-        settings_grid.addWidget(self.blur_slider, 8, 1)
-        settings_grid.addWidget(self.blur_value_label, 8, 2)
-        settings_grid.addWidget(QLabel("Saturation"), 9, 0)
-        settings_grid.addWidget(self.saturation_slider, 9, 1)
-        settings_grid.addWidget(self.saturation_value_label, 9, 2)
-        settings_grid.addWidget(QLabel("Brightness"), 10, 0)
-        settings_grid.addWidget(self.brightness_slider, 10, 1)
-        settings_grid.addWidget(self.brightness_value_label, 10, 2)
-        settings_grid.addWidget(QLabel("Seed"), 11, 0)
-        settings_grid.addWidget(self.seed_spin, 11, 1)
+        self._add_model_row(settings_grid, 0, "Picture size", size_widget, reset_callback=self._reset_picture_size)
+        self._add_model_row(settings_grid, 1, "Plate size", self.plate_size_edit, reset_callback=lambda: self.plate_size_edit.setText("270x270"))
+        self._add_model_row(settings_grid, 2, "Resolution", self.resolution_spin, reset_callback=lambda: self.resolution_spin.setValue(engine.DEFAULT_RESOLUTION_MM))
+        self._add_model_row(settings_grid, 3, "Layer height", self.layer_height_spin, reset_callback=lambda: self.layer_height_spin.setValue(engine.DEFAULT_BASE_LAYER_HEIGHT_MM))
+        self._add_model_row(settings_grid, 4, "Base layers", self.base_layers_spin, reset_callback=lambda: self.base_layers_spin.setValue(engine.DEFAULT_BASE_LAYER_COUNT))
+        self._add_model_row(settings_grid, 5, "Lead layer height", self.lead_height_spin, reset_callback=lambda: self.lead_height_spin.setValue(max(0.01, engine.DEFAULT_LEAD_CAP_HEIGHT_MM)))
+        self._add_model_row(settings_grid, 6, "Lead", self.lead_mode_combo, reset_callback=lambda: self.lead_mode_combo.setCurrentText("generate"))
+        self._add_model_row(settings_grid, 7, "Lead thickness", self.lead_thickness_spin, reset_callback=lambda: self.lead_thickness_spin.setValue(engine.DEFAULT_LEAD_THICKNESS_MM))
+        self._add_model_row(settings_grid, 8, "Blur", self.blur_slider, self.blur_value_label, reset_callback=lambda: self.blur_slider.setValue(max(1, int(round(engine.DEFAULT_BLUR_MM * 100)))))
+        self._add_model_row(settings_grid, 9, "Nuances", self.nuances_slider, self.nuances_value_label, reset_callback=lambda: self.nuances_slider.setValue(DEFAULT_GUI_NUM_NUANCES))
+        self._add_model_row(settings_grid, 10, "Saturation", self.saturation_slider, self.saturation_value_label, reset_callback=lambda: self.saturation_slider.setValue(int(round(engine.DEFAULT_SATURATION_FACTOR * 100))))
+        self._add_model_row(settings_grid, 11, "Brightness", self.brightness_slider, self.brightness_value_label, reset_callback=lambda: self.brightness_slider.setValue(int(round(engine.DEFAULT_BRIGHTNESS_FACTOR * 100))))
+        self._add_model_row(settings_grid, 12, "Seed", self.seed_spin, reset_callback=lambda: self.seed_spin.setValue(7))
+        return settings_group
 
-        layout.addWidget(settings_group)
+    def _add_model_row(
+        self,
+        grid: QGridLayout,
+        row: int,
+        label: str,
+        control: QWidget,
+        value_widget: Optional[QWidget] = None,
+        *,
+        reset_callback,
+    ) -> None:
+        grid.addWidget(QLabel(label), row, 0)
+        grid.addWidget(control, row, 1)
+        if value_widget is not None:
+            grid.addWidget(value_widget, row, 2)
+        reset_button = self._make_reset_button(reset_callback)
+        grid.addWidget(reset_button, row, 3)
 
+    def _make_reset_button(self, callback) -> QPushButton:
+        button = QPushButton("↺")
+        button.setFixedWidth(34)
+        button.setToolTip("Reset to default")
+        button.clicked.connect(callback)
+        return button
+
+    def _reset_picture_size(self) -> None:
+        self.size_slider.setValue(int(DEFAULT_LONG_SIDE_MM))
+        if self.input_path is not None:
+            self._sync_size_from_image(self.input_path)
+        else:
+            self.size_edit.clear()
+            self.size_slider_label.setText("Long side: auto")
+
+    def _build_action_bar(self) -> QWidget:
         run_buttons = QWidget()
         run_buttons_layout = QHBoxLayout(run_buttons)
         run_buttons_layout.setContentsMargins(0, 0, 0, 0)
@@ -631,9 +716,64 @@ class MainWindow(QMainWindow):
         run_buttons_layout.addWidget(self.generate_button, 1)
         run_buttons_layout.addWidget(reveal_button)
         run_buttons_layout.addWidget(open_button)
-        layout.addWidget(run_buttons)
+        return run_buttons
 
-        return panel
+    def _setting_key(self, name: str) -> str:
+        return f"ui/{name}"
+
+    def _restore_ui_state(self) -> None:
+        self.image_path_edit.setText(str(self.settings.value(self._setting_key("image_path"), "")))
+        self.description_edit.setText(str(self.settings.value(self._setting_key("description"), "")))
+        self.output_edit.setText(str(self.settings.value(self._setting_key("output_path"), "")))
+        self.plate_size_edit.setText(str(self.settings.value(self._setting_key("plate_size"), "270x270")))
+        self.size_edit.setText(str(self.settings.value(self._setting_key("size_text"), "")))
+        self.resolution_spin.setValue(float(self.settings.value(self._setting_key("resolution"), engine.DEFAULT_RESOLUTION_MM)))
+        self.layer_height_spin.setValue(float(self.settings.value(self._setting_key("layer_height"), engine.DEFAULT_BASE_LAYER_HEIGHT_MM)))
+        self.base_layers_spin.setValue(float(self.settings.value(self._setting_key("base_layers"), engine.DEFAULT_BASE_LAYER_COUNT)))
+        self.lead_height_spin.setValue(float(self.settings.value(self._setting_key("lead_height"), max(0.01, engine.DEFAULT_LEAD_CAP_HEIGHT_MM))))
+        self.lead_mode_combo.setCurrentText(str(self.settings.value(self._setting_key("lead_mode"), "generate")))
+        self.lead_thickness_spin.setValue(float(self.settings.value(self._setting_key("lead_thickness"), engine.DEFAULT_LEAD_THICKNESS_MM)))
+        self.blur_slider.setValue(int(self.settings.value(self._setting_key("blur_slider"), max(1, int(round(engine.DEFAULT_BLUR_MM * 100))))))
+        self.nuances_slider.setValue(int(self.settings.value(self._setting_key("nuances_slider"), DEFAULT_GUI_NUM_NUANCES)))
+        self.saturation_slider.setValue(int(self.settings.value(self._setting_key("saturation_slider"), int(round(engine.DEFAULT_SATURATION_FACTOR * 100)))))
+        self.brightness_slider.setValue(int(self.settings.value(self._setting_key("brightness_slider"), int(round(engine.DEFAULT_BRIGHTNESS_FACTOR * 100)))))
+        self.seed_spin.setValue(float(self.settings.value(self._setting_key("seed"), 7)))
+        self._connect_ui_state_persistence()
+
+        image_path = self._effective_image_path()
+        if image_path is not None and image_path.exists():
+            self.input_path = image_path
+            self._load_preview_source_image(image_path)
+            self._sync_size_from_image(image_path)
+            saved_size_slider = self.settings.value(self._setting_key("size_slider"))
+            if saved_size_slider is not None:
+                self.size_slider.setValue(int(saved_size_slider))
+            saved_size_text = str(self.settings.value(self._setting_key("size_text"), "")).strip()
+            if saved_size_text:
+                self.size_edit.setText(saved_size_text)
+            self._update_live_preview()
+            self._set_stage_index(0)
+        else:
+            self._update_live_preview()
+
+    def _connect_ui_state_persistence(self) -> None:
+        self.image_path_edit.textChanged.connect(lambda value: self.settings.setValue(self._setting_key("image_path"), value))
+        self.description_edit.textChanged.connect(lambda value: self.settings.setValue(self._setting_key("description"), value))
+        self.output_edit.textChanged.connect(lambda value: self.settings.setValue(self._setting_key("output_path"), value))
+        self.size_edit.textChanged.connect(lambda value: self.settings.setValue(self._setting_key("size_text"), value))
+        self.plate_size_edit.textChanged.connect(lambda value: self.settings.setValue(self._setting_key("plate_size"), value))
+        self.size_slider.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("size_slider"), value))
+        self.resolution_spin.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("resolution"), value))
+        self.layer_height_spin.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("layer_height"), value))
+        self.base_layers_spin.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("base_layers"), value))
+        self.lead_height_spin.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("lead_height"), value))
+        self.lead_mode_combo.currentTextChanged.connect(lambda value: self.settings.setValue(self._setting_key("lead_mode"), value))
+        self.lead_thickness_spin.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("lead_thickness"), value))
+        self.blur_slider.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("blur_slider"), value))
+        self.nuances_slider.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("nuances_slider"), value))
+        self.saturation_slider.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("saturation_slider"), value))
+        self.brightness_slider.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("brightness_slider"), value))
+        self.seed_spin.valueChanged.connect(lambda value: self.settings.setValue(self._setting_key("seed"), value))
 
     def _build_preview_panel(self) -> QWidget:
         panel = QWidget()
@@ -641,10 +781,21 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(panel)
         layout.setSpacing(10)
 
-        preview_group = QGroupBox("Preview")
+        preview_group = QGroupBox("")
         preview_layout = QVBoxLayout(preview_group)
         preview_layout.setContentsMargins(18, 18, 18, 18)
         preview_layout.setSpacing(10)
+
+        preview_header = QWidget()
+        preview_header_layout = QHBoxLayout(preview_header)
+        preview_header_layout.setContentsMargins(0, 0, 0, 0)
+        preview_header_layout.setSpacing(8)
+        preview_title = QLabel("Preview:")
+        preview_title.setStyleSheet("font-size: 16px; font-weight: 700; color: #584635;")
+        self.preview_step_label = QLabel("No image")
+        self.preview_step_label.setStyleSheet("font-size: 15px; color: #715d49;")
+        preview_header_layout.addWidget(preview_title)
+        preview_header_layout.addWidget(self.preview_step_label, 1)
 
         self.preview_step_slider = QSlider(Qt.Horizontal)
         self.preview_step_slider.setRange(0, 0)
@@ -655,6 +806,7 @@ class MainWindow(QMainWindow):
 
         self.preview_display = ImagePreview("Preview will appear here")
 
+        preview_layout.addWidget(preview_header)
         preview_layout.addWidget(self.preview_step_slider)
         preview_layout.addWidget(self.preview_display, 1)
 
@@ -662,12 +814,7 @@ class MainWindow(QMainWindow):
         self._update_preview_slider()
         return panel
 
-    def _build_right_panel(self) -> QWidget:
-        panel = QWidget()
-        panel.setMinimumHeight(0)
-        layout = QVBoxLayout(panel)
-        layout.setSpacing(12)
-
+    def _build_materials_group(self) -> QWidget:
         materials_group = QGroupBox("Materials")
         materials_layout = QVBoxLayout(materials_group)
         materials_layout.setSpacing(10)
@@ -720,7 +867,9 @@ class MainWindow(QMainWindow):
         materials_buttons_layout.addWidget(load_button)
         materials_buttons_layout.addStretch(1)
         materials_layout.addWidget(materials_buttons)
+        return materials_group
 
+    def _build_status_group(self) -> QWidget:
         summary_group = QGroupBox("Status")
         summary_layout = QVBoxLayout(summary_group)
         summary_layout.setContentsMargins(18, 18, 18, 18)
@@ -728,7 +877,9 @@ class MainWindow(QMainWindow):
         self.summary_label.setWordWrap(True)
         self.summary_label.setObjectName("statusBanner")
         summary_layout.addWidget(self.summary_label)
+        return summary_group
 
+    def _build_log_group(self) -> QWidget:
         log_group = QGroupBox("Run Log")
         log_layout = QVBoxLayout(log_group)
         log_layout.setContentsMargins(18, 18, 18, 18)
@@ -736,11 +887,7 @@ class MainWindow(QMainWindow):
         self.log_view.setReadOnly(True)
         self.log_view.setMinimumHeight(80)
         log_layout.addWidget(self.log_view)
-
-        layout.addWidget(materials_group, 0)
-        layout.addWidget(summary_group, 0)
-        layout.addWidget(log_group, 1)
-        return panel
+        return log_group
 
     def pick_material_from_db(self, slot: str) -> None:
         if not self.filament_db_path.exists():
@@ -797,7 +944,8 @@ class MainWindow(QMainWindow):
                 border: 1px solid #cfbfa7;
                 border-radius: 8px;
                 padding: 6px 8px;
-                selection-background-color: #0a84ff;
+                selection-background-color: #c7d9e8;
+                selection-color: #2f241a;
                 placeholder-text-color: #9a866f;
             }
             QTextEdit {
@@ -887,6 +1035,9 @@ class MainWindow(QMainWindow):
     def _current_brightness(self) -> float:
         return self.brightness_slider.value() / 100.0
 
+    def _current_num_nuances(self) -> int:
+        return int(self.nuances_slider.value())
+
     def _prepare_dialog(self) -> None:
         self.raise_()
         self.activateWindow()
@@ -897,7 +1048,7 @@ class MainWindow(QMainWindow):
             preview_image.thumbnail((PREVIEW_RENDER_MAX_SIDE_PX, PREVIEW_RENDER_MAX_SIDE_PX), Image.Resampling.LANCZOS)
         self.preview_source_image = preview_image.copy()
 
-    def _build_live_preview_image(self) -> Optional[Image.Image]:
+    def _build_preprocessed_preview_image(self) -> Optional[Image.Image]:
         if self.preview_source_image is None:
             return None
         preview_image = self.preview_source_image.copy()
@@ -912,12 +1063,24 @@ class MainWindow(QMainWindow):
             preview_image = preview_image.filter(ImageFilter.GaussianBlur(radius=blur_mm * 1.5))
         return preview_image
 
+    def _build_live_preview_image(self) -> Optional[Image.Image]:
+        preview_image = self._build_preprocessed_preview_image()
+        if preview_image is None:
+            return None
+        rgb_array = np.asarray(preview_image, dtype=np.uint8)
+        flat_rgb = rgb_array.reshape(-1, 3)
+        flat_lab = engine.srgb_to_lab(rgb_array).reshape(-1, 3).astype(np.float32)
+        raw_labels, lab_centers = engine.kmeans(flat_lab, clusters=self._current_num_nuances(), seed=int(self.seed_spin.value()))
+        labels, _sorted_lab, region_colors = engine.reorder_by_lightness(raw_labels, lab_centers, flat_rgb)
+        labels = labels.reshape(rgb_array.shape[0], rgb_array.shape[1])
+        labels = engine.majority_smooth(labels, num_classes=self._current_num_nuances(), passes=2)
+        return engine.build_preview(labels, region_colors, np.zeros_like(labels, dtype=bool))
+
     def _update_live_preview(self) -> None:
-        preview_image = self._build_live_preview_image()
+        self.live_nuance_preview_image = self._build_live_preview_image()
         self._update_preview_slider()
-        if self.stage_index <= 0:
-            self.preview_display.set_pil_image(preview_image, "Preview will appear here")
-            self.preview_step_slider.setToolTip("Step 0: live preview")
+        if self.stage_index in (0, 1):
+            self._set_stage_index(self.stage_index if self.stage_index >= 0 else 0)
 
     def choose_image(self) -> None:
         self._prepare_dialog()
@@ -1122,6 +1285,8 @@ class MainWindow(QMainWindow):
 
         script_args = [
             str(image_path),
+            "--num-nuances",
+            str(self._current_num_nuances()),
             "--size",
             self.size_edit.text().strip() or self._suggest_model_size(image_path, long_side_mm=float(self.size_slider.value())),
             "--plate-size",
@@ -1248,24 +1413,34 @@ class MainWindow(QMainWindow):
             self.stage_index = -1
             self.preview_display.set_image(None, "Preview will appear here")
             self.preview_step_slider.setToolTip("No preview loaded yet")
+            self.preview_step_label.setText("No image")
             return
         self.stage_index = max(0, min(index, total_steps - 1))
         self.preview_step_slider.blockSignals(True)
         self.preview_step_slider.setValue(self.stage_index)
         self.preview_step_slider.blockSignals(False)
         if self.stage_index == 0:
-            self.preview_display.set_pil_image(self._build_live_preview_image(), "Preview will appear here")
-            self.preview_step_slider.setToolTip("Step 0: live preview")
+            self.preview_display.set_pil_image(self._build_preprocessed_preview_image(), "Preview will appear here")
+            self.preview_step_slider.setToolTip("Step 0: source preview")
+            self.preview_step_label.setText("Original")
             return
 
-        name, path = self.stage_paths[self.stage_index - 1]
+        if self.live_nuance_preview_image is not None and self.stage_index == 1:
+            self.preview_display.set_pil_image(self.live_nuance_preview_image, "Preview will appear here")
+            self.preview_step_slider.setToolTip("Step 1: live nuance preview")
+            self.preview_step_label.setText("Live Nuance")
+            return
+
+        stage_offset = 1 if self.live_nuance_preview_image is not None else 0
+        name, path = self.stage_paths[self.stage_index - 1 - stage_offset]
         self.preview_display.set_image(path, "Preview will appear here")
         self.preview_step_slider.setToolTip(f"Step {self.stage_index}: {name.replace('_', ' ')}")
+        self.preview_step_label.setText(name.replace("_", " ").title())
 
     def _preview_step_count(self) -> int:
         if self.preview_source_image is None:
             return 0
-        return 1 + len(self.stage_paths)
+        return 1 + (1 if self.live_nuance_preview_image is not None else 0) + len(self.stage_paths)
 
     def _update_preview_slider(self) -> None:
         total_steps = self._preview_step_count()
