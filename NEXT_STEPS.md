@@ -8,6 +8,7 @@ Use this file as a quick checkpoint before stopping work.
 - `David` is this Mac under `ecohen`.
 - `Max` is the MacBook Pro under `ecohen`.
 - `Par_Rook6` is the VM hosted on `David`, where you operate as `Rook` / `Openclaw`.
+- As of `2026-03-31`, use `main` as the shared branch again for LeadLight / filamentDB work. `codex/oleataxco-new-look` is no longer the default resume branch.
 - Olea Tax work is active and the latest visible design target is the `v25.2` direction under `~/Codex/web/github.io/oleataxco/`.
 - The two planning PDFs now exist on GitHub on both `main` and `codex/oleataxco-new-look`:
   `web/github.io/oleataxco/assets/Scalable-Tax-Planning-Pod-Model.pdf`
@@ -34,6 +35,7 @@ Use this file as a quick checkpoint before stopping work.
 
 - Keep LeadLight and filamentDB in sync across machines via their canonical `dist/` app bundles.
 - Keep `~/Codex/filamentDB/data/filaments.tsv` on `David` as the canonical filament dataset and sync changes outward through Git.
+- On any machine switch, start with `git -C ~/Codex pull --ff-only origin main`.
 - Validate the integrated hybrid `detect` mode on a wider real-image set and decide whether the old direct-detect helpers can be retired.
 - `gmail_idealista_app`: added `report` mode to extract listing URLs from Idealista alert emails and `enrich` mode to visit only those email-derived property URLs for public advertiser details.
 
@@ -56,6 +58,7 @@ Use this file as a quick checkpoint before stopping work.
 
 ## Next Command To Run
 
+- `git -C ~/Codex pull --ff-only origin main`
 - `~/Codex/imageTo3MF/build_leadlight_app.sh`
 - `~/Codex/filamentDB/build_filamentdb_app.sh`
 - `uv run --project ~/Codex/imageTo3MF python ~/Codex/imageTo3MF/image_grade_to_3mf.py ~/Desktop/F.png --lead-source detect --no-open --preview /tmp/leadlight_detect_preview.png --output /tmp/leadlight_detect_test.3mf`
