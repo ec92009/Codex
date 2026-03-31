@@ -7,7 +7,6 @@
 **/*.pyc
 **/.env
 **/.env.*
-!gws-cli/.env.example
 **/token.json
 **/credentials.json
 **/.playwright-profile/
