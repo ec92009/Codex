@@ -8,6 +8,12 @@ Central workspace repository for ongoing projects under `~/Codex`.
 - `web/github.io`: Canonical local website workspace for GitHub Pages.
 - `gmail_idealista_app`: Python app for Gmail + Idealista automation, including listing report extraction from Idealista alert emails.
 
+## External Repos
+
+- `LeadLight` now lives in its own repo and should no longer be worked on from `~/Codex`.
+- `FilamentDB` now lives in its own repo and should no longer be worked on from `~/Codex`.
+- Keep their local checkouts under `~/Dev` or another standalone location, separate from this workspace repo.
+
 ## Website Structure
 
 - `web/github.io/oleamediaco`: Olea Media Co site, variants, assets, and published PDFs.
@@ -54,7 +60,7 @@ GitHub Pages is deployed by `.github/workflows/deploy-oleamediaco-site.yml`, whi
 
 ## Cross-Computer Workflow
 
-Use GitHub as the source of truth for code and tracked scripts. For `filamentDB`, treat `~/Codex/filamentDB/data/filaments.tsv` on `David` as the source of truth and sync that file outward through Git. Local generated artifacts such as `build/` and `dist/` are ignored and should be rebuilt on each machine.
+Use GitHub as the source of truth for code and tracked scripts that still belong to this repo. `LeadLight` and `FilamentDB` now live in standalone repos, with `FilamentDB` primarily checked out at `~/Dev/FilamentDB`. Local generated artifacts such as `build/` and `dist/` are ignored and should be rebuilt on each machine.
 
 Finish on computer A:
 
@@ -73,23 +79,11 @@ cd ~/Codex
 git pull --ff-only origin main
 ```
 
-Rebuild local macOS app bundles after pulling when needed:
-
-```bash
-~/Codex/imageTo3MF/build_leadlight_app.sh
-~/Codex/filamentDB/build_filamentdb_app.sh
-```
-
-Each build refreshes the canonical local app bundles in `dist/`:
-
-- `~/Codex/imageTo3MF/dist/LeadLight.app`
-- `~/Codex/filamentDB/dist/filamentDB.app`
-
 Notes:
 
 - Commit source changes, docs, scripts, icons, and launcher changes.
 - Do not commit generated `build/` or `dist/` folders.
-- If you change both `imageTo3MF` and `filamentDB`, commit them together from the repo root so the two apps stay in sync.
+- Commit LeadLight and FilamentDB changes from their standalone repos, not from `~/Codex`.
 - Before starting work on another computer, always `git pull` first.
 
 ## Cleanup Routine
@@ -97,7 +91,7 @@ Notes:
 Use this when settling a machine after pulling fresh changes:
 
 1. `git pull --ff-only origin main`
-2. Verify `filamentDB/data/filaments.tsv` looks current.
-3. Ignore legacy `filaments.db` state; SQLite is no longer part of the intended `filamentDB` workflow.
-4. Rebuild local app bundles if launcher, icon, or app-wrapper code changed.
-5. Start work only after the repo and local wrappers are current.
+2. Confirm you are editing the right repo for the project at hand.
+3. For LeadLight or FilamentDB work, switch to their standalone repos before making changes.
+4. Rebuild local app bundles only from the repo that owns them.
+5. Start work only after the active repo and local wrappers are current.
