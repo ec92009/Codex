@@ -18,14 +18,19 @@
     .site-logo{width:42px;height:42px;border-radius:12px;border:1px solid #2a3140;object-fit:cover;background:#101521}
     h1{margin:0;font-size:1.25rem}
     .meta{color:var(--muted);font-size:.92rem}
-    .controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 0}
     button{border:1px solid var(--line);background:#111622;color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
     button.primary{background:var(--accent);color:#04130b;border-color:#16985a}
+    .mode-toggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#111622}
+    .mode-toggle button{border:none;border-right:1px solid var(--line);border-radius:0;padding:8px 14px}
+    .mode-toggle button:last-child{border-right:none}
+    .mode-toggle button.active{background:var(--accent);color:#04130b}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
-    .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
     .name{font-weight:800}
-    .stat{font-size:.82rem;color:var(--muted)}
+    .stat{font-size:.82rem;color:var(--muted);text-align:right}
+    .stat strong{display:block;color:var(--text);font-size:.95rem}
     canvas{width:100%;height:180px;background:#0e1320;border-radius:8px;border:1px solid #243047}
     @media (max-width:900px){.grid{grid-template-columns:1fr}.sticky-head{top:0;padding-top:8px}}
   </style>
@@ -36,7 +41,7 @@
   <div class="sticky-head">
     <div class="top">
       <div class="title-row"><img class="site-logo" src="../assets/logos/sorting-logo.png" alt="Sorting logo" /><h1>Sorting Algorithms Visualizer</h1></div>
-      <div class="meta">100 random integers · Bubble → Insertion → Selection → Merge → Quick · Version v23.0</div>
+      <div class="meta">100 random integers · Bubble → Insertion → Selection → Merge → Quick · Version v35.0</div>
     </div>
 
     <div class="controls">
@@ -44,6 +49,10 @@
       <button id="run">Run All</button>
       <button id="pause">Pause</button>
       <button id="step">Step</button>
+      <div class="mode-toggle" aria-label="Execution speed mode">
+        <button id="humanMode" class="active" type="button">Human speed</button>
+        <button id="browserMode" type="button">Browser speed</button>
+      </div>
     </div>
   </div>
 
@@ -53,21 +62,25 @@
 <script>
 const N=100;
 const ALGO_NAMES=['Bubble Sort','Insertion Sort','Selection Sort','Merge Sort','Quick Sort'];
-const speedMs=14;
+const HUMAN_SPEED_MS=120;
+const BROWSER_SPEED_MS=0;
 
 const grid=document.getElementById('grid');
+const humanModeBtn=document.getElementById('humanMode');
+const browserModeBtn=document.getElementById('browserMode');
 let base=[];
 let sims=[];
 let running=false;
 let timer=null;
+let speedMode='human';
 
 function randData(){ return Array.from({length:N},()=>Math.floor(Math.random()*400)+10); }
 
 function makePanel(name){
   const box=document.createElement('div'); box.className='panel';
-  box.innerHTML=`<div class="head"><div class="name">${name}</div><div class="stat">ops: <span>0</span></div></div><canvas width="520" height="180"></canvas>`;
+  box.innerHTML=`<div class="head"><div class="name">${name}</div><div class="stat"><strong>0.00s</strong><span>ops: 0</span></div></div><canvas width="520" height="180"></canvas>`;
   grid.appendChild(box);
-  return {box, canvas:box.querySelector('canvas'), stat:box.querySelector('.stat span')};
+  return {box, canvas:box.querySelector('canvas'), time:box.querySelector('.stat strong'), stat:box.querySelector('.stat span')};
 }
 
 function draw(sim){
@@ -88,7 +101,8 @@ function draw(sim){
     ctx.fillStyle=col;
     ctx.fillRect(x,y,Math.max(1,bw-1),bh);
   }
-  sim.ui.stat.textContent=sim.ops;
+  sim.ui.stat.textContent=`ops: ${sim.ops}`;
+  sim.ui.time.textContent=`${((sim.endTime ?? performance.now()) - sim.startTime)/1000 >= 0 ? (((sim.endTime ?? performance.now()) - sim.startTime)/1000).toFixed(2) : '0.00'}s`;
 }
 
 function* bubble(arr){
@@ -150,7 +164,8 @@ function build(){
   for(let i=0;i<ALGO_NAMES.length;i++){
     const ui=makePanel(ALGO_NAMES[i]);
     const arr=base.slice();
-    sims.push({arr, ui, it:gens[i](arr), done:false, ops:0, a:-1, b:-1});
+    const now=performance.now();
+    sims.push({arr, ui, it:gens[i](arr), done:false, ops:0, a:-1, b:-1, startTime:now, endTime:null});
   }
   sims.forEach(draw);
 }
@@ -160,7 +175,7 @@ function stepOnce(){
   for(const s of sims){
     if(s.done) continue;
     const n=s.it.next();
-    if(n.done){ s.done=true; s.a=s.b=-1; draw(s); continue; }
+    if(n.done){ s.done=true; s.a=s.b=-1; s.endTime=performance.now(); draw(s); continue; }
     s.ops++; s.a=n.value?.a??-1; s.b=n.value?.b??-1; draw(s); active++;
   }
   if(!active){ running=false; clearInterval(timer); timer=null; setPauseLabel(); }
@@ -172,10 +187,19 @@ function setPauseLabel(){
   pauseBtn.textContent = running ? 'Pause' : 'Resume';
 }
 
+function getCurrentSpeed(){
+  return speedMode === 'human' ? HUMAN_SPEED_MS : BROWSER_SPEED_MS;
+}
+
 function run(){
   if(running) return;
   running=true;
-  timer=setInterval(stepOnce,speedMs);
+  const speed=getCurrentSpeed();
+  if(speed === 0){
+    timer=setInterval(stepOnce,0);
+  } else {
+    timer=setInterval(stepOnce,speed);
+  }
   setPauseLabel();
 }
 
@@ -191,12 +215,25 @@ function togglePauseResume(){
   else run();
 }
 
+function setSpeedMode(mode){
+  speedMode=mode;
+  humanModeBtn.classList.toggle('active', mode==='human');
+  browserModeBtn.classList.toggle('active', mode==='browser');
+  if(running){
+    clearInterval(timer);
+    timer=null;
+    run();
+  }
+}
+
 document.getElementById('newSet').onclick=()=>{ pause(); base=randData(); build(); };
 document.getElementById('run').onclick=run;
 pauseBtn.onclick=togglePauseResume;
 document.getElementById('step').onclick=()=>{ pause(); stepOnce(); };
+humanModeBtn.onclick=()=>setSpeedMode('human');
+browserModeBtn.onclick=()=>setSpeedMode('browser');
 
-base=randData(); build(); setPauseLabel();
+base=randData(); build(); setPauseLabel(); setSpeedMode('human');
 </script>
 </body>
 </html>
